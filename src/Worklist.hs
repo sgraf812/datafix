@@ -15,8 +15,19 @@ newtype TransferFunction node lattice a
   = TFM (State (WorklistState node lattice) a)
   deriving (Functor, Applicative, Monad)
 
+type ChangeDetector node lattice
+  = Set node -> lattice -> lattice -> Bool
+
 newtype DataFlowFramework node lattice
-  = DFF { getTransfer :: node -> TransferFunction node lattice lattice }
+  = DFF { getTransfer :: node -> (TransferFunction node lattice lattice, ChangeDetector node lattice) }
+
+frameworkWithEqChangeDetector
+  :: Eq lattice
+  => (node -> TransferFunction node lattice lattice)
+  -> DataFlowFramework node lattice
+frameworkWithEqChangeDetector transfer = DFF transfer'
+  where
+    transfer' node = (transfer node, const (/=))
 
 data NodeInfo node lattice
   = NodeInfo
@@ -58,7 +69,7 @@ dependOn node = TFM $ do
   zoomReferencedNodes (modify' (Set.insert node)) -- save that we depend on this value
   case maybeNodeInfo of
     Nothing | loopDetected -> return Nothing
-    Nothing -> Just . fst <$> recompute node
+    Nothing -> fmap (\(val, _, _) -> Just val) (recompute node)
     Just info -> return (value info)
 
 data Diff a
@@ -98,14 +109,14 @@ updateGraphNode node val refs = zoomGraph $ do
 recompute
   :: Ord node
   => node
-  -> State (WorklistState node lattice) (lattice, NodeInfo node lattice)
+  -> State (WorklistState node lattice) (lattice, NodeInfo node lattice, ChangeDetector node lattice)
 recompute node = do
   oldState <- get
   put $ oldState
     { referencedNodes = Set.empty
     , callStack = Set.insert node (callStack oldState)
     }
-  let TFM transfer = getTransfer (framework oldState) node
+  let (TFM transfer, changeDetector) = getTransfer (framework oldState) node
   res <- transfer
   refs <- gets referencedNodes
   oldInfo <- updateGraphNode node res refs
@@ -113,23 +124,25 @@ recompute node = do
     { referencedNodes = referencedNodes oldState
     , callStack = callStack oldState
     }
-  return (res, oldInfo)
+  return (res, oldInfo, changeDetector)
 
-enqueue :: Ord node => Set node -> Set node -> Set node
-enqueue = Set.union
+enqueue :: Ord node => node -> Set node -> Map node (Set node) -> Map node (Set node)
+enqueue reference referrers_ = Map.unionWith Set.union referrersMap
+  where
+    referrersMap = Map.fromSet (\_ -> Set.singleton reference) referrers_
 
-dequeue :: Set node -> Maybe (node, Set node)
-dequeue = Set.minView
+dequeue :: Map node (Set node) -> Maybe ((node, Set node), Map node (Set node))
+dequeue = Map.maxViewWithKey
 
-work :: (Ord node, Eq lattice) => Set node -> State (WorklistState node lattice) ()
+work :: (Ord node, Eq lattice) => Map node (Set node) -> State (WorklistState node lattice) ()
 work nodes =
   case dequeue nodes of
     Nothing -> return ()
-    Just (nextNode, nodes') -> do
-      (val, oldInfo) <- recompute nextNode
-      if value oldInfo /= Just val
-        then work (enqueue (referrers oldInfo) nodes')
-        else work nodes'
+    Just ((node, changedRefs), nodes') -> do
+      (newVal, oldInfo, detectChange) <- recompute node
+      case value oldInfo of
+        Just oldVal | not (detectChange changedRefs oldVal newVal) -> work nodes'
+        _ -> work (enqueue node (referrers oldInfo) nodes')
 
 runFramework
   :: (Ord node, Eq lattice)
@@ -138,4 +151,5 @@ runFramework
   -> Map node lattice
 runFramework framework_ interestingNodes = run framework_
   where
-    run  = Map.mapMaybe value . graph . execState (work interestingNodes) . initialWorklistState
+    st = work (Map.fromSet (const Set.empty) interestingNodes)
+    run = Map.mapMaybe value . graph . execState st . initialWorklistState

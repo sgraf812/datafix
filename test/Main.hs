@@ -33,7 +33,7 @@ evaluate :: (Show a, Show b, Ord a, Eq b) => DataFlowFramework a b -> a -> b
 evaluate fw a = (fromJust . Map.lookup a . runFramework fw . Set.singleton) a
 
 fibFramework :: DataFlowFramework Int Integer
-fibFramework = DFF transfer
+fibFramework = frameworkWithEqChangeDetector transfer
   where
     transfer :: Int -> TransferFunction Int Integer Integer
     transfer 0 = return 0
@@ -49,7 +49,7 @@ fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 
 facFramework :: DataFlowFramework Int Integer
-facFramework = DFF transfer
+facFramework = frameworkWithEqChangeDetector transfer
   where
     transfer :: Int -> TransferFunction Int Integer Integer
     transfer 0 = return 1
@@ -62,7 +62,7 @@ fac :: Int -> Integer
 fac n = product [1..fromIntegral n]
 
 mutualRecursiveFramework :: DataFlowFramework Int Int
-mutualRecursiveFramework = DFF transfer
+mutualRecursiveFramework = frameworkWithEqChangeDetector transfer
   where
     transfer :: Int -> TransferFunction Int Int Int
     transfer 0 = do
