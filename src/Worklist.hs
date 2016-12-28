@@ -4,8 +4,8 @@
 module Worklist where
 
 import Control.Monad.Trans.State.Strict
-import Data.Map.Strict (Map)
-import qualified Data.Map.Strict as Map
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Data.Set (Set)
 import qualified Data.Set as Set
 import Data.Maybe (fromMaybe)
@@ -21,13 +21,19 @@ type ChangeDetector node lattice
 newtype DataFlowFramework node lattice
   = DFF { getTransfer :: node -> (TransferFunction node lattice lattice, ChangeDetector node lattice) }
 
+eqChangeDetector :: Eq lattice => ChangeDetector node lattice
+eqChangeDetector _ = (/=)
+
+alwaysChangeDetector :: ChangeDetector node lattice
+alwaysChangeDetector _ _ _ = True
+
 frameworkWithEqChangeDetector
   :: Eq lattice
   => (node -> TransferFunction node lattice lattice)
   -> DataFlowFramework node lattice
 frameworkWithEqChangeDetector transfer = DFF transfer'
   where
-    transfer' node = (transfer node, const (/=))
+    transfer' node = (transfer node, eqChangeDetector)
 
 data NodeInfo node lattice
   = NodeInfo
@@ -46,6 +52,7 @@ data WorklistState node lattice
   { graph :: !(Graph node lattice)
   , callStack :: !(Set node)
   , referencedNodes :: !(Set node)
+  , loopBreakers :: !(Set node)
   , framework :: !(DataFlowFramework node lattice)
   }
 
@@ -56,11 +63,16 @@ zoomGraph modifyGraph = state $ \st ->
 
 zoomReferencedNodes :: State (Set node) a -> State (WorklistState node lattice) a
 zoomReferencedNodes modifier = state $ \st ->
-  let (res, an) = runState modifier (referencedNodes st)
-  in  (res, st { referencedNodes = an })
+  let (res, rn) = runState modifier (referencedNodes st)
+  in  (res, st { referencedNodes = rn })
+
+zoomLoopBreakers :: State (Set node) a -> State (WorklistState node lattice) a
+zoomLoopBreakers modifier = state $ \st ->
+  let (res, lb) = runState modifier (loopBreakers st)
+  in  (res, st { loopBreakers = lb })
 
 initialWorklistState :: DataFlowFramework node lattice -> WorklistState node lattice
-initialWorklistState = WorklistState Map.empty Set.empty Set.empty
+initialWorklistState = WorklistState Map.empty Set.empty Set.empty Set.empty
 
 dependOn :: Ord node => node -> TransferFunction node lattice (Maybe lattice)
 dependOn node = TFM $ do
@@ -68,7 +80,10 @@ dependOn node = TFM $ do
   maybeNodeInfo <- Map.lookup node <$> gets graph
   zoomReferencedNodes (modify' (Set.insert node)) -- save that we depend on this value
   case maybeNodeInfo of
-    Nothing | loopDetected -> return Nothing
+    Nothing | loopDetected -> do
+      -- We have to revisit these later
+      zoomLoopBreakers (modify' (Set.insert node))
+      return Nothing
     Nothing -> fmap (\(val, _, _) -> Just val) (recompute node)
     Just info -> return (value info)
 
@@ -117,14 +132,14 @@ recompute node = do
     , callStack = Set.insert node (callStack oldState)
     }
   let (TFM transfer, changeDetector) = getTransfer (framework oldState) node
-  res <- transfer
+  val <- transfer
   refs <- gets referencedNodes
-  oldInfo <- updateGraphNode node res refs
+  oldInfo <- updateGraphNode node val refs
   modify' $ \st -> st
     { referencedNodes = referencedNodes oldState
     , callStack = callStack oldState
     }
-  return (res, oldInfo, changeDetector)
+  return (val, oldInfo, changeDetector)
 
 enqueue :: Ord node => node -> Set node -> Map node (Set node) -> Map node (Set node)
 enqueue reference referrers_ = Map.unionWith Set.union referrersMap
@@ -134,18 +149,30 @@ enqueue reference referrers_ = Map.unionWith Set.union referrersMap
 dequeue :: Map node (Set node) -> Maybe ((node, Set node), Map node (Set node))
 dequeue = Map.maxViewWithKey
 
-work :: (Ord node, Eq lattice) => Map node (Set node) -> State (WorklistState node lattice) ()
+lookupReferrers :: Ord node => node -> Graph node lattice -> Set node
+lookupReferrers node = maybe Set.empty referrers . Map.lookup node
+
+work :: Ord node => Map node (Set node) -> State (WorklistState node lattice) ()
 work nodes =
   case dequeue nodes of
     Nothing -> return ()
     Just ((node, changedRefs), nodes') -> do
+      modify' $ \st -> st { loopBreakers = Set.empty }
       (newVal, oldInfo, detectChange) <- recompute node
+      -- We have to enqueue all referrers to loop breakers, e.g. nodes which we
+      -- returned `Nothing` from `dependOn` to break cyclic dependencies.
+      -- Their referrers probably aren't carrying safe values, so we have to
+      -- revisit them. This looks expensive, but loopBreakers should be pretty
+      -- rare later on.
+      g <- gets graph
+      lbs <- gets loopBreakers
+      let nodes'' = Set.foldr (\lb -> enqueue lb (lookupReferrers lb g)) nodes' lbs
       case value oldInfo of
-        Just oldVal | not (detectChange changedRefs oldVal newVal) -> work nodes'
-        _ -> work (enqueue node (referrers oldInfo) nodes')
+        Just oldVal | not (detectChange changedRefs oldVal newVal) -> work nodes''
+        _ -> work (enqueue node (referrers oldInfo) nodes'')
 
 runFramework
-  :: (Ord node, Eq lattice)
+  :: Ord node
   => DataFlowFramework node lattice
   -> Set node
   -> Map node lattice

@@ -4,7 +4,6 @@ import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.Maybe (fromJust, fromMaybe)
 import Worklist
-import Debug.Trace
 
 main :: IO ()
 main = defaultMain $ testGroup "All tests" tests
@@ -26,10 +25,13 @@ huTests =
       [ testCase "fibonacci 10" (evaluate fibFramework 10 @?= fib 10)
       , testCase "factorial 100" (evaluate facFramework 100 @?= fac 100)
       ]
-  , testCase "mutual recursion" (evaluate mutualRecursiveFramework 1 @?= 10)
+  , testGroup "mutual recursion"
+      [ testCase "stabilizes mutual recursive nodes" (evaluate mutualRecursiveFramework 1 @?= 10)
+      , testCase "stabilizes all nodes" (evaluate mutualRecursiveFramework 2 @?= 10)
+      ]
   ]
 
-evaluate :: (Show a, Show b, Ord a, Eq b) => DataFlowFramework a b -> a -> b
+evaluate :: Ord a => DataFlowFramework a b -> a -> b
 evaluate fw a = (fromJust . Map.lookup a . runFramework fw . Set.singleton) a
 
 fibFramework :: DataFlowFramework Int Integer
@@ -71,4 +73,5 @@ mutualRecursiveFramework = frameworkWithEqChangeDetector transfer
     transfer 1 = do
       a <- fromMaybe 0 <$> dependOn 0
       return (min 10 a) -- So the overall fixpoint of this is 10
+    transfer 2 = fromMaybe 0 <$> dependOn 1
     transfer _ = return 0
