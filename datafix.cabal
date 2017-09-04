@@ -1,17 +1,17 @@
-name:                worklist
+name:                datafix
 version:             0.1.0.0
-synopsis:            Unobtrusive worklist algorithm
-description:         An unobtrusive implementation of the worklist algorithm.
+synopsis:            Fixing data-flow problems
+description:         Fixing data-flow problems in expression trees
 
 license:             ISC
 license-file:        LICENSE
 author:              Sebastian Graf
 maintainer:          sgraf1337@gmail.com
-copyright:           © 2016 Sebastian Graf
-homepage:            https://github.com/sgraf812/worklist
-bug-reports:         https://github.com/sgraf812/worklist/issues
+copyright:           © 2017 Sebastian Graf
+homepage:            https://github.com/sgraf812/datafix
+bug-reports:         https://github.com/sgraf812/datafix/issues
 
-category:            Test
+category:            Compiler
 build-type:          Simple
 stability:           alpha (experimental)
 cabal-version:       >=1.10
@@ -22,18 +22,19 @@ extra-source-files:
 
 source-repository head
   type:     git
-  location: https://github.com/sgraf812/worklist
+  location: https://github.com/sgraf812/datafix
 
 library
   default-language:  Haskell2010
   ghc-options:       -Wall -O2
   hs-source-dirs:    src
-  exposed-modules:   Worklist
+  exposed-modules:   Datafix
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
+                   , pomaps
 
-test-suite worklist-test
+test-suite datafix-test
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -44,9 +45,9 @@ test-suite worklist-test
                    , tasty-hunit >= 0.9
                    , tasty-smallcheck >= 0.8
                    , containers
-                   , worklist
+                   , datafix
 
-test-suite worklist-doctest
+test-suite datafix-doctest
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -56,9 +57,9 @@ test-suite worklist-doctest
                    , doctest >=0.10
                    , Glob >= 0.7
                    , QuickCheck >= 2.5
-                   , worklist
+                   , datafix
 
-benchmark worklist-benchmark
+benchmark datafix-benchmark
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -66,4 +67,4 @@ benchmark worklist-benchmark
   main-is:           Main.hs
   build-depends:     base >= 4.8 && < 5
                    , criterion >= 1.1
-                   , worklist
+                   , datafix

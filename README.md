@@ -1,9 +1,7 @@
-`worklist` [![Build Status](https://travis-ci.org/sgraf812/worklist.svg?branch=master)](https://travis-ci.org/sgraf812/worklist)
+`datafix` [![Build Status](https://travis-ci.org/sgraf812/datafix.svg?branch=master)](https://travis-ci.org/sgraf812/datafix)
 ==========
 
-Library for a simple worklist implementation with dynamic edges. Intentionally
-does not build on top of the lattice abstraction, shifting that responsibility
-into transfer functions.
+Library for separating specification of a data-flow problem from computing its solution.
 
 This is all work in progress documentation and performance wise, but should
 mostly work by now.

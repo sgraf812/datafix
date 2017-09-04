@@ -1,9 +1,9 @@
-import Test.Tasty
-import Test.Tasty.HUnit
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import Data.Maybe (fromJust, fromMaybe)
-import Worklist
+import qualified Data.Map.Strict  as Map
+import           Data.Maybe       (fromJust, fromMaybe)
+import qualified Data.Set         as Set
+import           Datafix
+import           Test.Tasty
+import           Test.Tasty.HUnit
 
 main :: IO ()
 main = defaultMain $ testGroup "All tests" tests
@@ -22,20 +22,20 @@ scTests =
 huTests :: [TestTree]
 huTests =
   [ testGroup "Memoization"
-      [ testCase "fibonacci 10" (evaluate fibFramework 10 @?= fib 10)
-      , testCase "factorial 100" (evaluate facFramework 100 @?= fac 100)
+      [ testCase "fibonacci 10" (evaluate fibProblem 10 @?= fib 10)
+      , testCase "factorial 100" (evaluate facProblem 100 @?= fac 100)
       ]
   , testGroup "mutual recursion"
-      [ testCase "stabilizes mutual recursive nodes" (evaluate mutualRecursiveFramework 1 @?= 10)
-      , testCase "stabilizes all nodes" (evaluate mutualRecursiveFramework 2 @?= 10)
+      [ testCase "stabilizes mutual recursive nodes" (evaluate mutualRecursiveProblem 1 @?= 10)
+      , testCase "stabilizes all nodes" (evaluate mutualRecursiveProblem 2 @?= 10)
       ]
   ]
 
-evaluate :: Ord a => DataFlowFramework a b -> a -> b
-evaluate fw a = (fromJust . Map.lookup a . runFramework fw . Set.singleton) a
+evaluate :: Ord a => DataFlowProblem a b -> a -> b
+evaluate fw a = (fromJust . Map.lookup a . fixProblem fw . Set.singleton) a
 
-fibFramework :: DataFlowFramework Int Integer
-fibFramework = frameworkWithEqChangeDetector transfer
+fibProblem :: DataFlowProblem Int Integer
+fibProblem = DFP transfer (const eqChangeDetector)
   where
     transfer :: Int -> TransferFunction Int Integer Integer
     transfer 0 = return 0
@@ -50,8 +50,8 @@ fib 0 = 0
 fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 
-facFramework :: DataFlowFramework Int Integer
-facFramework = frameworkWithEqChangeDetector transfer
+facProblem :: DataFlowProblem Int Integer
+facProblem = DFP transfer (const eqChangeDetector)
   where
     transfer :: Int -> TransferFunction Int Integer Integer
     transfer 0 = return 1
@@ -63,8 +63,8 @@ facFramework = frameworkWithEqChangeDetector transfer
 fac :: Int -> Integer
 fac n = product [1..fromIntegral n]
 
-mutualRecursiveFramework :: DataFlowFramework Int Int
-mutualRecursiveFramework = frameworkWithEqChangeDetector transfer
+mutualRecursiveProblem :: DataFlowProblem Int Int
+mutualRecursiveProblem = DFP transfer (const eqChangeDetector)
   where
     transfer :: Int -> TransferFunction Int Int Int
     transfer 0 = do
