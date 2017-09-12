@@ -13,6 +13,7 @@ module Datafix
   , fixProblem
   ) where
 
+import           Algebra.Lattice
 import           Control.Monad                    (forM_, when, (<=<))
 import           Control.Monad.Trans.State.Strict
 import           Data.Map                         (Map)
@@ -42,7 +43,7 @@ alwaysChangeDetector _ _ _ = True
 
 data NodeInfo node lattice
   = NodeInfo
-  { value      :: !(Maybe lattice) -- ^ the value at this node. can be Nothing only when a loop was detected
+  { value      :: !(Maybe lattice) -- ^ the value at this node. Can be Nothing only when a loop was detected
   , references :: !(Set node)      -- ^ nodes this value depends on
   , referrers  :: !(Set node)      -- ^ nodes depending on this value
   } deriving (Show, Eq)
@@ -83,7 +84,10 @@ initialWorklistState
 initialWorklistState unstable_ fw =
   WorklistState fw Map.empty unstable_ Set.empty Set.empty
 
-dependOn :: Ord node => node -> TransferFunction node lattice (Maybe lattice)
+dependOn
+  :: (Ord node, BoundedJoinSemiLattice lattice)
+  => node
+  -> TransferFunction node lattice lattice
 dependOn node = TFM $ do
   loopDetected <- Set.member node <$> gets callStack
   -- isNotYetStable <- Map.member node <$> gets unstable
@@ -92,13 +96,13 @@ dependOn node = TFM $ do
   case maybeNodeInfo of
     Nothing | loopDetected ->
       -- Somewhere in an outer call stack we already compute this one.
-      -- We don't recurse again and just return Nothing.
+      -- We don't recurse again and just return 'bottom'.
       -- The outer call will then recognize the instability and enqueue
       -- itself as unstable after its first approximation is computed.
-      return Nothing
+      return bottom
     Nothing ->
       -- Depth-first discovery of reachable nodes.
-      Just <$> recompute node
+      recompute node
     -- We aren't doing this because it's not obvious
     -- which nodes will need to be marked unstable.
     -- Think about a node that `dependOn`s the same
@@ -107,8 +111,8 @@ dependOn node = TFM $ do
     -- We don't discover any new nodes and should rather
     -- rely on the ordering in the worklist.
     --Just _ | isNotYetStable && not loopDetected -> do
-    --  Just <$> recompute node
-    Just info -> return (value info)
+    --  recompute node
+    Just info -> return (fromMaybe bottom (value info))
 
 unsafePeekValue :: Ord node => node -> TransferFunction node lattice (Maybe lattice)
 unsafePeekValue node = TFM $ (value <=< Map.lookup node) <$> gets graph
@@ -168,7 +172,7 @@ recompute node = do
     Just oldVal | not (detectChange' changedRefs oldVal newVal) -> return ()
     _ -> do
       forM_ (referrers oldInfo) (\ref -> enqueueUnstable ref (Set.singleton node))
-      -- If the node depends itself the first time (e.g. when it gets its first value),
+      -- If the node depends on itself the first time (e.g. when it gets its first value),
       -- that will not be reflected in `oldInfo`. So we enqueue it manually
       -- if that is the case.
       when (Set.member node refs) (enqueueUnstable node (Set.singleton node))
@@ -202,9 +206,15 @@ work = whileJust_ highestPriorityUnstableNode recompute
 fixProblem
   :: Ord node
   => DataFlowProblem node lattice
-  -> Set node
-  -> Map node lattice
-fixProblem problem_ interestingNodes = run problem_
+  -> node
+  -> lattice
+fixProblem problem_ node = run problem_
   where
-    unstable_ = Map.fromSet (const Set.empty) interestingNodes
-    run = Map.mapMaybe value . graph . execState work . initialWorklistState unstable_
+    unstable_ = Map.singleton node Set.empty
+    run
+      = fromMaybe (error "Broken invarant: The root node has no value")
+      . Map.lookup node
+      . Map.mapMaybe value
+      . graph
+      . execState work
+      . initialWorklistState unstable_

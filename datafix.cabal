@@ -24,6 +24,10 @@ source-repository head
   type:     git
   location: https://github.com/sgraf812/datafix
 
+flag use-lattices
+  description: Depend on the lattices package.
+  default: True
+
 library
   default-language:  Haskell2010
   ghc-options:       -Wall -O2
@@ -33,6 +37,11 @@ library
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
                    , pomaps
+  if flag(use-lattices)
+    build-depends:   lattices < 2
+  if !flag(use-lattices)
+    hs-source-dirs:  lattices
+    exposed-modules: Algebra.Lattice
 
 test-suite datafix-test
   type:              exitcode-stdio-1.0
@@ -45,7 +54,10 @@ test-suite datafix-test
                    , tasty-hunit >= 0.9
                    , tasty-smallcheck >= 0.8
                    , containers
+                   , transformers < 0.6
                    , datafix
+                   , ghc
+                   , lattices < 2
 
 test-suite datafix-doctest
   type:              exitcode-stdio-1.0
