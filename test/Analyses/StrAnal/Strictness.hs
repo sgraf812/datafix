@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -7,10 +8,13 @@ module Analyses.StrAnal.Strictness where
 
 import           Algebra.Lattice
 import           Algebra.Lattice.Lifted
+import           Algebra.Lattice.Op
+import           Algebra.PartialOrd
 import           Data.IntMap.Strict     (IntMap)
 import           Unsafe.Coerce          (unsafeCoerce)
 
-import           BasicTypes
+import           Datafix.MonoMap        (MonoMapKey)
+
 import           Coercion
 import           CoreArity
 import           Id
@@ -22,6 +26,24 @@ instance Show v => Show (UniqFM v) where
   -- I'd rather use coerce or the UFM constructor, but
   -- that isn't exported.
   show env = show (unsafeCoerce env :: IntMap v)
+
+newtype Arity
+  = Arity Int
+  deriving (Eq, Show, Num)
+
+instance Ord Arity where
+  compare (Arity a) (Arity b) = compare (Op a) (Op b)
+
+instance PartialOrd Arity where
+  leq a b = a <= b
+
+instance JoinSemiLattice Arity where
+  Arity a \/ Arity b = Arity (min a b)
+
+instance MeetSemiLattice Arity where
+  Arity a /\ Arity b = Arity (max a b)
+
+instance MonoMapKey (Arity, ())
 
 data Strictness
   = Lazy         -- ^ Evaluated lazily
@@ -35,15 +57,15 @@ instance Show Strictness where
 instance JoinSemiLattice Strictness where
   Lazy \/ _ = Lazy
   _ \/ Lazy = Lazy
-  Strict n \/ Strict m = Strict (min n m)
+  Strict n \/ Strict m = Strict (n \/ m)
 
 instance MeetSemiLattice Strictness where
   Lazy /\ s = s
   s /\ Lazy = s
-  Strict n /\ Strict m = Strict (max n m)
+  Strict n /\ Strict m = Strict (n /\ m)
 
 trimLiftedStrToType :: Type -> Lifted Strictness -> Strictness
-trimLiftedStrToType ty Bottom   = Strict (length (typeArity ty))
+trimLiftedStrToType ty Bottom   = Strict (Arity (length (typeArity ty)))
 trimLiftedStrToType ty (Lift s) = s
 
 newtype StrEnv

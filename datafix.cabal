@@ -33,6 +33,11 @@ library
   ghc-options:       -Wall -O2
   hs-source-dirs:    src
   exposed-modules:   Datafix
+                     Datafix.MonoMap
+                     Datafix.NodeAllocator
+                     Datafix.IntArgsMonoMap
+                     Datafix.IntArgsMonoSet
+                     Datafix.Utils.TypeLevel
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
@@ -49,6 +54,12 @@ test-suite datafix-test
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs:    test
   main-is:           Main.hs
+  other-modules:     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Strictness
+                     Analyses.Syntax.CoreSynF
+                     Analyses.Syntax.MkCoreHelpers
+                     Analyses.Templates.LetDn
+                     Analyses.Tests.StrAnal
   build-depends:     base >= 4.8 && < 5
                    , tasty >= 0.11
                    , tasty-hunit >= 0.9

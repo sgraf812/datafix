@@ -1,50 +1,66 @@
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE AllowAmbiguousTypes   #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Analyses.Templates.LetDn where
 
-import           Algebra.Lattice
-import           Data.Maybe                       (fromMaybe)
-
-import           Analyses.Templates.NodeAllocator
-import           Datafix
+import qualified Data.IntMap.Lazy         as IntMap
+import           Data.Maybe               (fromMaybe)
+import           Data.Proxy               (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
-import           BasicTypes
+import           Datafix
+import           Datafix.NodeAllocator
+import           Datafix.Utils.TypeLevel
+
 import           CoreSyn
-import qualified Data.IntMap.Lazy                 as IntMap
 import           VarEnv
 
+type TransferAlgebra lattice
+  = forall m
+   . Monad m
+  => Proxy m
+  -> Proxy lattice
+  -> VarEnv (TransferFunction m lattice)
+  -> CoreExprF (TransferFunction m lattice)
+  -> TransferFunction m lattice
+
 buildProblem
-  :: (Eq v, BoundedJoinSemiLattice v)
-  => (forall m. Monad m => VarEnv (Arity -> m v) -> CoreExprF (Arity -> m v) -> Arity -> m v)
+  :: forall lattice
+   . Eq (CoDomain lattice)
+  => Datafixable lattice
+  => TransferAlgebra lattice
   -> CoreExpr
-  -> (ExprNode, DataFlowProblem (ExprNode, Arity) v)
-buildProblem alg e = (root, DFP transfer (const eqChangeDetector))
+  -> (GraphNode, DataFlowProblem lattice)
+buildProblem alg e = (root, DFP transfer changeDetector)
   where
+    p = Proxy :: Proxy lattice
+    changeDetector _ = eqChangeDetector p
     notFoundError = error "Requested a node that wasn't present in the graph"
-    transfer (ExprNode node, arity) =
-      ($ arity)
-      . fromMaybe notFoundError
-      . IntMap.lookup node
-      $ map_
+    transfer (GraphNode node) = fromMaybe notFoundError (IntMap.lookup node map_)
     (root, map_) = runAllocator $ allocateNode $ \root_ -> do
-      transferRoot <- buildRoot alg e
+      transferRoot <- buildRoot p alg e
       pure (root_, transferRoot)
 
-type TF v a = TransferFunction (ExprNode, Arity) v a
+type TF lattice = TransferFunction (DependencyM lattice) lattice
 
 buildRoot
-  :: forall v. BoundedJoinSemiLattice v
-  => (forall m. Monad m => VarEnv (Arity -> m v) -> CoreExprF (Arity -> m v) -> Arity -> m v)
+  :: forall lattice
+   . Datafixable lattice
+  => Proxy lattice
+  -> TransferAlgebra lattice
   -> CoreExpr
-  -> NodeAllocator (Arity -> TF v v) (Arity -> TF v v)
-buildRoot alg = buildExpr emptyVarEnv
+  -> NodeAllocator (TF lattice) (TF lattice)
+buildRoot p alg' = buildExpr emptyVarEnv
   where
+    alg = alg' (Proxy :: Proxy (DependencyM lattice)) p
     buildExpr
-      :: VarEnv (Arity -> TF v v)
+      :: VarEnv (TF lattice)
       -> CoreExpr
-      -> NodeAllocator (Arity -> TF v v) (Arity -> TF v v)
+      -> NodeAllocator (TF lattice) (TF lattice)
     buildExpr env expr =
       case expr of
         Lit lit -> pure (alg env (LitF lit))
@@ -97,7 +113,7 @@ buildRoot alg = buildExpr emptyVarEnv
             [] -> pure (env, [])
             ((id_, rhs):binders') ->
               allocateNode $ \node -> do
-                let deref arity = dependOn (node, arity)
+                let deref = dependOn (Proxy :: Proxy lattice) node
                 let env' = extendVarEnv env id_ deref
                 (env'', transferredBind) <- impl env' binders'
                 transferRHS <- buildExpr env' rhs

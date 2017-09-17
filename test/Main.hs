@@ -2,6 +2,7 @@ import           Algebra.Lattice
 import qualified Analyses.Tests.StrAnal as StrAnal
 import qualified Data.Map.Strict        as Map
 import           Data.Maybe             (fromJust, fromMaybe)
+import           Data.Proxy
 import qualified Data.Set               as Set
 import           Datafix
 import           Numeric.Natural
@@ -28,24 +29,26 @@ tests =
 huTests :: [TestTree]
 huTests =
   [ testGroup "Memoization"
-      [ testCase "fibonacci 10" (fixProblem fibProblem 10 @?= fib 10)
-      , testCase "factorial 100" (fixProblem facProblem 100 @?= fac 100)
+      [ testCase "fibonacci 10" (fixProblem fibProblem (GraphNode 10) @?= fib 10)
+      , testCase "factorial 100" (fixProblem facProblem (GraphNode 100) @?= fac 100)
       ]
   , testGroup "mutual recursion"
-      [ testCase "stabilizes mutual recursive nodes" (fixProblem mutualRecursiveProblem 1 @?= 10)
-      , testCase "stabilizes all nodes" (fixProblem mutualRecursiveProblem 2 @?= 10)
+      [ testCase "stabilizes mutual recursive nodes" (fixProblem mutualRecursiveProblem (GraphNode 1) @?= 10)
+      , testCase "stabilizes all nodes" (fixProblem mutualRecursiveProblem (GraphNode 2) @?= 10)
       ]
   ]
 
-fibProblem :: DataFlowProblem Int Natural
-fibProblem = DFP transfer (const eqChangeDetector)
+fibProblem :: DataFlowProblem Natural
+fibProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    transfer :: Int -> TransferFunction Int Natural Natural
-    transfer 0 = return 0
-    transfer 1 = return 1
-    transfer n = do
-      a <- dependOn (n-1)
-      b <- dependOn (n-2)
+    p :: Proxy Natural
+    p = Proxy
+    transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
+    transfer (GraphNode 0) = return 0
+    transfer (GraphNode 1) = return 1
+    transfer (GraphNode n) = do
+      a <- dependOn p (GraphNode (n-1))
+      b <- dependOn p (GraphNode (n-2))
       return (a + b)
 
 fib :: Int -> Natural
@@ -53,28 +56,32 @@ fib 0 = 0
 fib 1 = 1
 fib n = fib (n-1) + fib (n-2)
 
-facProblem :: DataFlowProblem Int Natural
-facProblem = DFP transfer (const eqChangeDetector)
+facProblem :: DataFlowProblem Natural
+facProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    transfer :: Int -> TransferFunction Int Natural Natural
-    transfer 0 = return 1
-    transfer 1 = return 1
-    transfer n = do
-      a <- dependOn (n-1)
+    p :: Proxy Natural
+    p = Proxy
+    transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
+    transfer (GraphNode 0) = return 1
+    transfer (GraphNode 1) = return 1
+    transfer (GraphNode n) = do
+      a <- dependOn p (GraphNode (n-1))
       return (fromIntegral n * a)
 
 fac :: Int -> Natural
 fac n = product [1..fromIntegral n]
 
-mutualRecursiveProblem :: DataFlowProblem Int Natural
-mutualRecursiveProblem = DFP transfer (const eqChangeDetector)
+mutualRecursiveProblem :: DataFlowProblem Natural
+mutualRecursiveProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    transfer :: Int -> TransferFunction Int Natural Natural
-    transfer 0 = do
-      b <- dependOn 1
+    p :: Proxy Natural
+    p = Proxy
+    transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
+    transfer (GraphNode 0) = do
+      b <- dependOn p (GraphNode 1)
       return (b + 1)
-    transfer 1 = do
-      a <- dependOn 0
+    transfer (GraphNode 1) = do
+      a <- dependOn p (GraphNode 0)
       return (min 10 a) -- So the overall fixpoint of this is 10
-    transfer 2 = dependOn 1
+    transfer (GraphNode 2) = dependOn p (GraphNode 1)
     transfer _ = return 0
