@@ -55,6 +55,7 @@ test-suite datafix-test
   hs-source-dirs:    test
   main-is:           Main.hs
   other-modules:     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Arity
                      Analyses.StrAnal.Strictness
                      Analyses.Syntax.CoreSynF
                      Analyses.Syntax.MkCoreHelpers

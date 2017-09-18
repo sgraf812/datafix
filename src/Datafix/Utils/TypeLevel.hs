@@ -5,6 +5,7 @@
 
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE KindSignatures        #-}
@@ -74,10 +75,17 @@ type family Constant (b :: l) (as :: [k]) :: [l] where
 ------------------------------------------------------------------
 
 -- | @Arrows [a1,..,an] r@ corresponds to @a1 -> .. -> an -> r@
--- | @Products [a1,..,an]@ corresponds to @(a1, (..,( an, ())..))@
-
 type Arrows   (as :: [*]) (r :: *) = Foldr (->) r as
-type Products (as :: [*])          = Foldr (,) () as
+
+-- | @Products []@ corresponds to @()@
+-- @Products [a1,..,an]@ corresponds to @(a1, (..,( an)..))@
+--
+-- So, not quite a right fold, because we want to optimize for the
+-- singleton case.
+type family Products (as :: [*]) where
+  Products '[]       = ()
+  Products '[a]      = a
+  Products (a ': as) = (a, Products as)
 
 -- | @IsBase t@ is @'True@ whenever @t@ is *not* a function space.
 
@@ -113,12 +121,16 @@ class Currying as b where
   currys   :: Proxy as -> Proxy b -> (Products as -> b) -> Arrows as b
 
 instance Currying '[] b where
-  uncurrys _ _ f = \ () -> f
+  uncurrys _ _ f () = f
   currys   _ _ f = f ()
 
-instance Currying as b => Currying (a ': as) b where
-  uncurrys _ p f = uncurry $ uncurrys (Proxy :: Proxy as) p . f
-  currys   _ p f = currys (Proxy :: Proxy as) p . curry f
+instance Currying (a ': '[]) b where
+  uncurrys _ _ f = f
+  currys _ _ f = f
+
+instance Currying (a2 ': as) b => Currying (a1 ': a2 ': as) b where
+  uncurrys _ p f = uncurry $ uncurrys (Proxy :: Proxy (a2 ': as)) p . f
+  currys   _ p f = currys (Proxy :: Proxy (a2 ': as)) p . curry f
 
 ------------------------------------------------------------------
 -- DEFUNCTIONALISATION

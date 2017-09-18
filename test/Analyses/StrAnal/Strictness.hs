@@ -7,13 +7,11 @@
 module Analyses.StrAnal.Strictness where
 
 import           Algebra.Lattice
-import           Algebra.Lattice.Op
-import           Algebra.PartialOrd
-import           Data.IntMap.Strict (IntMap)
-import           Data.Maybe         (fromMaybe)
-import           Unsafe.Coerce      (unsafeCoerce)
+import           Data.IntMap.Strict     (IntMap)
+import           Data.Maybe             (fromMaybe)
+import           Unsafe.Coerce          (unsafeCoerce)
 
-import           Datafix.MonoMap    (MonoMapKey)
+import           Analyses.StrAnal.Arity
 
 import           Coercion
 import           Id
@@ -25,33 +23,6 @@ instance Show v => Show (UniqFM v) where
   -- that isn't exported.
   show env = show (unsafeCoerce env :: IntMap v)
 
--- | Arity is totally ordered, but with the order turned
--- upside down. E.g., 'Arity 0' is the figurative 'top'
--- element and the instance for 'JoinSemiLattice' will
--- return the minimum of the two arities.
---
--- This corresponds to the intuition that more incoming
--- arguments is more valuable information to the analysis.
-newtype Arity
-  = Arity Int
-  deriving (Eq, Num)
-
-instance Show Arity where
-  show (Arity i) = show i
-
-instance Ord Arity where
-  compare (Arity a) (Arity b) = compare (Op a) (Op b)
-
-instance PartialOrd Arity where
-  leq a b = a <= b
-
-instance JoinSemiLattice Arity where
-  Arity a \/ Arity b = Arity (min a b)
-
-instance MeetSemiLattice Arity where
-  Arity a /\ Arity b = Arity (max a b)
-
-instance MonoMapKey (Arity, ())
 
 -- | Captures lower bounds on evaluation cardinality of some variable.
 -- E.g.: Is this variable evaluated at least once, and if so, what is the

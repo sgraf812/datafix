@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 import           Algebra.Lattice
 import qualified Analyses.Tests.StrAnal as StrAnal
 import           Data.Proxy

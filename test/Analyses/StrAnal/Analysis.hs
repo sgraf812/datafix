@@ -1,6 +1,7 @@
 module Analyses.StrAnal.Analysis where
 
 import           Algebra.Lattice
+import           Analyses.StrAnal.Arity
 import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
