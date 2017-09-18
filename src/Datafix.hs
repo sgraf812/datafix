@@ -158,7 +158,8 @@ dependOn _ (GraphNode node) = currys dom cod impl
       loopDetected <- IntArgsMonoSet.member node args <$> gets callStack
       -- isNotYetStable <- Map.member node <$> gets unstable
       maybeNodeInfo <- IntArgsMonoMap.lookup node args <$> gets graph
-      zoomReferencedNodes (modify' (IntArgsMonoSet.insert node args)) -- save that we depend on this value
+      -- save that we depend on this value
+      zoomReferencedNodes (modify' (IntArgsMonoSet.insert node args))
       case maybeNodeInfo of
         Nothing | loopDetected ->
           -- Somewhere in an outer call stack we already compute this one.
@@ -179,6 +180,7 @@ dependOn _ (GraphNode node) = currys dom cod impl
         --Just _ | isNotYetStable && not loopDetected -> do
         --  recompute node
         Just info -> return (fromMaybe bottom (value info))
+{-# INLINE dependOn #-}
 
 unsafePeekValue
   :: forall lattice
@@ -233,6 +235,7 @@ updateGraphNode node args val refs = zoomGraph $ do
   forM_ (IntArgsMonoSet.toList (removed diff)) (updater removeReferrer)
 
   return oldInfo
+{-# INLINE updateGraphNode #-}
 
 recompute
   :: forall lattice dom cod
@@ -269,6 +272,7 @@ recompute node args = do
     , callStack = callStack oldState
     }
   return newVal
+{-# INLINE recompute #-}
 
 enqueueUnstable
   :: k ~ Products (Domains lattice)
@@ -294,9 +298,11 @@ whileJust_ cond action = go
     go = cond >>= \m -> case m of
       Nothing -> return ()
       Just a  -> action a >> go
+{-# INLINE whileJust_ #-}
 
 work :: Datafixable lattice => State (WorklistState lattice) ()
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
+{-# INLINE work #-}
 
 fixProblem
   :: forall lattice dom cod
@@ -316,3 +322,4 @@ fixProblem prob (GraphNode node) = currys (Proxy :: Proxy dom) (Proxy :: Proxy c
       . execState work
       . initialWorklistState (IntArgsMonoSet.singleton node args)
       $ prob
+{-# INLINE fixProblem #-}

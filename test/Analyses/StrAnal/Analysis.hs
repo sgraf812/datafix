@@ -1,4 +1,7 @@
-module Analyses.StrAnal.Analysis where
+-- This is so that the specialisation of transferFunctionAlg gets inlined.
+{-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
+
+module Analyses.StrAnal.Analysis (analyse) where
 
 import           Algebra.Lattice
 import           Analyses.StrAnal.Arity
@@ -35,9 +38,9 @@ transferFunctionAlg _ _ env expr arity =
     CastF e _ -> e arity
     AppF f a -> do
       StrLattice (fTy, fAnns) <- f (arity + 1)
-      let (liftedArgStr, fTy') = overArgs unconsArgStr fTy
+      let (argStr, fTy') = overArgs unconsArgStr fTy
       let argArity =
-            case liftedArgStr of
+            case argStr of
               -- It's unfortunate that we don't have the type available to
               -- trim this... But it doesn't hurt either.
               HyperStrict -> Arity maxBound
@@ -96,9 +99,3 @@ transferFunctionAlg _ _ env expr arity =
             pure (mkStrLattice ty' (anns' \/ rhsAnns))
       latt <- body arity
       foldM transferBinder latt (flattenBindsF [bind])
-
-
-
-
-
-

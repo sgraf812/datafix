@@ -4,8 +4,12 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# OPTIONS_GHC -fexpose-all-unfoldings #-}
 
-module Analyses.Templates.LetDn where
+module Analyses.Templates.LetDn
+  ( TransferAlgebra
+  , buildProblem
+  ) where
 
 import qualified Data.IntMap.Lazy         as IntMap
 import           Data.Maybe               (fromMaybe)
@@ -44,6 +48,7 @@ buildProblem alg e = (root, DFP transfer changeDetector)
     (root, map_) = runAllocator $ allocateNode $ \root_ -> do
       transferRoot <- buildRoot p alg e
       pure (root_, transferRoot)
+{-# INLINE buildProblem #-}
 
 type TF lattice = TransferFunction (DependencyM lattice) lattice
 
@@ -91,10 +96,12 @@ buildRoot p alg' = buildExpr emptyVarEnv
           -- 'alg' should use 'transferredBind' for
           -- annotated RHSs.
           pure (alg env (LetF transferredBind transferBody))
+    {-# INLINE buildExpr #-}
 
     buildAlt env (con, bndrs, e) = do
       transferE <- buildExpr env e
       pure (con, bndrs, transferE)
+    {-# INLINE buildAlt #-}
 
     mapBinders f env bind = do
       let binders = flattenBinds [bind]
@@ -105,6 +112,8 @@ buildRoot p alg' = buildExpr emptyVarEnv
           | [(id_, transferRHS)] <- transferredBinds
           -> pure (env', NonRecF id_ transferRHS)
         _ -> error "NonRec, but multiple transferredBinds"
+    {-# INLINE mapBinders #-}
+
 
     registerBindingGroup = mapBinders impl
       where
@@ -120,3 +129,5 @@ buildRoot p alg' = buildExpr emptyVarEnv
                 -- we return `deref`, which is like `transferRHS` but
                 -- with caching.
                 pure ((env'', (id_, deref):transferredBind), transferRHS)
+    {-# INLINE registerBindingGroup #-}
+{-# INLINE buildRoot #-}
