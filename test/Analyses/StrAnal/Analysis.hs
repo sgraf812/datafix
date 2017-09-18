@@ -1,7 +1,6 @@
 module Analyses.StrAnal.Analysis where
 
 import           Algebra.Lattice
-import           Algebra.Lattice.Lifted
 import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
@@ -23,16 +22,16 @@ applyWhen True f  = f
 applyWhen False _ = id
 
 transferFunctionAlg :: TransferAlgebra (Arity -> StrLattice)
-transferFunctionAlg m lattice env expr arity =
+transferFunctionAlg _ _ env expr arity =
   case expr of
     LitF _       -> pure emptyStrLattice
     TypeF _      -> pure emptyStrLattice
-    CoercionF co -> pure (mkStrLattice (coercionStrType co) emptyAnnotations)
+    -- Coercions are irrelevant to Strictness Analysis:
+    -- 'emptyStrLattice' is already the 'top' element,
+    -- so it's a safe approximation.
+    CoercionF _ -> pure emptyStrLattice
     TickF _ e    -> e arity
-    CastF e co   -> do
-      StrLattice (ty, anns) <- e arity
-      let ty' = coercionStrType co `bothStrType` ty
-      pure (mkStrLattice ty' anns)
+    CastF e _ -> e arity
     AppF f a -> do
       StrLattice (fTy, fAnns) <- f (arity + 1)
       let (liftedArgStr, fTy') = overArgs unconsArgStr fTy
@@ -40,9 +39,9 @@ transferFunctionAlg m lattice env expr arity =
             case liftedArgStr of
               -- It's unfortunate that we don't have the type available to
               -- trim this... But it doesn't hurt either.
-              Bottom          -> Arity maxBound
-              Lift Lazy       -> 0
-              Lift (Strict n) -> n
+              HyperStrict -> Arity maxBound
+              Lazy        -> 0
+              Strict n    -> n
       StrLattice (aTy, aAnns) <- a argArity
       pure (mkStrLattice (aTy `bothStrType` fTy') (fAnns \/ aAnns))
     VarF id_
@@ -56,8 +55,7 @@ transferFunctionAlg m lattice env expr arity =
       | isTyVar id_ -> body arity
       | otherwise -> do
           StrLattice (ty1, anns) <- body (0 /\ (arity-1))
-          let (liftedArgStr, ty2) = peelFV id_ ty1
-          let argStr = trimLiftedStrToType (idType id_) liftedArgStr
+          let (argStr, ty2) = peelFV id_ ty1
           let anns' = annotate id_ argStr anns
           let ty3 = modifyArgs (consArgStr argStr) ty2
           let ty4 = applyWhen (arity == 0) lazifyStrType ty3
@@ -86,8 +84,7 @@ transferFunctionAlg m lattice env expr arity =
             -- we'd always have to assume incoming arity 0
             -- for annotations, which wouldn't allow us to
             -- unbox any arguments.
-            let (liftedStr, ty') = peelFV id_ ty
-            let str = trimLiftedStrToType (idType id_) liftedStr
+            let (str, ty') = peelFV id_ ty
             let anns' = annotate id_ str anns
             let oldArity = Arity (idArity id_)
             let safeArity
@@ -98,7 +95,6 @@ transferFunctionAlg m lattice env expr arity =
             pure (mkStrLattice ty' (anns' \/ rhsAnns))
       latt <- body arity
       foldM transferBinder latt (flattenBindsF [bind])
-
 
 
 

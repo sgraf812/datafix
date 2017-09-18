@@ -21,6 +21,9 @@ int = intTy
 bool :: Type
 bool = boolTy
 
+int2int :: Type
+int2int = mkFunTys [int] int
+
 int2int2int :: Type
 int2int2int = mkFunTys [int, int] int
 

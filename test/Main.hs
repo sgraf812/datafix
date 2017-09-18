@@ -1,9 +1,6 @@
 import           Algebra.Lattice
 import qualified Analyses.Tests.StrAnal as StrAnal
-import qualified Data.Map.Strict        as Map
-import           Data.Maybe             (fromJust, fromMaybe)
 import           Data.Proxy
-import qualified Data.Set               as Set
 import           Datafix
 import           Numeric.Natural
 import           Test.Tasty
@@ -38,11 +35,12 @@ huTests =
       ]
   ]
 
+p :: Proxy Natural
+p = Proxy
+
 fibProblem :: DataFlowProblem Natural
 fibProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    p :: Proxy Natural
-    p = Proxy
     transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
     transfer (GraphNode 0) = return 0
     transfer (GraphNode 1) = return 1
@@ -59,8 +57,6 @@ fib n = fib (n-1) + fib (n-2)
 facProblem :: DataFlowProblem Natural
 facProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    p :: Proxy Natural
-    p = Proxy
     transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
     transfer (GraphNode 0) = return 1
     transfer (GraphNode 1) = return 1
@@ -74,8 +70,6 @@ fac n = product [1..fromIntegral n]
 mutualRecursiveProblem :: DataFlowProblem Natural
 mutualRecursiveProblem = DFP transfer (const (eqChangeDetector (Proxy :: Proxy Natural)))
   where
-    p :: Proxy Natural
-    p = Proxy
     transfer :: GraphNode -> TransferFunction (DependencyM Natural) Natural
     transfer (GraphNode 0) = do
       b <- dependOn p (GraphNode 1)
