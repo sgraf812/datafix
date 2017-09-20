@@ -5,7 +5,6 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE UndecidableInstances       #-}
@@ -199,13 +198,13 @@ data Diff a
   }
 
 computeDiff
-  :: forall lattice k
-   . k ~ Products (Domains lattice)
+  :: k ~ Products (Domains lattice)
   => MonoMapKey k
-  => IntArgsMonoSet k
+  => Proxy lattice 
+  -> IntArgsMonoSet k
   -> IntArgsMonoSet k
   -> Diff k
-computeDiff from to = Diff (to `IntArgsMonoSet.difference` from) (from `IntArgsMonoSet.difference` to)
+computeDiff _ from to = Diff (to `IntArgsMonoSet.difference` from) (from `IntArgsMonoSet.difference` to)
 
 updateGraphNode
   :: forall lattice
@@ -224,7 +223,7 @@ updateGraphNode node args val refs = zoomGraph $ do
     state (IntArgsMonoMap.insertLookupWithKey merger node args newInfo)
 
   -- Now compute the diff of changed references
-  let diff = computeDiff @lattice (references oldInfo) refs
+  let diff = computeDiff (Proxy :: Proxy lattice) (references oldInfo) refs
 
   -- finally register/unregister at all references as referrer.
   let updater f (depNode, depArgs) = modify' $
