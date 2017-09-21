@@ -6,7 +6,6 @@ module Analyses.StrAnal.Arity where
 import           Algebra.Lattice
 import           Algebra.Lattice.Op
 import           Algebra.PartialOrd
-import           Control.Arrow      (second)
 import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import           Data.Maybe         (maybeToList)
@@ -63,4 +62,7 @@ instance MonoMapKey Arity where
   keys (ArityMap m) = coerce (IntMap.keys m)
   insertLookupWithKey f (Arity n) v (ArityMap m) =
     coerce (IntMap.insertLookupWithKey (coerce f) n v m)
+  updateLookupWithKey f (Arity n) (ArityMap m) =
+    coerce (IntMap.updateLookupWithKey (coerce f) n m)
   alter f (Arity n) (ArityMap m) = ArityMap (IntMap.alter (coerce f) n m)
+  adjust f (Arity n) (ArityMap m) = ArityMap (IntMap.adjust (coerce f) n m)

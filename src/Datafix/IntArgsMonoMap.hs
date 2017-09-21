@@ -62,17 +62,27 @@ keys (Map m) = IntMap.foldrWithKey f [] m
 insertLookupWithKey
   :: MonoMapKey k
   => (Int -> k -> v -> v -> v)
-  -> Int -> k -> v
-  -> IntArgsMonoMap k v -> (Maybe v, IntArgsMonoMap k v)
+  -> Int 
+  -> k 
+  -> v
+  -> IntArgsMonoMap k v 
+  -> (Maybe v, IntArgsMonoMap k v)
 insertLookupWithKey f i k v (Map m) = coerce (IntMap.alterF alterMonoMap i m)
   where
-    alterMonoMap Nothing    = (Nothing, Just (MonoMap.singleton k v))
+    alterMonoMap Nothing        = (Nothing, Just (MonoMap.singleton k v))
     alterMonoMap (Just monoMap) = Just <$> MonoMap.insertLookupWithKey (f i) k v monoMap
 
-alter :: MonoMapKey k => (Maybe v -> Maybe v) -> Int -> k -> IntArgsMonoMap k v -> IntArgsMonoMap k v
-alter f i k (Map m) = Map (IntMap.alter alterMonoMap i m)
+updateLookupWithKey
+  :: MonoMapKey k
+  => (Int -> k -> v -> Maybe v)
+  -> Int 
+  -> k
+  -> IntArgsMonoMap k v 
+  -> (Maybe v, IntArgsMonoMap k v)
+updateLookupWithKey f i k (Map m) = coerce (IntMap.alterF alterMonoMap i m)
   where
-    alterMonoMap (Just monoMap) = nothingIfEmpty (MonoMap.alter f k monoMap)
-    alterMonoMap Nothing
-      | Just v <- f Nothing = Just (MonoMap.singleton k v)
-      | otherwise = Nothing
+    alterMonoMap Nothing        = (Nothing, Nothing)
+    alterMonoMap (Just monoMap) = nothingIfEmpty <$> MonoMap.updateLookupWithKey (f i) k monoMap
+    
+adjust :: MonoMapKey k => (v -> v) -> Int -> k -> IntArgsMonoMap k v -> IntArgsMonoMap k v
+adjust f i k (Map m) = Map (IntMap.adjust (MonoMap.adjust f k) i m)

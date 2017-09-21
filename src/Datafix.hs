@@ -26,7 +26,7 @@ module Datafix
   ) where
 
 import           Algebra.Lattice
-import           Control.Monad                    (forM_, when, (<=<))
+import           Control.Monad                    (forM_, (<=<))
 import           Control.Monad.Trans.State.Strict
 import           Data.Maybe                       (fromMaybe, listToMaybe)
 import           Data.Proxy                       (Proxy (..))
@@ -85,6 +85,7 @@ eqChangeDetector
 eqChangeDetector _ =
   currys (Proxy :: Proxy (Domains lattice)) (Proxy :: Proxy (CoDomain lattice -> CoDomain lattice -> Bool)) $
     const (/=)
+{-# INLINE eqChangeDetector #-}
 
 alwaysChangeDetector
   :: forall lattice
@@ -93,6 +94,7 @@ alwaysChangeDetector
 alwaysChangeDetector _ =
   currys (Proxy :: Proxy (Domains lattice)) (Proxy :: Proxy (CoDomain lattice -> CoDomain lattice -> Bool)) $
     \_ _ _ -> True
+{-# INLINE alwaysChangeDetector #-}
 
 data NodeInfo lattice
   = NodeInfo
@@ -106,6 +108,7 @@ deriving instance (Show (CoDomain lattice), Show (IntArgsMonoSet (Products (Doma
 
 emptyNodeInfo :: NodeInfo lattice
 emptyNodeInfo = NodeInfo Nothing IntArgsMonoSet.empty IntArgsMonoSet.empty
+{-# INLINE emptyNodeInfo #-}
 
 type Graph lattice
   = IntArgsMonoMap (Products (Domains lattice)) (NodeInfo lattice)
@@ -116,13 +119,22 @@ data WorklistState lattice
   , graph           :: !(Graph lattice)
   , unstable        :: !(IntArgsMonoSet (Products (Domains lattice))) -- unstable nodes and their changed references
   , callStack       :: !(IntArgsMonoSet (Products (Domains lattice)))
-  , referencedNodes :: !(IntArgsMonoSet (Products (Domains lattice)))
+  , current         :: !(Maybe (Int, Products (Domains lattice)))
   }
+
+initialWorklistState
+  :: IntArgsMonoSet (Products (Domains lattice))
+  -> DataFlowProblem lattice
+  -> WorklistState lattice
+initialWorklistState unstable_ fw =
+  WorklistState fw IntArgsMonoMap.empty unstable_ IntArgsMonoSet.empty Nothing
+{-# INLINE initialWorklistState #-}
 
 zoomGraph :: State (Graph lattice) a -> State (WorklistState lattice) a
 zoomGraph modifyGraph = state $ \st ->
   let (res, g) = runState modifyGraph (graph st)
   in  (res, st { graph = g })
+{-# INLINE zoomGraph #-}
 
 zoomUnstable
   :: State (IntArgsMonoSet (Products (Domains lattice))) a
@@ -130,20 +142,121 @@ zoomUnstable
 zoomUnstable modifyUnstable = state $ \st ->
   let (res, u) = runState modifyUnstable (unstable st)
   in  (res, st { unstable = u })
+{-# INLINE zoomUnstable #-}
 
-zoomReferencedNodes
-  :: State (IntArgsMonoSet (Products (Domains lattice))) a
+enqueueUnstable
+  :: k ~ Products (Domains lattice)
+  => MonoMapKey k
+  => Int -> k -> State (WorklistState lattice) ()
+enqueueUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.insert i k))
+{-# INLINE enqueueUnstable #-}
+
+deleteUnstable
+  :: k ~ Products (Domains lattice)
+  => MonoMapKey k
+  => Int -> k -> State (WorklistState lattice) ()
+deleteUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.delete i k))
+{-# INLINE deleteUnstable #-}
+
+highestPriorityUnstableNode
+  :: k ~ Products (Domains lattice)
+  => MonoMapKey k
+  => State (WorklistState lattice) (Maybe (Int, k))
+highestPriorityUnstableNode = listToMaybe . IntArgsMonoSet.highestPriorityNodes <$> gets unstable
+{-# INLINE highestPriorityUnstableNode #-}
+
+clearReferences 
+  :: forall lattice
+   . MonoMapKey (Products (Domains lattice))
+  => Int
+  -> Products (Domains lattice)
+  -> State (WorklistState lattice) (NodeInfo lattice)
+clearReferences node args = zoomGraph $ do
+  let merger _ _ _ old = old { references = IntArgsMonoSet.empty }
+  oldInfo <- fromMaybe emptyNodeInfo <$>
+    state (IntArgsMonoMap.insertLookupWithKey merger node args emptyNodeInfo)
+  let deleteReferrer ni = 
+        ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
+  forM_ (IntArgsMonoSet.toList (references oldInfo)) $ \(depNode, depArgs) ->
+    modify' (IntArgsMonoMap.adjust deleteReferrer depNode depArgs)
+  return oldInfo
+{-# INLINE clearReferences #-}
+
+updateNodeValue
+  :: forall lattice
+   . MonoMapKey (Products (Domains lattice))
+  => Datafixable lattice
+  => Int
+  -> Products (Domains lattice)
+  -> CoDomain lattice
+  -> State (WorklistState lattice) (NodeInfo lattice)
+updateNodeValue node args val = zoomGraph $ do
+  let updater _ _ ni = Just ni { value = Just val }
+  oldInfo <- fromMaybe (error "There should be an entry when this is called") <$>
+    state (IntArgsMonoMap.updateLookupWithKey updater node args)
+  return oldInfo { value = Just val }
+{-# INLINE updateNodeValue #-}
+
+withCall 
+  :: Datafixable lattice 
+  => Int 
+  -> Products (Domains lattice) 
+  -> State (WorklistState lattice) a 
   -> State (WorklistState lattice) a
-zoomReferencedNodes modifier = state $ \st ->
-  let (res, rn) = runState modifier (referencedNodes st)
-  in  (res, st { referencedNodes = rn })
+withCall node args inner = do
+  old <- get
+  put $ old
+    { callStack = IntArgsMonoSet.insert node args (callStack old)
+    , current = Just (node, args)
+    }
+  ret <- inner
+  modify' $ \new -> new
+    { callStack = callStack old
+    , current = current old
+    }
+  return ret
+{-# INLINE withCall #-}
 
-initialWorklistState
-  :: IntArgsMonoSet (Products (Domains lattice))
-  -> DataFlowProblem lattice
-  -> WorklistState lattice
-initialWorklistState unstable_ fw =
-  WorklistState fw IntArgsMonoMap.empty unstable_ IntArgsMonoSet.empty IntArgsMonoSet.empty
+recompute
+  :: forall lattice dom cod
+   . dom ~ Domains lattice
+  => cod ~ CoDomain lattice
+  => Datafixable lattice
+  => Int -> Products dom -> State (WorklistState lattice) cod
+recompute node args = withCall node args $ do
+  deleteUnstable node args
+  maybeOldVal <- value <$> clearReferences node args
+  prob <- gets problem
+  let dom = Proxy :: Proxy dom
+  let depm = Proxy :: Proxy (DependencyM lattice cod)
+  let eq = Proxy :: Proxy (cod -> cod -> Bool)
+  let node' = GraphNode node
+  let DM iterate' = uncurrys dom depm (transfer prob node') args
+  let detectChange' = uncurrys dom eq (detectChange prob node') args
+  newVal <- iterate'
+  newInfo <- updateNodeValue node args newVal
+  case maybeOldVal of
+    Just oldVal | not (detectChange' oldVal newVal) -> 
+      return ()
+    _ ->
+      forM_ (IntArgsMonoSet.toList (referrers newInfo)) (uncurry enqueueUnstable)
+  return newVal
+{-# INLINE recompute #-}
+
+addReference
+  :: forall lattice
+   . MonoMapKey (Products (Domains lattice))
+  => Int
+  -> Products (Domains lattice)
+  -> Int
+  -> Products (Domains lattice)
+  -> State (WorklistState lattice) ()
+addReference node args depNode depArgs = zoomGraph $ do
+  let adjustReferences ni = ni { references = IntArgsMonoSet.insert depNode depArgs (references ni) }
+  modify' (IntArgsMonoMap.adjust adjustReferences node args)
+  let adjustReferrers ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
+  modify' (IntArgsMonoMap.adjust adjustReferrers depNode depArgs)
+{-# INLINE addReference #-}
 
 dependOn
   :: forall lattice
@@ -154,32 +267,70 @@ dependOn _ (GraphNode node) = currys dom cod impl
     dom = Proxy :: Proxy (Domains lattice)
     cod = Proxy :: Proxy (DependencyM lattice (CoDomain lattice))
     impl args = DM $ do
-      loopDetected <- IntArgsMonoSet.member node args <$> gets callStack
-      -- isNotYetStable <- Map.member node <$> gets unstable
+      cycleDetected <- IntArgsMonoSet.member node args <$> gets callStack
+      isStable <- not . IntArgsMonoSet.member node args <$> gets unstable
       maybeNodeInfo <- IntArgsMonoMap.lookup node args <$> gets graph
+      val <- 
+        case maybeNodeInfo >>= value of 
+          -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
+          -- Otherwise, the node wasn't part of the call stack and thus will either
+          -- have a 'value' assigned or will not have been discovered at all.
+          Nothing | cycleDetected ->
+            -- Somewhere in an outer activation record we already compute this one.
+            -- We don't recurse again and just return 'bottom'.
+            -- Otherwise, 'recompute' will immediately add a 'NodeInfo' before
+            -- any calls to 'dependOn' for a cycle to even be possible.
+            return bottom
+          Just val | isStable || cycleDetected ->
+            -- No brainer
+            return val
+          maybeVal ->
+            -- No cycle && (unstable || undiscovered). Apply one of the schemes 
+            -- outlined in 
+            -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+            scheme2 maybeVal node args
       -- save that we depend on this value
-      zoomReferencedNodes (modify' (IntArgsMonoSet.insert node args))
-      case maybeNodeInfo of
-        Nothing | loopDetected ->
-          -- Somewhere in an outer call stack we already compute this one.
-          -- We don't recurse again and just return 'bottom'.
-          -- The outer call will then recognize the instability and enqueue
-          -- itself as unstable after its first approximation is computed.
-          return bottom
-        Nothing ->
-          -- Depth-first discovery of reachable nodes.
-          recompute node args
-        -- We aren't doing this because it's not obvious
-        -- which nodes will need to be marked unstable.
-        -- Think about a node that `dependOn`s the same
-        -- node twice.
-        -- Also it is unclear if this really is beneficial:
-        -- We don't discover any new nodes and should rather
-        -- rely on the ordering in the worklist.
-        --Just _ | isNotYetStable && not loopDetected -> do
-        --  recompute node
-        Just info -> return (fromMaybe bottom (value info))
+      (curNode, curArgs) <- fromMaybe (error "`dependOn` can only be called in an activation record") <$> gets current
+      addReference curNode curArgs node args 
+      return val
 {-# INLINE dependOn #-}
+
+scheme1, scheme2, scheme3
+  :: Datafixable lattice
+  => Maybe (CoDomain lattice)
+  -> Int
+  -> Products (Domains lattice) 
+  -> State (WorklistState lattice) (CoDomain lattice)
+{-# INLINE scheme1 #-}
+{-# INLINE scheme2 #-}
+{-# INLINE scheme3 #-}
+
+-- | scheme 1 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
+--
+-- Let the worklist algorithm figure things out.
+scheme1 _ _ _ = return bottom
+
+-- | scheme 2 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
+--
+-- Descend into \(\bot\) nodes when there is no cycle to discover the set of 
+-- reachable nodes as quick as possible.
+-- Do *not* descend into unstable, non-\(\bot\) nodes.
+scheme2 maybeVal node args = 
+  case maybeVal of
+    Nothing ->
+      -- Depth-first discovery of reachable nodes
+      recompute node args
+    Just val ->
+      -- It is unclear if this really is beneficial:
+      -- We don't discover any new nodes and should rather
+      -- rely on the ordering in the worklist.
+      return val
+
+-- | scheme 3 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
+--
+-- Descend into unstable nodes when there is no cycle.
+-- It's unclear if this leads to better performance than 'scheme2'.
+scheme3 _ = recompute
 
 unsafePeekValue
   :: forall lattice
@@ -190,106 +341,7 @@ unsafePeekValue
 unsafePeekValue (GraphNode node) =
   currys (Proxy :: Proxy (Domains lattice)) (Proxy :: Proxy (DependencyM lattice (Maybe (CoDomain lattice)))) $ \args ->
     DM $ (value <=< IntArgsMonoMap.lookup node args) <$> gets graph
-
-data Diff a
-  = Diff
-  { added   :: !(IntArgsMonoSet a)
-  , removed :: !(IntArgsMonoSet a)
-  }
-
-computeDiff
-  :: k ~ Products (Domains lattice)
-  => MonoMapKey k
-  => Proxy lattice 
-  -> IntArgsMonoSet k
-  -> IntArgsMonoSet k
-  -> Diff k
-computeDiff _ from to = Diff (to `IntArgsMonoSet.difference` from) (from `IntArgsMonoSet.difference` to)
-
-updateGraphNode
-  :: forall lattice
-   . MonoMapKey (Products (Domains lattice))
-  => Int
-  -> Products (Domains lattice)
-  -> CoDomain lattice
-  -> IntArgsMonoSet (Products (Domains lattice))
-  -> State (WorklistState lattice) (NodeInfo lattice)
-updateGraphNode node args val refs = zoomGraph $ do
-  -- if we are lucky (e.g. no refs changed), we get away with one map access
-  -- first update `node`s NodeInfo
-  let newInfo = emptyNodeInfo { value = Just val, references = refs }
-  let merger _ _ new old = new { referrers = referrers old }
-  oldInfo <- fromMaybe emptyNodeInfo <$>
-    state (IntArgsMonoMap.insertLookupWithKey merger node args newInfo)
-
-  -- Now compute the diff of changed references
-  let diff = computeDiff (Proxy :: Proxy lattice) (references oldInfo) refs
-
-  -- finally register/unregister at all references as referrer.
-  let updater f (depNode, depArgs) = modify' $
-        IntArgsMonoMap.alter (Just . f . fromMaybe emptyNodeInfo) depNode depArgs
-  let addReferrer ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
-  let removeReferrer ni = ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
-  forM_ (IntArgsMonoSet.toList (added diff)) (updater addReferrer)
-  forM_ (IntArgsMonoSet.toList (removed diff)) (updater removeReferrer)
-
-  return oldInfo
-{-# INLINE updateGraphNode #-}
-
-recompute
-  :: forall lattice dom cod
-   . dom ~ Domains lattice
-  => cod ~ CoDomain lattice
-  => Datafixable lattice
-  => Int -> Products dom -> State (WorklistState lattice) cod
-recompute node args = do
-  oldState <- get
-  put $ oldState
-    { referencedNodes = IntArgsMonoSet.empty
-    , callStack = IntArgsMonoSet.insert node args (callStack oldState)
-    }
-  let dom = Proxy :: Proxy dom
-  let depm = Proxy :: Proxy (DependencyM lattice cod)
-  let eq = Proxy :: Proxy (cod -> cod -> Bool)
-  let node' = GraphNode node
-  let DM iterate' = uncurrys dom depm (transfer (problem oldState) node') args
-  let detectChange' = uncurrys dom eq (detectChange (problem oldState) node') args
-  newVal <- iterate'
-  refs <- gets referencedNodes
-  oldInfo <- updateGraphNode node args newVal refs
-  deleteUnstable node args
-  case value oldInfo of
-    Just oldVal | not (detectChange' oldVal newVal) -> return ()
-    _ -> do
-      forM_ (IntArgsMonoSet.toList (referrers oldInfo)) (uncurry enqueueUnstable)
-      -- If the node depends on itself the first time (e.g. when it gets its first value),
-      -- that will not be reflected in `oldInfo`. So we enqueue it manually
-      -- if that is the case.
-      when (IntArgsMonoSet.member node args refs) (enqueueUnstable node args)
-  modify' $ \st -> st
-    { referencedNodes = referencedNodes oldState
-    , callStack = callStack oldState
-    }
-  return newVal
-{-# INLINE recompute #-}
-
-enqueueUnstable
-  :: k ~ Products (Domains lattice)
-  => MonoMapKey k
-  => Int -> k -> State (WorklistState lattice) ()
-enqueueUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.insert i k))
-
-deleteUnstable
-  :: k ~ Products (Domains lattice)
-  => MonoMapKey k
-  => Int -> k -> State (WorklistState lattice) ()
-deleteUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.delete i k))
-
-highestPriorityUnstableNode
-  :: k ~ Products (Domains lattice)
-  => MonoMapKey k
-  => State (WorklistState lattice) (Maybe (Int, k))
-highestPriorityUnstableNode = listToMaybe . IntArgsMonoSet.highestPriorityNodes <$> gets unstable
+{-# INLINE unsafePeekValue #-}
 
 whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 whileJust_ cond action = go
