@@ -33,39 +33,40 @@ type TransferAlgebra lattice
   -> TransferFunction m lattice
 
 buildProblem
-  :: forall lattice
-   . Eq (CoDomain lattice)
-  => Datafixable lattice
-  => TransferAlgebra lattice
+  :: forall m
+   . MonadDependency m
+  => Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
+  => Eq (CoDomain (Domain m))
+  => TransferAlgebra (Domain m)
   -> CoreExpr
-  -> (GraphNode, DataFlowProblem lattice)
+  -> (Node, DataFlowProblem m)
 buildProblem alg e = (root, DFP transfer changeDetector)
   where
-    p = Proxy :: Proxy lattice
+    p = Proxy :: Proxy m
     changeDetector _ = eqChangeDetector p
     notFoundError = error "Requested a node that wasn't present in the graph"
-    transfer (GraphNode node) = fromMaybe notFoundError (IntMap.lookup node map_)
+    transfer (Node node) = fromMaybe notFoundError (IntMap.lookup node map_)
     (root, map_) = runAllocator $ allocateNode $ \root_ -> do
       transferRoot <- buildRoot p alg e
       pure (root_, transferRoot)
 {-# INLINE buildProblem #-}
 
-type TF lattice = TransferFunction (DependencyM lattice) lattice
+type TF m = TransferFunction m (Domain m)
 
 buildRoot
-  :: forall lattice
-   . Datafixable lattice
-  => Proxy lattice
-  -> TransferAlgebra lattice
+  :: forall m
+   . MonadDependency m
+  => Proxy m
+  -> TransferAlgebra (Domain m)
   -> CoreExpr
-  -> NodeAllocator (TF lattice) (TF lattice)
+  -> NodeAllocator (TF m) (TF m)
 buildRoot p alg' = buildExpr emptyVarEnv
   where
-    alg = alg' (Proxy :: Proxy (DependencyM lattice)) p
+    alg = alg' p (Proxy :: Proxy (Domain m))
     buildExpr
-      :: VarEnv (TF lattice)
+      :: VarEnv (TF m)
       -> CoreExpr
-      -> NodeAllocator (TF lattice) (TF lattice)
+      -> NodeAllocator (TF m) (TF m)
     buildExpr env expr =
       case expr of
         Lit lit -> pure (alg env (LitF lit))
@@ -122,7 +123,7 @@ buildRoot p alg' = buildExpr emptyVarEnv
             [] -> pure (env, [])
             ((id_, rhs):binders') ->
               allocateNode $ \node -> do
-                let deref = dependOn (Proxy :: Proxy lattice) node
+                let deref = dependOn p node
                 let env' = extendVarEnv env id_ deref
                 (env'', transferredBind) <- impl env' binders'
                 transferRHS <- buildExpr env' rhs

@@ -10,6 +10,7 @@ import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
 import           Datafix
+import           Datafix.Worklist (fixProblem)
 
 import           CoreSyn
 import           Id

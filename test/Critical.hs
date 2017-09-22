@@ -1,3 +1,5 @@
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Critical (tests) where
@@ -5,6 +7,7 @@ module Critical (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
+import           Datafix.Worklist (fixProblem)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,25 +21,22 @@ instance BoundedJoinSemiLattice Natural where
 tests :: [TestTree]
 tests =
   [ testGroup "One node with loop"
-      [ testCase "stabilises at 10" (fixProblem loopProblem (GraphNode 0) @?= 10)
+      [ testCase "stabilises at 10" (fixProblem loopProblem (Node 0) @?= 10)
       ]
   , testGroup "One node with double dependency on node with loop"
-      [ testCase "stabilizes at 4" (fixProblem doubleDependencyProblem (GraphNode 0) @?= 4)
+      [ testCase "stabilizes at 4" (fixProblem doubleDependencyProblem (Node 0) @?= 4)
       ]
   ]
 
-p :: Proxy Natural
-p = Proxy
-
-mkDFP :: (GraphNode -> TransferFunction (DependencyM Natural) Natural) -> DataFlowProblem Natural
-mkDFP transfer = DFP transfer (const (eqChangeDetector p))
+mkDFP :: forall m . (MonadDependency m, Domain m ~ Natural) => (Node -> TransferFunction m Natural) -> DataFlowProblem m
+mkDFP transfer = DFP transfer (const (eqChangeDetector (Proxy :: Proxy m)))
 
 -- | One node graph with loop that stabilizes after 10 iterations.
-loopProblem :: DataFlowProblem Natural
+loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
 loopProblem = mkDFP transfer
   where
-    transfer (GraphNode 0) = do -- stabilizes at 10
-      n <- dependOn p (GraphNode 0)
+    transfer (Node 0) = do -- stabilizes at 10
+      n <- dependOn (Proxy :: Proxy m) (Node 0)
       return (min (n + 1) 10)
 
 -- | Two node graph (nodes @A@, @B@), where @A@ `dependOn` @B@ twice and @B@
@@ -46,13 +46,15 @@ loopProblem = mkDFP transfer
 -- unstable, so that it gets iterated again, which results in a value of
 -- 4 instead of e.g. 3 (= 1 + 2, the values of @B@ in the first iteration
 -- of @A@).
-doubleDependencyProblem :: DataFlowProblem Natural
+doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
 doubleDependencyProblem = mkDFP transfer  
   where
-    transfer (GraphNode 0) = do -- stabilizes at 4
-      n <- dependOn p (GraphNode 1)
-      m <- dependOn p (GraphNode 1)
+    p :: Proxy m
+    p = Proxy
+    transfer (Node 0) = do -- stabilizes at 4
+      n <- dependOn p (Node 1)
+      m <- dependOn p (Node 1)
       return (n + m)
-    transfer (GraphNode 1) = do -- stabilizes at 2
-      n <- dependOn p (GraphNode 1)
+    transfer (Node 1) = do -- stabilizes at 2
+      n <- dependOn p (Node 1)
       return (min (n + 1) 2)

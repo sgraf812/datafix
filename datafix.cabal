@@ -38,6 +38,8 @@ library
                      Datafix.IntArgsMonoMap
                      Datafix.IntArgsMonoSet
                      Datafix.Utils.TypeLevel
+                     Datafix.Worklist
+                     Datafix.Worklist.Internal
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
