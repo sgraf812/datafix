@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilies        #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Trivial (tests) where
@@ -21,12 +21,12 @@ instance BoundedJoinSemiLattice Natural where
 tests :: [TestTree]
 tests =
   [ testGroup "Memoization"
-      [ testCase "fibonacci 10" (fixProblem fibProblem (Node 10) @?= fib 10)
-      , testCase "factorial 100" (fixProblem facProblem (Node 100) @?= fac 100)
+      [ testCase "fibonacci 10" (fixProblem id fibProblem (Node 10) @?= fib 10)
+      , testCase "factorial 100" (fixProblem id facProblem (Node 100) @?= fac 100)
       ]
   , testGroup "mutual recursion"
-      [ testCase "stabilizes mutual recursive nodes" (fixProblem mutualRecursiveProblem (Node 1) @?= 10)
-      , testCase "stabilizes all nodes" (fixProblem mutualRecursiveProblem (Node 2) @?= 10)
+      [ testCase "stabilizes mutual recursive nodes" (fixProblem id mutualRecursiveProblem (Node 1) @?= 10)
+      , testCase "stabilizes all nodes" (fixProblem id mutualRecursiveProblem (Node 2) @?= 10)
       ]
   ]
 
@@ -34,7 +34,7 @@ fibProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProb
 fibProblem = DFP transfer (const (eqChangeDetector p))
   where
     p :: Proxy m
-    p = Proxy 
+    p = Proxy
     transfer :: Node -> TransferFunction m Natural
     transfer (Node 0) = return 0
     transfer (Node 1) = return 1
@@ -52,7 +52,7 @@ facProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProb
 facProblem = DFP transfer (const (eqChangeDetector p))
   where
     p :: Proxy m
-    p = Proxy 
+    p = Proxy
     transfer :: Node -> TransferFunction m Natural
     transfer (Node 0) = return 1
     transfer (Node 1) = return 1
@@ -67,7 +67,7 @@ mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => 
 mutualRecursiveProblem = DFP transfer (const (eqChangeDetector p))
   where
     p :: Proxy m
-    p = Proxy 
+    p = Proxy
     transfer :: Node -> TransferFunction m Natural
     transfer (Node 0) = do
       b <- dependOn p (Node 1)

@@ -1,5 +1,5 @@
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies        #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Critical (tests) where
@@ -21,10 +21,10 @@ instance BoundedJoinSemiLattice Natural where
 tests :: [TestTree]
 tests =
   [ testGroup "One node with loop"
-      [ testCase "stabilises at 10" (fixProblem loopProblem (Node 0) @?= 10)
+      [ testCase "stabilises at 10" (fixProblem id loopProblem (Node 0) @?= 10)
       ]
   , testGroup "One node with double dependency on node with loop"
-      [ testCase "stabilizes at 4" (fixProblem doubleDependencyProblem (Node 0) @?= 4)
+      [ testCase "stabilizes at 4" (fixProblem id doubleDependencyProblem (Node 0) @?= 4)
       ]
   ]
 
@@ -40,14 +40,14 @@ loopProblem = mkDFP transfer
       return (min (n + 1) 10)
 
 -- | Two node graph (nodes @A@, @B@), where @A@ `dependOn` @B@ twice and @B@
--- has a loop. 
--- 
+-- has a loop.
+--
 -- The idea here is that the second change of @B@ from 1 to 2 makes @A@
 -- unstable, so that it gets iterated again, which results in a value of
 -- 4 instead of e.g. 3 (= 1 + 2, the values of @B@ in the first iteration
 -- of @A@).
 doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-doubleDependencyProblem = mkDFP transfer  
+doubleDependencyProblem = mkDFP transfer
   where
     p :: Proxy m
     p = Proxy

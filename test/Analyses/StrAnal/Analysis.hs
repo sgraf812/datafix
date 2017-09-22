@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
 
@@ -9,8 +11,9 @@ import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
-import           Datafix
-import           Datafix.Worklist (fixProblem)
+import           Data.Proxy                  (Proxy (..))
+import           Datafix                     (DataFlowProblem, Node)
+import           Datafix.Worklist            (DependencyM, fixProblem)
 
 import           CoreSyn
 import           Id
@@ -18,9 +21,11 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = fixProblem problem root 0
+analyse expr = fixProblem id problem root 0
   where
-    (root, problem) = buildProblem transferFunctionAlg expr
+    tmp :: forall s. (Node, DataFlowProblem (DependencyM s (Arity -> StrLattice)))
+    tmp = buildProblem @(DependencyM s (Arity -> StrLattice)) transferFunctionAlg expr
+    (root, problem) = tmp
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
