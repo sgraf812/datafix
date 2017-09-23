@@ -5,29 +5,29 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
-{-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Datafix.Worklist.Internal where
 
 import           Algebra.Lattice
-import           Control.Monad              (forM_)
+import           Control.Monad                 (forM_)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State
 import           Data.IORef
-import           Data.Maybe                 (fromMaybe, listToMaybe)
-import           Data.Proxy                 (Proxy (..))
-import           Datafix
-import           Datafix.IntArgsMonoMap     (IntArgsMonoMap)
-import qualified Datafix.IntArgsMonoMap     as IntArgsMonoMap
-import           Datafix.IntArgsMonoSet     (IntArgsMonoSet)
-import qualified Datafix.IntArgsMonoSet     as IntArgsMonoSet
-import           Datafix.MonoMap            (MonoMapKey)
+import           Data.Maybe                    (fromMaybe, listToMaybe)
+import           Data.Proxy                    (Proxy (..))
+import           Datafix                       hiding (dependOn)
+import qualified Datafix
+import           Datafix.IntArgsMonoSet        (IntArgsMonoSet)
+import qualified Datafix.IntArgsMonoSet        as IntArgsMonoSet
+import           Datafix.MonoMap               (MonoMapKey)
 import           Datafix.Utils.TypeLevel
-import           System.IO.Unsafe           (unsafePerformIO)
+import           Datafix.Worklist.Graph        (NodeInfo (..))
+import qualified Datafix.Worklist.Graph        as Graph
+import qualified Datafix.Worklist.Graph.Sparse as SparseGraph
+import           System.IO.Unsafe              (unsafePerformIO)
 
 newtype DependencyM domain a
   = DM (ReaderT (Env domain) IO a)
@@ -50,30 +50,24 @@ newtype DependencyM domain a
   -- must never be an instance of 'MonadIO' for this.
   deriving (Functor, Applicative, Monad)
 
-data NodeInfo domain
-  = NodeInfo
-  { value      :: !(Maybe (CoDomain domain)) -- ^ the value at this node. Can be Nothing only when a loop was detected
-  , references :: !(IntArgsMonoSet (Products (Domains domain)))      -- ^ nodes this value depends on
-  , referrers  :: !(IntArgsMonoSet (Products (Domains domain)))      -- ^ nodes depending on this value
-  }
-
-deriving instance (Eq (CoDomain domain), Eq (IntArgsMonoSet (Products (Domains domain)))) => Eq (NodeInfo domain)
-deriving instance (Show (CoDomain domain), Show (IntArgsMonoSet (Products (Domains domain)))) => Show (NodeInfo domain)
-
-emptyNodeInfo :: NodeInfo domain
-emptyNodeInfo = NodeInfo Nothing IntArgsMonoSet.empty IntArgsMonoSet.empty
-{-# INLINE emptyNodeInfo #-}
-
-type Graph domain
-  = IntArgsMonoMap (Products (Domains domain)) (NodeInfo domain)
-
 data Env domain
   = Env
   { problem   :: !(DataFlowProblem (DependencyM domain))
+  -- ^ Constant.
+  -- The specification of the data-flow problem we ought to solve.
   , callStack :: !(IntArgsMonoSet (Products (Domains domain)))
+  -- ^ Contextual state.
+  -- The set of points in the 'domain' of 'Node's currently in the call stack.
   , current   :: !(Maybe (Int, Products (Domains domain)))
-  , graph     :: !(IORef (Graph domain))
-  , unstable  :: !(IORef (IntArgsMonoSet (Products (Domains domain)))) -- unstable nodes and their changed references
+  -- ^ Contextual state.
+  -- The specific point in the 'domain' of a 'Node' we currently 'recompute'.
+  , graph     :: !(SparseGraph.Ref domain)
+  -- ^ Constant (but the the wrapped graph is stateful).
+  -- The data-flow graph, modeling dependencies between data-flow 'Node's,
+  -- or rather specific points in the 'domain' of each 'Node'.
+  , unstable  :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  -- ^ Constant (but the the wrapped queue is stateful).
+  -- Unstable nodes that will be 'recompute'd by the 'work'list algorithm.
   }
 
 initialEnv
@@ -82,7 +76,7 @@ initialEnv
   -> IO (Env domain)
 initialEnv unstable_ fw =
   Env fw IntArgsMonoSet.empty Nothing
-    <$> newIORef IntArgsMonoMap.empty
+    <$> SparseGraph.newRef
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
@@ -96,16 +90,7 @@ type Datafixable m =
 
 instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain) where
   type Domain (DependencyM domain) = domain
-  dependOn = dependOn'
-
-zoomGraph :: State (Graph domain) a -> ReaderT (Env domain) IO a
-zoomGraph modifyGraph = do
-  ref <- asks graph
-  g <- lift $ readIORef ref
-  let (res, g') = runState modifyGraph g
-  lift $ writeIORef ref g'
-  return res
-{-# INLINE zoomGraph #-}
+  dependOn = dependOn
 
 zoomUnstable
   :: State (IntArgsMonoSet (Products (Domains domain))) a
@@ -140,35 +125,6 @@ highestPriorityUnstableNode = zoomUnstable $
   listToMaybe . IntArgsMonoSet.highestPriorityNodes <$> get
 {-# INLINE highestPriorityUnstableNode #-}
 
-clearReferences
-  :: MonoMapKey (Products (Domains domain))
-  => Int
-  -> Products (Domains domain)
-  -> ReaderT (Env domain) IO (NodeInfo domain)
-clearReferences node args = zoomGraph $ do
-  let merger _ _ _ old = old { references = IntArgsMonoSet.empty }
-  oldInfo <- fromMaybe emptyNodeInfo <$>
-    state (IntArgsMonoMap.insertLookupWithKey merger node args emptyNodeInfo)
-  let deleteReferrer ni =
-        ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
-  forM_ (IntArgsMonoSet.toList (references oldInfo)) $ \(depNode, depArgs) ->
-    modify' (IntArgsMonoMap.adjust deleteReferrer depNode depArgs)
-  return oldInfo
-{-# INLINE clearReferences #-}
-
-updateNodeValue
-  :: MonoMapKey (Products (Domains domain))
-  => Int
-  -> Products (Domains domain)
-  -> CoDomain domain
-  -> ReaderT (Env domain) IO (NodeInfo domain)
-updateNodeValue node args val = zoomGraph $ do
-  let updater _ _ ni = Just ni { value = Just val }
-  oldInfo <- fromMaybe (error "There should be an entry when this is called") <$>
-    state (IntArgsMonoMap.updateLookupWithKey updater node args)
-  return oldInfo { value = Just val }
-{-# INLINE updateNodeValue #-}
-
 withCall
   :: Datafixable (DependencyM domain)
   => Int
@@ -189,7 +145,7 @@ recompute
   => Int -> Products dom -> ReaderT (Env domain) IO cod
 recompute node args = withCall node args $ do
   deleteUnstable node args
-  maybeOldVal <- value <$> clearReferences node args
+  maybeOldVal <- value <$> withReaderT graph (Graph.clearReferences node args)
   prob <- asks problem
   let dom = Proxy :: Proxy dom
   let depm = Proxy :: Proxy (DependencyM domain cod)
@@ -198,7 +154,7 @@ recompute node args = withCall node args $ do
   let DM iterate' = uncurrys dom depm (transfer prob node') args
   let detectChange' = uncurrys dom eq (detectChange prob node') args
   newVal <- iterate'
-  newInfo <- updateNodeValue node args newVal
+  newInfo <- withReaderT graph (Graph.updateNodeValue node args newVal)
   case maybeOldVal of
     Just oldVal | not (detectChange' oldVal newVal) ->
       return ()
@@ -207,25 +163,11 @@ recompute node args = withCall node args $ do
   return newVal
 {-# INLINE recompute #-}
 
-addReference
-  :: MonoMapKey (Products (Domains domain))
-  => Int
-  -> Products (Domains domain)
-  -> Int
-  -> Products (Domains domain)
-  -> ReaderT (Env domain) IO ()
-addReference node args depNode depArgs = zoomGraph $ do
-  let adjustReferences ni = ni { references = IntArgsMonoSet.insert depNode depArgs (references ni) }
-  modify' (IntArgsMonoMap.adjust adjustReferences node args)
-  let adjustReferrers ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
-  modify' (IntArgsMonoMap.adjust adjustReferrers depNode depArgs)
-{-# INLINE addReference #-}
-
-dependOn'
+dependOn
   :: forall domain
    . Datafixable (DependencyM domain)
   => Proxy (DependencyM domain) -> Node -> TransferFunction (DependencyM domain) domain
-dependOn' _ (Node node) = currys dom cod impl
+dependOn _ (Node node) = currys dom cod impl
   where
     dom = Proxy :: Proxy (Domains domain)
     cod = Proxy :: Proxy (DependencyM domain (CoDomain domain))
@@ -233,8 +175,7 @@ dependOn' _ (Node node) = currys dom cod impl
       cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
       isStable <- zoomUnstable $
         not . IntArgsMonoSet.member node args <$> get
-      maybeNodeInfo <- zoomGraph $
-        IntArgsMonoMap.lookup node args <$> get
+      maybeNodeInfo <- withReaderT graph (Graph.lookup node args)
       val <-
         case maybeNodeInfo >>= value of
           -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
@@ -256,9 +197,9 @@ dependOn' _ (Node node) = currys dom cod impl
             scheme2 maybeVal node args
       -- save that we depend on this value
       (curNode, curArgs) <- fromMaybe (error "`dependOn` can only be called in an activation record") <$> asks current
-      addReference curNode curArgs node args
+      withReaderT graph (Graph.addReference curNode curArgs node args)
       return val
-{-# INLINE dependOn' #-}
+{-# INLINE dependOn #-}
 
 scheme1, scheme2, scheme3
   :: Datafixable (DependencyM domain)
@@ -317,15 +258,13 @@ fixProblem
   -> Arrows (Domains domain) (CoDomain domain)
 fixProblem prob (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
   where
-    impl args
+    impl
       = fromMaybe (error "Broken invariant: The root node has no value")
       . (>>= value)
-      . IntArgsMonoMap.lookup node args
       . runProblem
-      $ args
     runProblem args = unsafePerformIO $ do
       -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
       -- of 'DependencyM' for why we 'unsafePerformIO'.
       env <- initialEnv (IntArgsMonoSet.singleton node args) prob
-      runReaderT (work >> asks graph >>= lift . readIORef) env
+      runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE fixProblem #-}

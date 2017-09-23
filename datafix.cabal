@@ -39,6 +39,8 @@ library
                      Datafix.IntArgsMonoSet
                      Datafix.Utils.TypeLevel
                      Datafix.Worklist
+                     Datafix.Worklist.Graph
+                     Datafix.Worklist.Graph.Sparse
                      Datafix.Worklist.Internal
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
