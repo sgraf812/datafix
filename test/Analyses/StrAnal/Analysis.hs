@@ -11,9 +11,7 @@ import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
-import           Data.Proxy                  (Proxy (..))
-import           Datafix                     (DataFlowProblem, Node)
-import           Datafix.Worklist            (DependencyM, fixProblem)
+import           Datafix.Worklist            (fixProblem)
 
 import           CoreSyn
 import           Id
@@ -21,11 +19,9 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = fixProblem id problem root 0
+analyse expr = fixProblem problem root 0
   where
-    tmp :: forall s. (Node, DataFlowProblem (DependencyM s (Arity -> StrLattice)))
-    tmp = buildProblem @(DependencyM s (Arity -> StrLattice)) transferFunctionAlg expr
-    (root, problem) = tmp
+    (root, problem) = buildProblem transferFunctionAlg expr
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f

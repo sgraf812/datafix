@@ -21,10 +21,10 @@ instance BoundedJoinSemiLattice Natural where
 tests :: [TestTree]
 tests =
   [ testGroup "One node with loop"
-      [ testCase "stabilises at 10" (fixProblem id loopProblem (Node 0) @?= 10)
+      [ testCase "stabilises at 10" (fixProblem loopProblem (Node 0) @?= 10)
       ]
   , testGroup "One node with double dependency on node with loop"
-      [ testCase "stabilizes at 4" (fixProblem id doubleDependencyProblem (Node 0) @?= 4)
+      [ testCase "stabilizes at 4" (fixProblem doubleDependencyProblem (Node 0) @?= 4)
       ]
   ]
 

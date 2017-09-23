@@ -21,12 +21,12 @@ instance BoundedJoinSemiLattice Natural where
 tests :: [TestTree]
 tests =
   [ testGroup "Memoization"
-      [ testCase "fibonacci 10" (fixProblem id fibProblem (Node 10) @?= fib 10)
-      , testCase "factorial 100" (fixProblem id facProblem (Node 100) @?= fac 100)
+      [ testCase "fibonacci 10" (fixProblem fibProblem (Node 10) @?= fib 10)
+      , testCase "factorial 100" (fixProblem facProblem (Node 100) @?= fac 100)
       ]
   , testGroup "mutual recursion"
-      [ testCase "stabilizes mutual recursive nodes" (fixProblem id mutualRecursiveProblem (Node 1) @?= 10)
-      , testCase "stabilizes all nodes" (fixProblem id mutualRecursiveProblem (Node 2) @?= 10)
+      [ testCase "stabilizes mutual recursive nodes" (fixProblem mutualRecursiveProblem (Node 1) @?= 10)
+      , testCase "stabilizes all nodes" (fixProblem mutualRecursiveProblem (Node 2) @?= 10)
       ]
   ]
 
