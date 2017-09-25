@@ -1,6 +1,5 @@
 {-# LANGUAGE DefaultSignatures      #-}
 {-# LANGUAGE FlexibleContexts       #-}
-{-# LANGUAGE StandaloneDeriving     #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 
@@ -12,8 +11,6 @@ import qualified Data.IntMap.Strict as IntMap
 import           Data.Maybe         (maybeToList)
 import           Data.POMap.Strict  (POMap)
 import qualified Data.POMap.Strict  as POMap
-
-type MonoSet k = MonoMap k ()
 
 class Foldable (MonoMap k) => MonoMapKey k where
   type MonoMap k = (r :: * -> *) | r -> k
@@ -43,19 +40,19 @@ class Foldable (MonoMap k) => MonoMapKey k where
   default difference :: (MonoMap k a ~ POMap k a, MonoMap k b ~ POMap k b, PartialOrd k) => MonoMap k a -> MonoMap k b -> MonoMap k a
   difference = POMap.difference
   keys :: MonoMap k a -> [k]
-  default keys :: MonoMap k v ~ POMap k v => POMap k v -> [k]
+  default keys :: MonoMap k v ~ POMap k v => MonoMap k v -> [k]
   keys = POMap.keys
   insertLookupWithKey :: (k -> v -> v -> v) -> k -> v -> MonoMap k v -> (Maybe v, MonoMap k v)
-  default insertLookupWithKey :: (MonoMap k v ~ POMap k v, PartialOrd k) => (k -> v -> v -> v) -> k -> v -> POMap k v -> (Maybe v, POMap k v)
+  default insertLookupWithKey :: (MonoMap k v ~ POMap k v, PartialOrd k) => (k -> v -> v -> v) -> k -> v -> MonoMap k v -> (Maybe v, MonoMap k v)
   insertLookupWithKey = POMap.insertLookupWithKey
   updateLookupWithKey :: (k -> v -> Maybe v) -> k -> MonoMap k v -> (Maybe v, MonoMap k v)
-  default updateLookupWithKey :: (MonoMap k v ~ POMap k v, PartialOrd k) => (k -> v -> Maybe v) -> k -> POMap k v -> (Maybe v, POMap k v)
+  default updateLookupWithKey :: (MonoMap k v ~ POMap k v, PartialOrd k) => (k -> v -> Maybe v) -> k -> MonoMap k v -> (Maybe v, MonoMap k v)
   updateLookupWithKey = POMap.updateLookupWithKey
   alter :: (Maybe v -> Maybe v) -> k -> MonoMap k v -> MonoMap k v
-  default alter :: (MonoMap k v ~ POMap k v, PartialOrd k) => (Maybe v -> Maybe v) -> k -> POMap k v -> POMap k v
+  default alter :: (MonoMap k v ~ POMap k v, PartialOrd k) => (Maybe v -> Maybe v) -> k -> MonoMap k v -> MonoMap k v
   alter = POMap.alter
   adjust :: (v -> v) -> k -> MonoMap k v -> MonoMap k v
-  default adjust :: (MonoMap k v ~ POMap k v, PartialOrd k) => (v -> v) -> k -> POMap k v -> POMap k v
+  default adjust :: (MonoMap k v ~ POMap k v, PartialOrd k) => (v -> v) -> k -> MonoMap k v -> MonoMap k v
   adjust = POMap.adjust
 
 instance MonoMapKey () where

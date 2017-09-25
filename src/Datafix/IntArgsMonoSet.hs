@@ -26,16 +26,16 @@ insert :: MonoMapKey k => Int -> k -> IntArgsMonoSet k -> IntArgsMonoSet k
 insert i k = coerce (Map.insert i k ())
 
 delete :: MonoMapKey k => Int -> k -> IntArgsMonoSet k -> IntArgsMonoSet k
-delete = coerce Map.delete
+delete i k (Set m) = Set (Map.delete i k m)
 
 member :: MonoMapKey k => Int -> k -> IntArgsMonoSet k -> Bool
 member i k (Set m) = isJust (Map.lookup i k m)
 
 difference :: MonoMapKey k => IntArgsMonoSet k -> IntArgsMonoSet k -> IntArgsMonoSet k
-difference = coerce Map.difference
+difference (Set a) (Set b) = Set (Map.difference a b)
 
 toList :: MonoMapKey k => IntArgsMonoSet k -> [(Int, k)]
 toList (Set m) = Map.keys m
 
 highestPriorityNodes :: MonoMapKey k => IntArgsMonoSet k -> [(Int, k)]
-highestPriorityNodes = coerce Map.highestPriorityNodes
+highestPriorityNodes (Set m) = Map.highestPriorityNodes m
