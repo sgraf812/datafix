@@ -11,7 +11,8 @@ import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
-import           Datafix.Worklist            (Density (..), fixProblem)
+import           Datafix.Worklist            (Density (..), IterationBound (..),
+                                              fixProblem)
 
 import           CoreSyn
 import           Id
@@ -19,7 +20,7 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = fixProblem problem Sparse root 0
+analyse expr = fixProblem problem Sparse NeverAbort root 0
   where
     (root, problem) = buildProblem transferFunctionAlg expr
 

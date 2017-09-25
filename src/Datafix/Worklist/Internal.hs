@@ -39,9 +39,9 @@ newtype DependencyM graph domain a
   --
   -- This ultimately leaks badly into the exported interface in 'fixProblem':
   -- Since we can't have universally quantified instance contexts (yet!), we can' write
-  -- @(forall s. Datafixable (DependencyM graph domain)) => (forall s. DataFlowProblem (DependencyM graph domain)) -> ...@
+  -- @(forall s. Datafixable (DependencyM s graph domain)) => (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
   -- and have to instead have the isomorphic
-  -- @(forall s r. (Datafixable (DependencyM graph domain) => r) -> r) -> (forall s. DataFlowProblem (DependencyM graph domain)) -> ...@
+  -- @(forall s r. (Datafixable (DependencyM s graph domain) => r) -> r) -> (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
   -- and urge all call sites to pass a meaningless 'id' parameter.
   --
   -- Also, this means more explicit type signatures as we have to make clear to
@@ -55,20 +55,23 @@ newtype DependencyM graph domain a
 
 data Env graph domain
   = Env
-  { problem   :: !(DataFlowProblem (DependencyM graph domain))
+  { problem        :: !(DataFlowProblem (DependencyM graph domain))
   -- ^ Constant.
   -- The specification of the data-flow problem we ought to solve.
-  , callStack :: !(IntArgsMonoSet (Products (Domains domain)))
+  , iterationBound :: !(IterationBound domain)
+  -- ^ Constant.
+  -- Whether to abort after a number of iterations or not.
+  , callStack      :: !(IntArgsMonoSet (Products (Domains domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
-  , current   :: !(Maybe (Int, Products (Domains domain)))
+  , current        :: !(Maybe (Int, Products (Domains domain)))
   -- ^ Contextual state.
   -- The specific point in the 'domain' of a 'Node' we currently 'recompute'.
-  , graph     :: !(graph domain)
+  , graph          :: !(graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
-  , unstable  :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  , unstable       :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
   -- Unstable nodes that will be 'recompute'd by the 'work'list algorithm.
   }
@@ -77,10 +80,11 @@ initialEnv
   :: GraphRef graph
   => IntArgsMonoSet (Products (Domains domain))
   -> DataFlowProblem (DependencyM graph domain)
+  -> IterationBound domain
   -> IO (graph domain)
   -> IO (Env graph domain)
-initialEnv unstable_ fw newGraphRef =
-  Env fw IntArgsMonoSet.empty Nothing
+initialEnv unstable_ prob ib newGraphRef =
+  Env prob ib IntArgsMonoSet.empty Nothing
     <$> newGraphRef
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
@@ -89,6 +93,7 @@ type Datafixable m =
   ( Currying (Domains (Domain m)) (CoDomain (Domain m))
   , Currying (Domains (Domain m)) (m (CoDomain (Domain m)))
   , Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
+  , Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m))
   , MonoMapKey (Products (Domains (Domain m)))
   , BoundedJoinSemiLattice (CoDomain (Domain m))
   )
@@ -96,6 +101,17 @@ type Datafixable m =
 instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
   dependOn = dependOn
+
+data Density graph where
+  Sparse :: Density SparseGraph.Ref
+  Dense :: Node -> Density DenseGraph.Ref
+
+type AbortionFunction domain
+  = Arrows (Domains domain) (CoDomain domain -> CoDomain domain)
+
+data IterationBound domain
+  = NeverAbort
+  | AbortAfter Int (AbortionFunction domain)
 
 zoomUnstable
   :: State (IntArgsMonoSet (Products (Domains domain))) a
@@ -151,17 +167,23 @@ recompute
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
 recompute node args = withCall node args $ do
   deleteUnstable node args
-  maybeOldVal <- value <$> withReaderT graph (Graph.clearReferences node args)
+  oldInfo <- withReaderT graph (Graph.clearReferences node args)
   prob <- asks problem
   let dom = Proxy :: Proxy dom
   let depm = Proxy :: Proxy (DependencyM graph domain cod)
   let eq = Proxy :: Proxy (cod -> cod -> Bool)
+  let cod2cod = Proxy :: Proxy (cod -> cod)
   let node' = Node node
   let DM iterate' = uncurrys dom depm (transfer prob node') args
   let detectChange' = uncurrys dom eq (detectChange prob node') args
-  newVal <- iterate'
+  ib <- asks iterationBound
+  newVal <- case (value oldInfo, ib) of
+    (Just oldVal, AbortAfter n abort)
+      | iterations oldInfo >= n
+      -> return (uncurrys dom cod2cod abort args oldVal)
+    _ -> iterate'
   newInfo <- withReaderT graph (Graph.updateNodeValue node args newVal)
-  case maybeOldVal of
+  case value oldInfo of
     Just oldVal | not (detectChange' oldVal newVal) ->
       return ()
     _ ->
@@ -280,19 +302,16 @@ work
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
-data Density graph where
-  Sparse :: Density SparseGraph.Ref
-  Dense :: Node -> Density DenseGraph.Ref
-
 fixProblem
   :: forall domain graph
    . GraphRef graph
   => Datafixable (DependencyM graph domain)
   => DataFlowProblem (DependencyM graph domain)
   -> Density graph
+  -> IterationBound domain
   -> Node
   -> Arrows (Domains domain) (CoDomain domain)
-fixProblem prob density (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
+fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")
@@ -304,6 +323,6 @@ fixProblem prob density (Node node) = currys (Proxy :: Proxy (Domains domain)) (
       let newGraphRef = case density of
             Sparse               -> SparseGraph.newRef
             Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
-      env <- initialEnv (IntArgsMonoSet.singleton node args) prob newGraphRef
+      env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
       runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE fixProblem #-}

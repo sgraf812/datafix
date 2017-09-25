@@ -2,6 +2,7 @@ module Datafix.Worklist
   ( Impl.DependencyM
   , Impl.Datafixable
   , Impl.Density (..)
+  , Impl.IterationBound (..)
   , Impl.fixProblem
   ) where
 

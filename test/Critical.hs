@@ -7,7 +7,8 @@ module Critical (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
-import           Datafix.Worklist (Density (..), fixProblem)
+import           Datafix.Worklist (Density (..), IterationBound (..),
+                                   fixProblem)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,8 +19,8 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
-fixLoop density n = fixProblem loopProblem (density (Node 0)) (Node n)
-fixDoubleDependency density n = fixProblem doubleDependencyProblem (density (Node 1)) (Node n)
+fixLoop density n = fixProblem loopProblem (density (Node 0)) NeverAbort (Node n)
+fixDoubleDependency density n = fixProblem doubleDependencyProblem (density (Node 1)) NeverAbort (Node n)
 
 tests :: [TestTree]
 tests =

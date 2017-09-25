@@ -7,7 +7,8 @@ module Trivial (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
-import           Datafix.Worklist (Density (..), fixProblem)
+import           Datafix.Worklist (Density (..), IterationBound (..),
+                                   fixProblem)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,9 +19,9 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
-fixFib density n = fixProblem fibProblem (density (Node n)) (Node n)
-fixFac density n = fixProblem facProblem (density (Node n)) (Node n)
-fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 2)) (Node n)
+fixFib density n = fixProblem fibProblem (density (Node n)) NeverAbort (Node n)
+fixFac density n = fixProblem facProblem (density (Node n)) NeverAbort (Node n)
+fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 2)) NeverAbort (Node n)
 
 tests :: [TestTree]
 tests =
@@ -42,6 +43,9 @@ tests =
       , testGroup "Dense"
           [ testCase "stabilizes mutual recursive nodes" (fixMutualRecursive Dense 1 @?= 10)
           , testCase "stabilizes all nodes" (fixMutualRecursive Dense 2 @?= 10)
+          ]
+      , testGroup "Abortion"
+          [ testCase "aborts after 5 updates with value 42" (fixProblem mutualRecursiveProblem Sparse (AbortAfter 5 (const 42)) (Node 1) @?= 42)
           ]
       ]
   ]
