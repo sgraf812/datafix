@@ -1,6 +1,4 @@
-{-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE TypeFamilies         #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Datafix.Worklist.Graph.Sparse where
 
@@ -44,16 +42,20 @@ instance GraphRef Ref where
       modify' (IntArgsMonoMap.adjust deleteReferrer depNode depArgs)
     return oldInfo
   {-# INLINE clearReferences #-}
+
   updateNodeValue node args val = fromState $ do
     let updater _ _ ni = Just ni { value = Just val }
     oldInfo <- fromMaybe (error "There should be an entry when this is called") <$>
       state (IntArgsMonoMap.updateLookupWithKey updater node args)
     return oldInfo { value = Just val }
   {-# INLINE updateNodeValue #-}
+
   addReference node args depNode depArgs = fromState $ do
     let adjustReferences ni = ni { references = IntArgsMonoSet.insert depNode depArgs (references ni) }
     modify' (IntArgsMonoMap.adjust adjustReferences node args)
     let adjustReferrers ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
     modify' (IntArgsMonoMap.adjust adjustReferrers depNode depArgs)
   {-# INLINE addReference #-}
+
   lookup node args = fromState $ IntArgsMonoMap.lookup node args <$> get
+  {-# INLINE lookup #-}

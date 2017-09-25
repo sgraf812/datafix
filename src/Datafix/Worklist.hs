@@ -1,6 +1,7 @@
 module Datafix.Worklist
   ( Impl.DependencyM
   , Impl.Datafixable
+  , Impl.Density (..)
   , Impl.fixProblem
   ) where
 

@@ -7,7 +7,7 @@ module Critical (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
-import           Datafix.Worklist (fixProblem)
+import           Datafix.Worklist (Density (..), fixProblem)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,13 +18,26 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
+fixLoop density n = fixProblem loopProblem (density (Node 0)) (Node n)
+fixDoubleDependency density n = fixProblem doubleDependencyProblem (density (Node 1)) (Node n)
+
 tests :: [TestTree]
 tests =
   [ testGroup "One node with loop"
-      [ testCase "stabilises at 10" (fixProblem loopProblem (Node 0) @?= 10)
+      [ testGroup "Sparse"
+          [ testCase "stabilises at 10" (fixLoop (const Sparse) 0 @?= 10)
+          ]
+      , testGroup "Dense"
+          [ testCase "stabilises at 10" (fixLoop Dense 0 @?= 10)
+          ]
       ]
   , testGroup "One node with double dependency on node with loop"
-      [ testCase "stabilizes at 4" (fixProblem doubleDependencyProblem (Node 0) @?= 4)
+      [ testGroup "Sparse"
+          [ testCase "stabilizes at 4" (fixDoubleDependency (const Sparse) 0 @?= 4)
+          ]
+      , testGroup "Dense"
+          [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
+          ]
       ]
   ]
 

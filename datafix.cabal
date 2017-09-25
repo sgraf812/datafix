@@ -40,11 +40,13 @@ library
                      Datafix.Utils.TypeLevel
                      Datafix.Worklist
                      Datafix.Worklist.Graph
+                     Datafix.Worklist.Graph.Dense
                      Datafix.Worklist.Graph.Sparse
                      Datafix.Worklist.Internal
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
+                   , vector
                    , pomaps
   if flag(use-lattices)
     build-depends:   lattices < 2

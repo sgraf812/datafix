@@ -7,7 +7,7 @@ module Trivial (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
-import           Datafix.Worklist (fixProblem)
+import           Datafix.Worklist (Density (..), fixProblem)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -18,15 +18,31 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
+fixFib density n = fixProblem fibProblem (density (Node n)) (Node n)
+fixFac density n = fixProblem facProblem (density (Node n)) (Node n)
+fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 2)) (Node n)
+
 tests :: [TestTree]
 tests =
   [ testGroup "Memoization"
-      [ testCase "fibonacci 10" (fixProblem fibProblem (Node 10) @?= fib 10)
-      , testCase "factorial 100" (fixProblem facProblem (Node 100) @?= fac 100)
+      [ testGroup "Sparse"
+          [ testCase "fibonacci 10" (fixFib (const Sparse) 10 @?= fib 10)
+          , testCase "factorial 100" (fixFac (const Sparse) 100 @?= fac 100)
+          ]
+      , testGroup "Dense"
+          [ testCase "fibonacci 10" (fixFib Dense 10 @?= fib 10)
+          , testCase "factorial 100" (fixFac Dense 100 @?= fac 100)
+          ]
       ]
   , testGroup "mutual recursion"
-      [ testCase "stabilizes mutual recursive nodes" (fixProblem mutualRecursiveProblem (Node 1) @?= 10)
-      , testCase "stabilizes all nodes" (fixProblem mutualRecursiveProblem (Node 2) @?= 10)
+      [ testGroup "Sparse"
+          [ testCase "stabilizes mutual recursive nodes" (fixMutualRecursive (const Sparse) 1 @?= 10)
+          , testCase "stabilizes all nodes" (fixMutualRecursive (const Sparse) 2 @?= 10)
+          ]
+      , testGroup "Dense"
+          [ testCase "stabilizes mutual recursive nodes" (fixMutualRecursive Dense 1 @?= 10)
+          , testCase "stabilizes all nodes" (fixMutualRecursive Dense 2 @?= 10)
+          ]
       ]
   ]
 

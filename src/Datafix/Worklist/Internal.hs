@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -24,21 +25,22 @@ import           Datafix.IntArgsMonoSet        (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet        as IntArgsMonoSet
 import           Datafix.MonoMap               (MonoMapKey)
 import           Datafix.Utils.TypeLevel
-import           Datafix.Worklist.Graph        (NodeInfo (..))
+import           Datafix.Worklist.Graph        (GraphRef, NodeInfo (..))
 import qualified Datafix.Worklist.Graph        as Graph
+import qualified Datafix.Worklist.Graph.Dense  as DenseGraph
 import qualified Datafix.Worklist.Graph.Sparse as SparseGraph
 import           System.IO.Unsafe              (unsafePerformIO)
 
-newtype DependencyM domain a
-  = DM (ReaderT (Env domain) IO a)
+newtype DependencyM graph domain a
+  = DM (ReaderT (Env graph domain) IO a)
   -- ^ Why does this use 'IO'? Actually, we only need `IO` here, but that
   -- means we have to carry around the state thread in type signatures.
   --
   -- This ultimately leaks badly into the exported interface in 'fixProblem':
   -- Since we can't have universally quantified instance contexts (yet!), we can' write
-  -- @(forall s. Datafixable (DependencyM domain)) => (forall s. DataFlowProblem (DependencyM domain)) -> ...@
+  -- @(forall s. Datafixable (DependencyM graph domain)) => (forall s. DataFlowProblem (DependencyM graph domain)) -> ...@
   -- and have to instead have the isomorphic
-  -- @(forall s r. (Datafixable (DependencyM domain) => r) -> r) -> (forall s. DataFlowProblem (DependencyM domain)) -> ...@
+  -- @(forall s r. (Datafixable (DependencyM graph domain) => r) -> r) -> (forall s. DataFlowProblem (DependencyM graph domain)) -> ...@
   -- and urge all call sites to pass a meaningless 'id' parameter.
   --
   -- Also, this means more explicit type signatures as we have to make clear to
@@ -50,9 +52,9 @@ newtype DependencyM domain a
   -- must never be an instance of 'MonadIO' for this.
   deriving (Functor, Applicative, Monad)
 
-data Env domain
+data Env graph domain
   = Env
-  { problem   :: !(DataFlowProblem (DependencyM domain))
+  { problem   :: !(DataFlowProblem (DependencyM graph domain))
   -- ^ Constant.
   -- The specification of the data-flow problem we ought to solve.
   , callStack :: !(IntArgsMonoSet (Products (Domains domain)))
@@ -61,8 +63,8 @@ data Env domain
   , current   :: !(Maybe (Int, Products (Domains domain)))
   -- ^ Contextual state.
   -- The specific point in the 'domain' of a 'Node' we currently 'recompute'.
-  , graph     :: !(SparseGraph.Ref domain)
-  -- ^ Constant (but the the wrapped graph is stateful).
+  , graph     :: !(graph domain)
+  -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
   , unstable  :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
@@ -71,12 +73,14 @@ data Env domain
   }
 
 initialEnv
-  :: IntArgsMonoSet (Products (Domains domain))
-  -> DataFlowProblem (DependencyM domain)
-  -> IO (Env domain)
-initialEnv unstable_ fw =
+  :: GraphRef graph
+  => IntArgsMonoSet (Products (Domains domain))
+  -> DataFlowProblem (DependencyM graph domain)
+  -> IO (graph domain)
+  -> IO (Env graph domain)
+initialEnv unstable_ fw newGraphRef =
   Env fw IntArgsMonoSet.empty Nothing
-    <$> SparseGraph.newRef
+    <$> newGraphRef
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
@@ -88,13 +92,13 @@ type Datafixable m =
   , BoundedJoinSemiLattice (CoDomain (Domain m))
   )
 
-instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain) where
-  type Domain (DependencyM domain) = domain
+instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
+  type Domain (DependencyM graph domain) = domain
   dependOn = dependOn
 
 zoomUnstable
   :: State (IntArgsMonoSet (Products (Domains domain))) a
-  -> ReaderT (Env domain) IO a
+  -> ReaderT (Env graph domain) IO a
 zoomUnstable modifyUnstable = do
   ref <- asks unstable
   uns <- lift $ readIORef ref
@@ -106,31 +110,31 @@ zoomUnstable modifyUnstable = do
 enqueueUnstable
   :: k ~ Products (Domains domain)
   => MonoMapKey k
-  => Int -> k -> ReaderT (Env domain) IO ()
+  => Int -> k -> ReaderT (Env graph domain) IO ()
 enqueueUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.insert i k))
 {-# INLINE enqueueUnstable #-}
 
 deleteUnstable
   :: k ~ Products (Domains domain)
   => MonoMapKey k
-  => Int -> k -> ReaderT (Env domain) IO ()
+  => Int -> k -> ReaderT (Env graph domain) IO ()
 deleteUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.delete i k))
 {-# INLINE deleteUnstable #-}
 
 highestPriorityUnstableNode
   :: k ~ Products (Domains domain)
   => MonoMapKey k
-  => ReaderT (Env domain) IO (Maybe (Int, k))
+  => ReaderT (Env graph domain) IO (Maybe (Int, k))
 highestPriorityUnstableNode = zoomUnstable $
   listToMaybe . IntArgsMonoSet.highestPriorityNodes <$> get
 {-# INLINE highestPriorityUnstableNode #-}
 
 withCall
-  :: Datafixable (DependencyM domain)
+  :: Datafixable (DependencyM graph domain)
   => Int
   -> Products (Domains domain)
-  -> ReaderT (Env domain) IO a
-  -> ReaderT (Env domain) IO a
+  -> ReaderT (Env graph domain) IO a
+  -> ReaderT (Env graph domain) IO a
 withCall node args = local $ \env -> env
   { callStack = IntArgsMonoSet.insert node args (callStack env)
   , current = Just (node, args)
@@ -138,17 +142,18 @@ withCall node args = local $ \env -> env
 {-# INLINE withCall #-}
 
 recompute
-  :: forall domain dom cod
+  :: forall domain graph dom cod
    . dom ~ Domains domain
   => cod ~ CoDomain domain
-  => Datafixable (DependencyM domain)
-  => Int -> Products dom -> ReaderT (Env domain) IO cod
+  => GraphRef graph
+  => Datafixable (DependencyM graph domain)
+  => Int -> Products dom -> ReaderT (Env graph domain) IO cod
 recompute node args = withCall node args $ do
   deleteUnstable node args
   maybeOldVal <- value <$> withReaderT graph (Graph.clearReferences node args)
   prob <- asks problem
   let dom = Proxy :: Proxy dom
-  let depm = Proxy :: Proxy (DependencyM domain cod)
+  let depm = Proxy :: Proxy (DependencyM graph domain cod)
   let eq = Proxy :: Proxy (cod -> cod -> Bool)
   let node' = Node node
   let DM iterate' = uncurrys dom depm (transfer prob node') args
@@ -164,13 +169,14 @@ recompute node args = withCall node args $ do
 {-# INLINE recompute #-}
 
 dependOn
-  :: forall domain
-   . Datafixable (DependencyM domain)
-  => Proxy (DependencyM domain) -> Node -> TransferFunction (DependencyM domain) domain
+  :: forall domain graph
+   . Datafixable (DependencyM graph domain)
+  => GraphRef graph
+  => Proxy (DependencyM graph domain) -> Node -> TransferFunction (DependencyM graph domain) domain
 dependOn _ (Node node) = currys dom cod impl
   where
     dom = Proxy :: Proxy (Domains domain)
-    cod = Proxy :: Proxy (DependencyM domain (CoDomain domain))
+    cod = Proxy :: Proxy (DependencyM graph domain (CoDomain domain))
     impl args = DM $ do
       cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
       isStable <- zoomUnstable $
@@ -202,11 +208,12 @@ dependOn _ (Node node) = currys dom cod impl
 {-# INLINE dependOn #-}
 
 scheme1, scheme2, scheme3
-  :: Datafixable (DependencyM domain)
+  :: GraphRef graph
+  => Datafixable (DependencyM graph domain)
   => Maybe (CoDomain domain)
   -> Int
   -> Products (Domains domain)
-  -> ReaderT (Env domain) IO (CoDomain domain)
+  -> ReaderT (Env graph domain) IO (CoDomain domain)
 {-# INLINE scheme1 #-}
 {-# INLINE scheme2 #-}
 {-# INLINE scheme3 #-}
@@ -246,17 +253,26 @@ whileJust_ cond action = go
       Just a  -> action a >> go
 {-# INLINE whileJust_ #-}
 
-work :: Datafixable (DependencyM domain) => ReaderT (Env domain) IO ()
+work
+  :: GraphRef graph
+  => Datafixable (DependencyM graph domain)
+  => ReaderT (Env graph domain) IO ()
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
+data Density graph where
+  Sparse :: Density SparseGraph.Ref
+  Dense :: Node -> Density DenseGraph.Ref
+
 fixProblem
-  :: forall domain
-   . Datafixable (DependencyM domain)
-  => DataFlowProblem (DependencyM domain)
+  :: forall domain graph
+   . GraphRef graph
+  => Datafixable (DependencyM graph domain)
+  => DataFlowProblem (DependencyM graph domain)
+  -> Density graph
   -> Node
   -> Arrows (Domains domain) (CoDomain domain)
-fixProblem prob (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
+fixProblem prob density (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")
@@ -265,6 +281,9 @@ fixProblem prob (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy ::
     runProblem args = unsafePerformIO $ do
       -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
       -- of 'DependencyM' for why we 'unsafePerformIO'.
-      env <- initialEnv (IntArgsMonoSet.singleton node args) prob
+      let newGraphRef = case density of
+            Sparse               -> SparseGraph.newRef
+            Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
+      env <- initialEnv (IntArgsMonoSet.singleton node args) prob newGraphRef
       runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE fixProblem #-}
