@@ -54,8 +54,8 @@ instance MonoMapKey Arity where
   insert (Arity n) v (ArityMap m) = ArityMap (IntMap.insert n v m)
   delete (Arity n) (ArityMap m) = ArityMap (IntMap.delete n m)
   lookup (Arity n) (ArityMap m) = IntMap.lookup n m
-  -- using GE here!
-  lookupLE (Arity n) (ArityMap m) = coerce (maybeToList (IntMap.lookupGE n m))
+  -- using GT here!
+  lookupLT (Arity n) (ArityMap m) = coerce (maybeToList (IntMap.lookupGT n m))
   -- maxview!
   lookupMin (ArityMap m) = coerce (maybeToList (fst <$> IntMap.maxViewWithKey m))
   difference (ArityMap a) (ArityMap b) = ArityMap (IntMap.difference a b)

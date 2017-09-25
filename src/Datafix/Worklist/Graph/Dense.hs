@@ -58,3 +58,7 @@ instance GraphRef Ref where
   lookup node args = ReaderT $ \(Ref graph) ->
     MonoMap.lookup args <$> V.read graph node
   {-# INLINE lookup #-}
+
+  lookupLT node args = ReaderT $ \(Ref graph) ->
+    MonoMap.lookupLT args <$> V.read graph node
+  {-# INLINE lookupLT #-}

@@ -62,10 +62,10 @@ keys (Map m) = IntMap.foldrWithKey f [] m
 insertLookupWithKey
   :: MonoMapKey k
   => (Int -> k -> v -> v -> v)
-  -> Int 
-  -> k 
+  -> Int
+  -> k
   -> v
-  -> IntArgsMonoMap k v 
+  -> IntArgsMonoMap k v
   -> (Maybe v, IntArgsMonoMap k v)
 insertLookupWithKey f i k v (Map m) = coerce (IntMap.alterF alterMonoMap i m)
   where
@@ -75,14 +75,17 @@ insertLookupWithKey f i k v (Map m) = coerce (IntMap.alterF alterMonoMap i m)
 updateLookupWithKey
   :: MonoMapKey k
   => (Int -> k -> v -> Maybe v)
-  -> Int 
+  -> Int
   -> k
-  -> IntArgsMonoMap k v 
+  -> IntArgsMonoMap k v
   -> (Maybe v, IntArgsMonoMap k v)
 updateLookupWithKey f i k (Map m) = coerce (IntMap.alterF alterMonoMap i m)
   where
     alterMonoMap Nothing        = (Nothing, Nothing)
     alterMonoMap (Just monoMap) = nothingIfEmpty <$> MonoMap.updateLookupWithKey (f i) k monoMap
-    
+
 adjust :: MonoMapKey k => (v -> v) -> Int -> k -> IntArgsMonoMap k v -> IntArgsMonoMap k v
 adjust f i k (Map m) = Map (IntMap.adjust (MonoMap.adjust f k) i m)
+
+lookupLT :: MonoMapKey k => Int -> k -> IntArgsMonoMap k v -> [(k, v)]
+lookupLT i k (Map m) = maybe [] (MonoMap.lookupLT k) (IntMap.lookup i m)

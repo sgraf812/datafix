@@ -59,3 +59,6 @@ instance GraphRef Ref where
 
   lookup node args = fromState $ IntArgsMonoMap.lookup node args <$> get
   {-# INLINE lookup #-}
+
+  lookupLT node args = fromState $ IntArgsMonoMap.lookupLT node args <$> get
+  {-# INLINE lookupLT #-}

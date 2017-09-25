@@ -33,9 +33,9 @@ class Foldable (MonoMap k) => MonoMapKey k where
   lookup :: k -> MonoMap k v -> Maybe v
   default lookup :: (MonoMap k v ~ POMap k v, PartialOrd k) => k -> MonoMap k v -> Maybe v
   lookup = POMap.lookup
-  lookupLE :: k -> MonoMap k v -> [(k, v)]
-  default lookupLE :: (MonoMap k v ~ POMap k v, PartialOrd k) => k -> MonoMap k v -> [(k, v)]
-  lookupLE = POMap.lookupLE
+  lookupLT :: k -> MonoMap k v -> [(k, v)]
+  default lookupLT :: (MonoMap k v ~ POMap k v, PartialOrd k) => k -> MonoMap k v -> [(k, v)]
+  lookupLT = POMap.lookupLT
   lookupMin :: MonoMap k v -> [(k, v)]
   default lookupMin :: (MonoMap k v ~ POMap k v, PartialOrd k) => MonoMap k v -> [(k, v)]
   lookupMin = POMap.lookupMin
@@ -65,8 +65,8 @@ instance MonoMapKey () where
   insert _ v _ = Just v
   delete _ _ = Nothing
   lookup _ m = m
-  lookupLE _ = fmap ((,) ()) . maybeToList
-  lookupMin = lookupLE ()
+  lookupLT _ = fmap ((,) ()) . maybeToList
+  lookupMin = lookupLT ()
   difference _ (Just _) = Nothing
   difference a _        = a
   keys _ = [()]
@@ -84,7 +84,7 @@ instance MonoMapKey Int where
   insert = IntMap.insert
   delete = IntMap.delete
   lookup = IntMap.lookup
-  lookupLE k = maybeToList . IntMap.lookupLE k
+  lookupLT k = maybeToList . IntMap.lookupLT k
   lookupMin = maybeToList . fmap fst . IntMap.minViewWithKey
   difference = IntMap.difference
   keys = IntMap.keys

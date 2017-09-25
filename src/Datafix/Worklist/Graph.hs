@@ -32,4 +32,5 @@ class GraphRef (ref :: * -> *) where
    clearReferences :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO (NodeInfo domain)
    updateNodeValue :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> CoDomain domain -> ReaderT (ref domain) IO (NodeInfo domain)
    addReference :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> Int -> Products (Domains domain) -> ReaderT (ref domain) IO ()
-   lookup  :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO (Maybe (NodeInfo domain))
+   lookup :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO (Maybe (NodeInfo domain))
+   lookupLT :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO [(Products (Domains domain), NodeInfo domain)]

@@ -17,7 +17,8 @@ import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State
 import           Data.IORef
-import           Data.Maybe                    (fromMaybe, listToMaybe)
+import           Data.Maybe                    (fromMaybe, listToMaybe,
+                                                mapMaybe)
 import           Data.Proxy                    (Proxy (..))
 import           Datafix                       hiding (dependOn)
 import qualified Datafix
@@ -189,10 +190,11 @@ dependOn _ (Node node) = currys dom cod impl
           -- have a 'value' assigned or will not have been discovered at all.
           Nothing | cycleDetected ->
             -- Somewhere in an outer activation record we already compute this one.
-            -- We don't recurse again and just return 'bottom'.
+            -- We don't recurse again and just return an optimistic approximation,
+            -- such as 'bottom'.
             -- Otherwise, 'recompute' will immediately add a 'NodeInfo' before
             -- any calls to 'dependOn' for a cycle to even be possible.
-            return bottom
+            optimisticApproximation node args
           Just val | isStable || cycleDetected ->
             -- No brainer
             return val
@@ -206,6 +208,24 @@ dependOn _ (Node node) = currys dom cod impl
       withReaderT graph (Graph.addReference curNode curArgs node args)
       return val
 {-# INLINE dependOn #-}
+
+-- | Compute an optimistic approximation for a point of a given node that is
+-- as precise as possible, given the other points of that node we already
+-- computed.
+--
+-- E.g., it is always valid to return 'bottom' from this, but in many cases
+-- we can be more precise since we possibly have computed points for the node
+-- that are lower bounds to the current point.
+optimisticApproximation
+  :: GraphRef graph
+  => Datafixable (DependencyM graph domain)
+  => Int -> Products (Domains domain) -> ReaderT (Env graph domain) IO (CoDomain domain)
+optimisticApproximation node args = do
+  points <- withReaderT graph (Graph.lookupLT node args)
+  -- Note that 'points' might contain 'NodeInfo's that have no 'value'.
+  -- It's OK to filter these out: At worst, the approximation will be
+  -- more optimistic than necessary.
+  return (joins (mapMaybe (value . snd) points))
 
 scheme1, scheme2, scheme3
   :: GraphRef graph
@@ -221,7 +241,7 @@ scheme1, scheme2, scheme3
 -- | scheme 1 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
 --
 -- Let the worklist algorithm figure things out.
-scheme1 _ _ _ = return bottom
+scheme1 _ = optimisticApproximation
 
 -- | scheme 2 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
 --
