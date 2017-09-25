@@ -39,11 +39,12 @@ instance GraphRef Ref where
 
   updateNodeValue node args val = ReaderT $ \(Ref graph) -> do
     points <- V.read graph node
-    let updater _ ni = Just ni { value = Just val }
+    let update ni = ni { value = Just val, iterations = iterations ni + 1 }
+    let updater _ = Just . update
     let (maybeOldInfo, points') = MonoMap.updateLookupWithKey updater args points
     V.write graph node points'
     let oldInfo = fromMaybe (error "There should be an entry when this is called") maybeOldInfo
-    return oldInfo { value = Just val }
+    return (update oldInfo)
   {-# INLINE updateNodeValue #-}
 
   addReference fromNode fromArgs toNode toArgs = ReaderT $ \(Ref graph) -> do

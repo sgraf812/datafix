@@ -14,18 +14,21 @@ import           Datafix.Utils.TypeLevel
 data NodeInfo domain
   = NodeInfo
   { value      :: !(Maybe (CoDomain domain))
-  -- ^ the value at this node. Can be 'Nothing' only when a loop was detected
+  -- ^ The value at this point. Can be 'Nothing' only when a loop was detected.
   , references :: !(IntArgsMonoSet (Products (Domains domain)))
-  -- ^ nodes this value depends on
+  -- ^ Points this value depends on.
   , referrers  :: !(IntArgsMonoSet (Products (Domains domain)))
-  -- ^ nodes depending on this value
+  -- ^ Points depending on this value.
+  , iterations :: !Int
+  -- ^ The number of times this point has been updated through calls to
+  -- 'updateNodeValue'.
   }
 
 deriving instance (Eq (CoDomain domain), Eq (IntArgsMonoSet (Products (Domains domain)))) => Eq (NodeInfo domain)
 deriving instance (Show (CoDomain domain), Show (IntArgsMonoSet (Products (Domains domain)))) => Show (NodeInfo domain)
 
 emptyNodeInfo :: NodeInfo domain
-emptyNodeInfo = NodeInfo Nothing IntArgsMonoSet.empty IntArgsMonoSet.empty
+emptyNodeInfo = NodeInfo Nothing IntArgsMonoSet.empty IntArgsMonoSet.empty 0
 {-# INLINE emptyNodeInfo #-}
 
 class GraphRef (ref :: * -> *) where

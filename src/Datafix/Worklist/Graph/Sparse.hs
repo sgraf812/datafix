@@ -44,10 +44,11 @@ instance GraphRef Ref where
   {-# INLINE clearReferences #-}
 
   updateNodeValue node args val = fromState $ do
-    let updater _ _ ni = Just ni { value = Just val }
+    let update ni = ni { value = Just val, iterations = iterations ni + 1 }
+    let updater _ _ = Just . update
     oldInfo <- fromMaybe (error "There should be an entry when this is called") <$>
       state (IntArgsMonoMap.updateLookupWithKey updater node args)
-    return oldInfo { value = Just val }
+    return (update oldInfo)
   {-# INLINE updateNodeValue #-}
 
   addReference node args depNode depArgs = fromState $ do
