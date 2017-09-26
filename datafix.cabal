@@ -30,7 +30,7 @@ flag use-lattices
 
 library
   default-language:  Haskell2010
-  ghc-options:       -Wall -O2
+  ghc-options:       -Wall
   hs-source-dirs:    src
   exposed-modules:   Datafix
                      Datafix.MonoMap
@@ -57,18 +57,22 @@ library
 test-suite datafix-test
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
-  ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs:    test
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs:    test examples
   main-is:           Main.hs
-  other-modules:     Analyses.StrAnal.Analysis
+  other-modules:     Analyses.StrAnal
+                     Analyses.StrAnal.Analysis
                      Analyses.StrAnal.Arity
                      Analyses.StrAnal.Strictness
                      Analyses.Syntax.CoreSynF
                      Analyses.Syntax.MkCoreHelpers
                      Analyses.Templates.LetDn
-                     Analyses.Tests.StrAnal
+                     Fib
+                     Fac
+                     Mutual
                      Critical
                      Trivial
+                     StrAnal
   build-depends:     base >= 4.8 && < 5
                    , tasty >= 0.11
                    , tasty-hunit >= 0.9
@@ -82,7 +86,7 @@ test-suite datafix-test
 test-suite datafix-doctest
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
-  ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs:    doctest
   main-is:           Main.hs
   build-depends:     base >= 4.8 && < 5
@@ -95,8 +99,13 @@ benchmark datafix-benchmark
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs:    benchmark
+  hs-source-dirs:    benchmark examples
   main-is:           Main.hs
+  other-modules:     Sum
   build-depends:     base >= 4.8 && < 5
                    , criterion >= 1.1
-                   , datafix
+                   , containers
+                   , transformers < 0.6
+                   , datafix                   
+                   , ghc
+                   , lattices < 2

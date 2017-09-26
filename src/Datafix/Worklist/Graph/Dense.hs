@@ -22,18 +22,21 @@ newtype Ref domain =
 newRef :: MonoMapKey (Products (Domains domain)) => Int -> IO (Ref domain)
 newRef size = Ref <$> V.replicate size MonoMap.empty
 
+seqWrite :: IOVector v -> Int -> v -> IO ()
+seqWrite arr i v = seq v (V.write arr i v)
+
 instance GraphRef Ref where
   clearReferences node args = ReaderT $ \(Ref graph) -> do
     points <- V.read graph node
     let merger _ _ old = old { references = IntArgsMonoSet.empty }
     let (maybeOldInfo, points') = MonoMap.insertLookupWithKey merger args emptyNodeInfo points
     let oldInfo = fromMaybe emptyNodeInfo maybeOldInfo
-    V.write graph node points'
+    seqWrite graph node points'
     let deleteReferrer ni =
           ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
     forM_ (IntArgsMonoSet.toList (references oldInfo)) $ \(depNode, depArgs) -> do
       depPoints <- V.read graph depNode
-      V.write graph depNode (MonoMap.adjust deleteReferrer depArgs depPoints)
+      seqWrite graph depNode (MonoMap.adjust deleteReferrer depArgs depPoints)
     return oldInfo
   {-# INLINE clearReferences #-}
 
@@ -42,7 +45,7 @@ instance GraphRef Ref where
     let update ni = ni { value = Just val, iterations = iterations ni + 1 }
     let updater _ = Just . update
     let (maybeOldInfo, points') = MonoMap.updateLookupWithKey updater args points
-    V.write graph node points'
+    seqWrite graph node points'
     let oldInfo = fromMaybe (error "There should be an entry when this is called") maybeOldInfo
     return (update oldInfo)
   {-# INLINE updateNodeValue #-}
@@ -50,10 +53,10 @@ instance GraphRef Ref where
   addReference fromNode fromArgs toNode toArgs = ReaderT $ \(Ref graph) -> do
     fromPoints <- V.read graph fromNode
     let adjustReferences ni = ni { references = IntArgsMonoSet.insert toNode toArgs (references ni) }
-    V.write graph fromNode (MonoMap.adjust adjustReferences fromArgs fromPoints)
+    seqWrite graph fromNode (MonoMap.adjust adjustReferences fromArgs fromPoints)
     toPoints <- V.read graph toNode
     let adjustReferrers ni = ni { referrers = IntArgsMonoSet.insert fromNode fromArgs (referrers ni) }
-    V.write graph toNode (MonoMap.adjust adjustReferrers toArgs toPoints)
+    seqWrite graph toNode (MonoMap.adjust adjustReferrers toArgs toPoints)
   {-# INLINE addReference #-}
 
   lookup node args = ReaderT $ \(Ref graph) ->

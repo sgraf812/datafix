@@ -13,6 +13,10 @@ import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
+import           Fac
+import           Fib
+import           Mutual
+
 instance JoinSemiLattice Natural where
   (\/) = max
 
@@ -21,7 +25,7 @@ instance BoundedJoinSemiLattice Natural where
 
 fixFib density n = fixProblem fibProblem (density (Node n)) NeverAbort (Node n)
 fixFac density n = fixProblem facProblem (density (Node n)) NeverAbort (Node n)
-fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 2)) NeverAbort (Node n)
+fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 1)) NeverAbort (Node n)
 
 tests :: [TestTree]
 tests =
@@ -37,63 +41,15 @@ tests =
       ]
   , testGroup "mutual recursion"
       [ testGroup "Sparse"
-          [ testCase "stabilizes mutual recursive nodes" (fixMutualRecursive (const Sparse) 1 @?= 10)
-          , testCase "stabilizes all nodes" (fixMutualRecursive (const Sparse) 2 @?= 10)
+          [ testCase "first node is stable" (fixMutualRecursive (const Sparse) 0 @?= 11)
+          , testCase "second node is stable" (fixMutualRecursive (const Sparse) 1 @?= 10)
           ]
       , testGroup "Dense"
-          [ testCase "stabilizes mutual recursive nodes" (fixMutualRecursive Dense 1 @?= 10)
-          , testCase "stabilizes all nodes" (fixMutualRecursive Dense 2 @?= 10)
+          [ testCase "first node is stable" (fixMutualRecursive Dense 0 @?= 11)
+          , testCase "second node is stable" (fixMutualRecursive Dense 1 @?= 10)
           ]
       , testGroup "Abortion"
           [ testCase "aborts after 5 updates with value 42" (fixProblem mutualRecursiveProblem Sparse (AbortAfter 5 (const 42)) (Node 1) @?= 42)
           ]
       ]
   ]
-
-fibProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-fibProblem = DFP transfer (const (eqChangeDetector p))
-  where
-    p :: Proxy m
-    p = Proxy
-    transfer :: Node -> TransferFunction m Natural
-    transfer (Node 0) = return 0
-    transfer (Node 1) = return 1
-    transfer (Node n) = do
-      a <- dependOn p (Node (n-1))
-      b <- dependOn p (Node (n-2))
-      return (a + b)
-
-fib :: Int -> Natural
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n-1) + fib (n-2)
-
-facProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-facProblem = DFP transfer (const (eqChangeDetector p))
-  where
-    p :: Proxy m
-    p = Proxy
-    transfer :: Node -> TransferFunction m Natural
-    transfer (Node 0) = return 1
-    transfer (Node 1) = return 1
-    transfer (Node n) = do
-      a <- dependOn p (Node (n-1))
-      return (fromIntegral n * a)
-
-fac :: Int -> Natural
-fac n = product [1..fromIntegral n]
-
-mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-mutualRecursiveProblem = DFP transfer (const (eqChangeDetector p))
-  where
-    p :: Proxy m
-    p = Proxy
-    transfer :: Node -> TransferFunction m Natural
-    transfer (Node 0) = do
-      b <- dependOn p (Node 1)
-      return (b + 1)
-    transfer (Node 1) = do
-      a <- dependOn p (Node 0)
-      return (min 10 a) -- So the overall fixpoint of this is 10
-    transfer (Node 2) = dependOn p (Node 1)
-    transfer _ = return 0

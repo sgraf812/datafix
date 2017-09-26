@@ -1,6 +1,6 @@
-module Analyses.Tests.StrAnal where
+module StrAnal where
 
-import           Analyses.StrAnal.Analysis
+import qualified Analyses.StrAnal              as StrAnal
 import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.MkCoreHelpers
 
@@ -37,7 +37,7 @@ example1 =
     (var f $$ boolLit False $$ intLit 1)
 
 anns1 :: Annotations
-anns1 = annotations (analyse example1)
+anns1 = annotations (StrAnal.analyse example1)
 
 -- | @
 -- let f b =
@@ -57,7 +57,7 @@ example2 =
 
 ty2 :: StrType
 anns2 :: Annotations
-StrLattice (ty2, anns2) = analyse example2
+StrLattice (ty2, anns2) = StrAnal.analyse example2
 
 -- | @
 -- let f b =
@@ -77,7 +77,7 @@ example3 =
 
 ty3 :: StrType
 anns3 :: Annotations
-StrLattice (ty3, anns3) = analyse example3
+StrLattice (ty3, anns3) = StrAnal.analyse example3
 
 -- | @
 -- let f b =
@@ -96,7 +96,7 @@ example4 =
     (var f $$ boolLit False $$ intLit 1)
 
 ty4 :: StrType
-StrLattice (ty4, _) = analyse example4
+StrLattice (ty4, _) = StrAnal.analyse example4
 
 -- | @
 -- let f b =
@@ -115,7 +115,7 @@ example5 =
     (var f $$ boolLit False $$ intLit 1)
 
 ty5 :: StrType
-StrLattice (ty5, _) = analyse example5
+StrLattice (ty5, _) = StrAnal.analyse example5
 
 
 -- | @
@@ -135,7 +135,7 @@ example6 =
     (var f $$ boolLit False $$ intLit 1)
 
 anns6 :: Annotations
-StrLattice (_, anns6) = analyse example6
+StrLattice (_, anns6) = StrAnal.analyse example6
 
 tests :: [TestTree]
 tests =

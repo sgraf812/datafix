@@ -1,9 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications    #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
 
-module Analyses.StrAnal.Analysis (analyse) where
+module Analyses.StrAnal.Analysis where
 
 import           Algebra.Lattice
 import           Analyses.StrAnal.Arity

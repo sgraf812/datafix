@@ -39,6 +39,9 @@ tests =
       , testGroup "Dense"
           [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
           ]
+      , testGroup "Abortion"
+          [ testCase "stabilizes at (1+1)*1000" (fixProblem doubleDependencyProblem Sparse (AbortAfter 1 (*1000)) (Node 0) @?= 2000)
+          ]
       ]
   ]
 
