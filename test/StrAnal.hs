@@ -1,5 +1,6 @@
 module StrAnal where
 
+import qualified Analyses.AdHocStrAnal         as AdHocStrAnal
 import qualified Analyses.StrAnal              as StrAnal
 import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.MkCoreHelpers

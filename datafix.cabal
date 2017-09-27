@@ -60,7 +60,8 @@ test-suite datafix-test
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs:    test examples
   main-is:           Main.hs
-  other-modules:     Analyses.StrAnal
+  other-modules:     Analyses.AdHocStrAnal
+                     Analyses.StrAnal
                      Analyses.StrAnal.Analysis
                      Analyses.StrAnal.Arity
                      Analyses.StrAnal.Strictness
@@ -102,6 +103,14 @@ benchmark datafix-benchmark
   hs-source-dirs:    benchmark examples
   main-is:           Main.hs
   other-modules:     Sum
+                     Analyses.AdHocStrAnal
+                     Analyses.StrAnal
+                     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Arity
+                     Analyses.StrAnal.Strictness
+                     Analyses.Syntax.CoreSynF
+                     Analyses.Syntax.MkCoreHelpers
+                     Analyses.Templates.LetDn
   build-depends:     base >= 4.8 && < 5
                    , criterion >= 1.1
                    , containers
