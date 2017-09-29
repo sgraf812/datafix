@@ -1,17 +1,25 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
-module Datafix.NodeAllocator where
+module Datafix.NodeAllocator
+  ( NodeAllocator
+  , allocateNode
+  , runAllocator
+  ) where
 
 import           Control.Monad.Fix                (mfix)
+import           Control.Monad.Primitive
+import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.State.Strict
-import           Data.IntMap.Lazy                 (IntMap)
-import qualified Data.IntMap.Lazy                 as IntMap
+import           Data.Primitive.Array
 import           Datafix
+import           Datafix.Utils.GrowableVector     (GrowableVector)
+import qualified Datafix.Utils.GrowableVector     as GV
+import           System.IO.Unsafe                 (unsafePerformIO)
 
 -- | A state monad wrapping a mapping from 'Node' to some 'v'
 -- which we will instantiate to appropriate 'TransferFunction's.
 newtype NodeAllocator v a
-  = NodeAllocator { unwrapNodeAllocator :: State (IntMap v) a }
+  = NodeAllocator { unwrapNodeAllocator :: StateT (GrowableVector (PrimState IO) v) IO a }
   deriving (Functor, Applicative, Monad)
 
 -- | Allocates the next 'Node', which is greater than any
@@ -23,13 +31,17 @@ newtype NodeAllocator v a
 -- let, where the denotation of an expression depends on itself.
 allocateNode :: (Node -> NodeAllocator v (a, v)) -> NodeAllocator v a
 allocateNode f = NodeAllocator $ do
-  node <- gets IntMap.size
+  node <- gets GV.length
   (result, _) <- mfix $ \ ~(_, entry) -> do
-    let overwriteError = error ("Overwriting allocated node entry " ++ show node)
-    modify' (IntMap.insertWith overwriteError node entry)
+    vec <- get
+    lift (GV.pushBack vec entry) >>= put
     unwrapNodeAllocator (f (Node node))
   return result
 
 -- | Runs the allocator, beginning with an empty mapping.
-runAllocator :: NodeAllocator v a -> (a, IntMap v)
-runAllocator (NodeAllocator alloc) = runState alloc IntMap.empty
+runAllocator :: NodeAllocator v a -> (a, Array v)
+runAllocator (NodeAllocator alloc) = unsafePerformIO $ do
+  vec <- GV.new 8
+  (a, vec') <- runStateT alloc vec
+  vec'' <- GV.freeze vec'
+  pure (a, vec'')

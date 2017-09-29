@@ -11,8 +11,7 @@ module Analyses.Templates.LetDn
   , buildProblem
   ) where
 
-import qualified Data.IntMap.Lazy         as IntMap
-import           Data.Maybe               (fromMaybe)
+import           Data.Primitive.Array     (indexArray)
 import           Data.Proxy               (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
@@ -44,9 +43,8 @@ buildProblem alg e = (root, DFP transfer changeDetector)
   where
     p = Proxy :: Proxy m
     changeDetector _ = eqChangeDetector p
-    notFoundError = error "Requested a node that wasn't present in the graph"
-    transfer (Node node) = fromMaybe notFoundError (IntMap.lookup node map_)
-    (root, map_) = runAllocator $ allocateNode $ \root_ -> do
+    transfer (Node node) = indexArray arr node
+    (root, arr) = runAllocator $ allocateNode $ \root_ -> do
       transferRoot <- buildRoot p alg e
       pure (root_, transferRoot)
 {-# INLINE buildProblem #-}

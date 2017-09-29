@@ -38,6 +38,7 @@ library
                      Datafix.IntArgsMonoMap
                      Datafix.IntArgsMonoSet
                      Datafix.Utils.TypeLevel
+                     Datafix.Utils.GrowableVector
                      Datafix.Worklist
                      Datafix.Worklist.Graph
                      Datafix.Worklist.Graph.Dense
@@ -47,6 +48,7 @@ library
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
                    , vector
+                   , primitive
                    , pomaps
   if flag(use-lattices)
     build-depends:   lattices < 2
@@ -79,6 +81,7 @@ test-suite datafix-test
                    , tasty-hunit >= 0.9
                    , tasty-smallcheck >= 0.8
                    , containers
+                   , primitive
                    , transformers < 0.6
                    , datafix
                    , ghc
@@ -114,6 +117,7 @@ benchmark datafix-benchmark
   build-depends:     base >= 4.8 && < 5
                    , criterion >= 1.1
                    , containers
+                   , primitive
                    , transformers < 0.6
                    , datafix                   
                    , ghc
