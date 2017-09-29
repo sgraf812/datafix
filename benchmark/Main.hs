@@ -16,7 +16,9 @@ import           Analyses.Syntax.MkCoreHelpers
 import           Sum
 
 import           CoreSyn
+import           CoreTidy                      (tidyExpr)
 import           Id
+import           VarEnv                        (emptyTidyEnv)
 
 instance JoinSemiLattice Natural where
   (\/) = max
@@ -31,7 +33,8 @@ main :: IO ()
 main = defaultMain
   [ bgroup "sum" $ map sumGroup [100, 1000, 10000]
   , bgroup "stranal" $ map (uncurry strAnalGroup)
-      [ ("example1", example1)
+      [ ("simpleRecursive1", simpleRecursive1)
+      , ("simpleRecursive2", simpleRecursive2)
       ]
   ] where
       strAnalGroup descr e =
@@ -56,6 +59,24 @@ x, y, z, b, f :: Id
   , ("f", bool2int2int)
   ]
 
+
+-- | @
+-- let f b x =
+--       if b
+--         then f b z
+--         else z
+-- in f False 1
+-- @
+simpleRecursive1 :: CoreExpr
+simpleRecursive1 = tidyExpr emptyTidyEnv $
+  letrec
+    f (lam b $ lam x $
+        ite (var b)
+          (var f $$ var b $$ var z)
+          (var z))
+    (var f $$ boolLit False $$ intLit 1)
+
+
 -- | @
 -- let f b =
 --       if b
@@ -63,8 +84,8 @@ x, y, z, b, f :: Id
 --         else \y -> z
 -- in f False 1
 -- @
-example1 :: CoreExpr
-example1 =
+simpleRecursive2 :: CoreExpr
+simpleRecursive2 = tidyExpr emptyTidyEnv $
   letrec
     f (lam b $
         ite (var b)
