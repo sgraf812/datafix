@@ -9,7 +9,9 @@ import           Test.Tasty
 import           Test.Tasty.HUnit
 
 import           CoreSyn
+import           CoreTidy                      (tidyExpr)
 import           Id
+import           VarEnv                        (emptyTidyEnv)
 
 x, y, z, b, f, g :: Id
 [x, y, z, b, f, g] = mkTestIds
@@ -138,6 +140,23 @@ example6 =
 anns6 :: Annotations
 StrLattice (_, anns6) = StrAnal.analyse example6
 
+
+-- | @
+-- let f b x =
+--       if b
+--         then f b z
+--         else z
+-- in f False 1
+-- @
+example7 :: CoreExpr
+example7 = tidyExpr emptyTidyEnv $
+  letrec
+    f (lam b $ lam x $
+        ite (var b)
+          (var f $$ var b $$ var z)
+          (var z))
+    (var f $$ boolLit False $$ intLit 1)
+
 tests :: [TestTree]
 tests =
   [ testGroup "example1"
@@ -181,5 +200,9 @@ tests =
   , testGroup "example6"
       [ testCase "y is evaluated strictly" $
           lookupAnnotation y anns6 @?= Just (Strict 0)
+      ]
+  , testGroup "example7"
+      [ testCase "coincides with AdHocStrAnal for simple cases" $
+          StrAnal.analyse example7 @?= AdHocStrAnal.analyse example7
       ]
   ]
