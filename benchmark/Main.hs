@@ -39,9 +39,9 @@ main = defaultMain
   ] where
       strAnalGroup descr e =
         bgroup descr
-          [ bench "baseline" (whnf (strType . AdHocStrAnal.analyse) e)
-          , bench "sparse"   (whnf (strType . StrAnal.analyse) e)
-          , bench "dense"    (whnf (strType . StrAnal.analyseDense 2) e)
+          [ bench "baseline" (whnf (seqStrLattice . AdHocStrAnal.analyse) e)
+          , bench "sparse"   (whnf (seqStrLattice . StrAnal.analyse) e)
+          , bench "dense"    (whnf (seqStrLattice . StrAnal.analyseDense 2) e)
           ]
       sumGroup n =
         bgroup (show n)
@@ -49,6 +49,9 @@ main = defaultMain
           , bench "sparse"   (whnf (fixSum (const Sparse)) n)
           , bench "dense"    (whnf (fixSum Dense) n)
           ]
+
+seqStrLattice :: StrLattice -> ()
+seqStrLattice l = strType l `seq` annotations l `seq` ()
 
 x, y, z, b, f :: Id
 [x, y, z, b, f] = mkTestIds
