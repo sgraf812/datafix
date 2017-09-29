@@ -30,7 +30,7 @@ fixSum density n = fixProblem sumProblem (density (Node n)) NeverAbort (Node n)
 main :: IO ()
 main = defaultMain
   [ bgroup "sum" $ map sumGroup [100, 1000, 10000]
-  , bgroup "Strictness Analysis" $ map (uncurry strAnalGroup)
+  , bgroup "stranal" $ map (uncurry strAnalGroup)
       [ ("example1", example1)
       ]
   ] where

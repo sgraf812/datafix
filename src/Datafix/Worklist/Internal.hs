@@ -101,6 +101,7 @@ type Datafixable m =
 instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
   dependOn = dependOn
+  {-# INLINE dependOn #-}
 
 data Density graph where
   Sparse :: Density SparseGraph.Ref
