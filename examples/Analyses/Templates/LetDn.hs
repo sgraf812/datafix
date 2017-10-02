@@ -11,7 +11,7 @@ module Analyses.Templates.LetDn
   , buildProblem
   ) where
 
-import           Data.Primitive.Array     (indexArray)
+import           Data.Primitive.Array     (indexArray, sizeofArray)
 import           Data.Proxy               (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
@@ -38,8 +38,8 @@ buildProblem
   => Eq (CoDomain (Domain m))
   => TransferAlgebra (Domain m)
   -> CoreExpr
-  -> (Node, DataFlowProblem m)
-buildProblem alg e = (root, DFP transfer changeDetector)
+  -> (Node, Node, DataFlowProblem m)
+buildProblem alg e = (root, Node (sizeofArray arr - 1), DFP transfer changeDetector)
   where
     p = Proxy :: Proxy m
     changeDetector _ = eqChangeDetector p

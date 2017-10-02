@@ -10,7 +10,6 @@ import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
-import           Datafix                     (Node (..))
 import           Datafix.Worklist            (Density (..), IterationBound (..),
                                               fixProblem)
 
@@ -22,12 +21,12 @@ import           VarEnv
 analyse :: CoreExpr -> StrLattice
 analyse expr = fixProblem problem Sparse NeverAbort root 0
   where
-    (root, problem) = buildProblem transferFunctionAlg expr
+    (root, _, problem) = buildProblem transferFunctionAlg expr
 
-analyseDense :: Int -> CoreExpr -> StrLattice
-analyseDense maxNode expr = fixProblem problem (Dense (Node maxNode)) NeverAbort root 0
+analyseDense :: CoreExpr -> StrLattice
+analyseDense expr = fixProblem problem (Dense maxNode) NeverAbort root 0
   where
-    (root, problem) = buildProblem transferFunctionAlg expr
+    (root, maxNode, problem) = buildProblem transferFunctionAlg expr
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f

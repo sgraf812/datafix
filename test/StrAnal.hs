@@ -1,27 +1,33 @@
 module StrAnal where
 
-import qualified Analyses.AdHocStrAnal         as AdHocStrAnal
-import qualified Analyses.StrAnal              as StrAnal
+import qualified Analyses.AdHocStrAnal          as AdHocStrAnal
+import qualified Analyses.StrAnal               as StrAnal
 import           Analyses.StrAnal.Strictness
+import           Analyses.Syntax.MkCoreFromFile (compileCoreExpr)
 import           Analyses.Syntax.MkCoreHelpers
 
 import           Test.Tasty
 import           Test.Tasty.HUnit
 
 import           CoreSyn
-import           CoreTidy                      (tidyExpr)
+import           CoreTidy                       (tidyExpr)
 import           Id
-import           VarEnv                        (emptyTidyEnv)
+import           VarEnv                         (emptyTidyEnv)
 
-x, y, z, b, f, g :: Id
-[x, y, z, b, f, g] = mkTestIds
+x, x1, x2, y, z, b, b1, b2, f, g :: Id
+[x, x1, x2, y, z, b, b1, b2, f, g] = mkTestIds
   [ ("x", int)
+  , ("x1", int)
+  , ("x2", int)
   , ("y", int)
   , ("z", int)
   , ("b", bool)
+  , ("b1", bool)
+  , ("b2", bool)
   , ("f", bool2int2int)
-  , ("g", int2int)
+  , ("g", bool2int2int)
   ]
+
 
 -- | @
 -- let f b =
@@ -148,14 +154,41 @@ StrLattice (_, anns6) = StrAnal.analyse example6
 --         else z
 -- in f False 1
 -- @
-example7 :: CoreExpr
-example7 = tidyExpr emptyTidyEnv $
+simpleRecursive1 :: CoreExpr
+simpleRecursive1 = tidyExpr emptyTidyEnv $
   letrec
     f (lam b $ lam x $
         ite (var b)
           (var f $$ var b $$ var z)
           (var z))
     (var f $$ boolLit False $$ intLit 1)
+
+
+-- | @
+-- let f b1 x1 =
+--       let g b2 x2 =
+--             if b2
+--               then g b2 z
+--               else f b2 x2
+--       in if b1
+--            then g b1 x1
+--            else z
+-- in f False 1
+-- @
+nestedRecursive1 :: CoreExpr
+nestedRecursive1 = tidyExpr emptyTidyEnv $
+  letrec
+    f (lam b1 $ lam x1 $
+        letrec
+          g (lam b2 $ lam x2 $
+              ite (var b2)
+                (var g $$ var b2 $$ var z)
+                (var f $$ var b2 $$ var x2))
+          (ite (var b)
+            (var g $$ var b1 $$ var x1)
+            (var z)))
+    (var f $$ boolLit False $$ intLit 1)
+
 
 tests :: [TestTree]
 tests =
@@ -201,8 +234,20 @@ tests =
       [ testCase "y is evaluated strictly" $
           lookupAnnotation y anns6 @?= Just (Strict 0)
       ]
-  , testGroup "example7"
-      [ testCase "coincides with AdHocStrAnal for simple cases" $
-          StrAnal.analyse example7 @?= AdHocStrAnal.analyse example7
-      ]
-  ]
+  , coincidesWithAdHoc "simpleRecursive1" simpleRecursive1
+  , coincidesWithAdHoc "nestedRecursive1" nestedRecursive1
+  , coincidesWithAdHocOnFile "examples/exprs/const.hs"
+  , coincidesWithAdHocOnFile "examples/exprs/findLT.hs"
+  ] where
+      coincidesWithAdHoc desc e =
+        testGroup desc
+          [ testCase "coincides with AdHocStrAnal" $
+              StrAnal.analyse e @?= AdHocStrAnal.analyse e
+          ]
+      coincidesWithAdHocOnFile file =
+        testGroup file
+          [ testCase "coincides with AdHocStrAnal" $ do
+              e <- compileCoreExpr file
+              StrAnal.analyse e @?= AdHocStrAnal.analyse e
+          ]
+

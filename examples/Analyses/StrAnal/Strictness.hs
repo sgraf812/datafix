@@ -239,18 +239,18 @@ newtype Annotations
 emptyAnnotations :: Annotations
 emptyAnnotations = Ann emptyVarEnv
 
+instance JoinSemiLattice Annotations where
+  (Ann a) \/ (Ann b) = Ann $ plusVarEnv_C (\/) a b
+
+instance BoundedJoinSemiLattice Annotations where
+  bottom = emptyAnnotations
+
 overwriteError :: (Show a, Show b) => a -> b -> c
 overwriteError old new =
   error $
     "Should never overwrite an annotation. Old: "
     ++ show old ++ ", New: "
     ++ show new
-
-instance JoinSemiLattice Annotations where
-  (Ann a) \/ (Ann b) = Ann $ plusVarEnv_C overwriteError a b
-
-instance BoundedJoinSemiLattice Annotations where
-  bottom = emptyAnnotations
 
 annotate :: Id -> Strictness -> Annotations -> Annotations
 annotate id_ str (Ann anns) = Ann (extendVarEnv_C overwriteError anns id_ str)

@@ -19,6 +19,8 @@ cabal-version:       >=1.10
 extra-source-files:
   README.md
   stack.yaml
+  examples/exprs/const.hs
+  examples/exprs/findLT.hs
 
 source-repository head
   type:     git
@@ -69,6 +71,7 @@ test-suite datafix-test
                      Analyses.StrAnal.Strictness
                      Analyses.Syntax.CoreSynF
                      Analyses.Syntax.MkCoreHelpers
+                     Analyses.Syntax.MkCoreFromFile
                      Analyses.Templates.LetDn
                      Fib
                      Fac
@@ -85,6 +88,11 @@ test-suite datafix-test
                    , transformers < 0.6
                    , datafix
                    , ghc
+                   , ghc-paths
+                   , directory
+                   , filepath
+                   , turtle
+                   , text
                    , lattices < 2
 
 test-suite datafix-doctest
@@ -113,12 +121,19 @@ benchmark datafix-benchmark
                      Analyses.StrAnal.Strictness
                      Analyses.Syntax.CoreSynF
                      Analyses.Syntax.MkCoreHelpers
+                     Analyses.Syntax.MkCoreFromFile
                      Analyses.Templates.LetDn
   build-depends:     base >= 4.8 && < 5
                    , criterion >= 1.1
+                   , deepseq
                    , containers
                    , primitive
                    , transformers < 0.6
                    , datafix                   
                    , ghc
+                   , ghc-paths
+                   , directory
+                   , filepath
+                   , turtle
+                   , text
                    , lattices < 2
