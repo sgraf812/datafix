@@ -40,7 +40,7 @@ tests =
           [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
           ]
       , testGroup "Abortion"
-          [ testCase "stabilizes at (1+1)*1000" (fixProblem doubleDependencyProblem Sparse (AbortAfter 1 (*1000)) (Node 0) @?= 2000)
+          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ fixProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (Node 0) >= 4)
           ]
       ]
   ]

@@ -225,7 +225,7 @@ dependOn _ (Node node) = currys dom cod impl
             -- No cycle && (unstable || undiscovered). Apply one of the schemes
             -- outlined in
             -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-            scheme2 maybeVal node args
+            scheme3 maybeVal node args
       -- save that we depend on this value
       (curNode, curArgs) <- fromMaybe (error "`dependOn` can only be called in an activation record") <$> asks current
       withReaderT graph (Graph.addReference curNode curArgs node args)
@@ -264,7 +264,14 @@ scheme1, scheme2, scheme3
 -- | scheme 1 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
 --
 -- Let the worklist algorithm figure things out.
-scheme1 _ = optimisticApproximation
+scheme1 maybeVal node args =
+  case maybeVal of
+    Nothing -> do
+      _ <- withReaderT graph (Graph.clearReferences node args)
+      enqueueUnstable node args
+      optimisticApproximation node args
+    Just val -> do
+      return val
 
 -- | scheme 2 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
 --

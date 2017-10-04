@@ -42,9 +42,9 @@ main :: IO ()
 main = defaultMain
   [ bgroup "sum" $ map sumGroup [100, 1000, 10000]
   , bgroup "stranal"
-      -- [ strAnalGroup "simpleRecursive1" simpleRecursive1
-      -- , strAnalGroup "nestedRecursive1" nestedRecursive1
-      [ strAnalFileGroup "examples/exprs/const.hs"
+      [ strAnalGroup "simpleRecursive1" simpleRecursive1
+      , strAnalGroup "nestedRecursive1" nestedRecursive1
+      , strAnalFileGroup "examples/exprs/const.hs"
       , strAnalFileGroup "examples/exprs/findLT.hs"
       ]
   ] where
