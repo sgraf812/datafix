@@ -225,7 +225,7 @@ dependOn _ (Node node) = currys dom cod impl
             -- No cycle && (unstable || undiscovered). Apply one of the schemes
             -- outlined in
             -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-            scheme3 maybeVal node args
+            scheme2 maybeVal node args
       -- save that we depend on this value
       (curNode, curArgs) <- fromMaybe (error "`dependOn` can only be called in an activation record") <$> asks current
       withReaderT graph (Graph.addReference curNode curArgs node args)
