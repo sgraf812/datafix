@@ -60,6 +60,7 @@ instance MonoMapKey Arity where
   lookupMin (ArityMap m) = coerce (maybeToList (fst <$> IntMap.maxViewWithKey m))
   difference (ArityMap a) (ArityMap b) = ArityMap (IntMap.difference a b)
   keys (ArityMap m) = coerce (IntMap.keys m)
+  insertWith f (Arity n) v (ArityMap m) = ArityMap (IntMap.insertWith f n v m)
   insertLookupWithKey f (Arity n) v (ArityMap m) =
     coerce (IntMap.insertLookupWithKey (coerce f) n v m)
   updateLookupWithKey f (Arity n) (ArityMap m) =

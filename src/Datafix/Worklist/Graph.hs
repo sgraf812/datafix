@@ -31,9 +31,17 @@ emptyNodeInfo :: NodeInfo domain
 emptyNodeInfo = NodeInfo Nothing IntArgsMonoSet.empty IntArgsMonoSet.empty 0
 {-# INLINE emptyNodeInfo #-}
 
+data Diff a
+  = Diff
+  { added   :: !(IntArgsMonoSet a)
+  , removed :: !(IntArgsMonoSet a)
+  }
+
+computeDiff :: MonoMapKey k => IntArgsMonoSet k -> IntArgsMonoSet k -> Diff k
+computeDiff a b =
+  Diff (IntArgsMonoSet.difference b a) (IntArgsMonoSet.difference a b)
+
 class GraphRef (ref :: * -> *) where
-  clearReferences :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO (NodeInfo domain)
-  updateNodeValue :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> CoDomain domain -> ReaderT (ref domain) IO (NodeInfo domain)
-  addReference :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> Int -> Products (Domains domain) -> ReaderT (ref domain) IO ()
+  updatePoint :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> CoDomain domain -> IntArgsMonoSet (Products (Domains domain)) -> ReaderT (ref domain) IO (NodeInfo domain)
   lookup :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO (Maybe (NodeInfo domain))
   lookupLT :: MonoMapKey (Products (Domains domain)) => Int -> Products (Domains domain) -> ReaderT (ref domain) IO [(Products (Domains domain), NodeInfo domain)]

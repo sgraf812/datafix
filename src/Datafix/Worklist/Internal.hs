@@ -5,6 +5,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
@@ -12,7 +13,7 @@
 module Datafix.Worklist.Internal where
 
 import           Algebra.Lattice
-import           Control.Monad                 (forM_)
+import           Control.Monad                 (forM_, when)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State
@@ -30,6 +31,7 @@ import           Datafix.Worklist.Graph        (GraphRef, NodeInfo (..))
 import qualified Datafix.Worklist.Graph        as Graph
 import qualified Datafix.Worklist.Graph.Dense  as DenseGraph
 import qualified Datafix.Worklist.Graph.Sparse as SparseGraph
+import           Debug.Trace
 import           System.IO.Unsafe              (unsafePerformIO)
 
 newtype DependencyM graph domain a
@@ -55,23 +57,23 @@ newtype DependencyM graph domain a
 
 data Env graph domain
   = Env
-  { problem        :: !(DataFlowProblem (DependencyM graph domain))
+  { problem          :: !(DataFlowProblem (DependencyM graph domain))
   -- ^ Constant.
   -- The specification of the data-flow problem we ought to solve.
-  , iterationBound :: !(IterationBound domain)
+  , iterationBound   :: !(IterationBound domain)
   -- ^ Constant.
   -- Whether to abort after a number of iterations or not.
-  , callStack      :: !(IntArgsMonoSet (Products (Domains domain)))
+  , callStack        :: !(IntArgsMonoSet (Products (Domains domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
-  , current        :: !(Maybe (Int, Products (Domains domain)))
-  -- ^ Contextual state.
-  -- The specific point in the 'domain' of a 'Node' we currently 'recompute'.
-  , graph          :: !(graph domain)
+  , graph            :: !(graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
-  , unstable       :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  , referencedPoints :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  -- ^ Constant (but the the wrapped queue is stateful).
+  -- The set of points the currently `recompute`d node references so far.
+  , unstable         :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
   -- Unstable nodes that will be 'recompute'd by the 'work'list algorithm.
   }
@@ -84,8 +86,9 @@ initialEnv
   -> IO (graph domain)
   -> IO (Env graph domain)
 initialEnv unstable_ prob ib newGraphRef =
-  Env prob ib IntArgsMonoSet.empty Nothing
+  Env prob ib IntArgsMonoSet.empty
     <$> newGraphRef
+    <*> newIORef IntArgsMonoSet.empty
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
@@ -114,15 +117,27 @@ data IterationBound domain
   = NeverAbort
   | AbortAfter Int (AbortionFunction domain)
 
+zoomIORef
+  :: State s a
+  -> ReaderT (IORef s) IO a
+zoomIORef s = do
+  ref <- ask
+  uns <- lift $ readIORef ref
+  let (res, uns') = runState s uns
+  lift $ writeIORef ref uns'
+  return res
+{-# INLINE zoomIORef #-}
+
+zoomReferencedPoints
+  :: State (IntArgsMonoSet (Products (Domains domain))) a
+  -> ReaderT (Env graph domain) IO a
+zoomReferencedPoints = withReaderT referencedPoints . zoomIORef
+{-# INLINE zoomReferencedPoints #-}
+
 zoomUnstable
   :: State (IntArgsMonoSet (Products (Domains domain))) a
   -> ReaderT (Env graph domain) IO a
-zoomUnstable modifyUnstable = do
-  ref <- asks unstable
-  uns <- lift $ readIORef ref
-  let (res, uns') = runState modifyUnstable uns
-  lift $ writeIORef ref uns'
-  return res
+zoomUnstable = withReaderT unstable . zoomIORef
 {-# INLINE zoomUnstable #-}
 
 enqueueUnstable
@@ -153,10 +168,13 @@ withCall
   -> Products (Domains domain)
   -> ReaderT (Env graph domain) IO a
   -> ReaderT (Env graph domain) IO a
-withCall node args = local $ \env -> env
-  { callStack = IntArgsMonoSet.insert node args (callStack env)
-  , current = Just (node, args)
-  }
+withCall node args r = ReaderT $ \env -> do
+  refs <- readIORef (referencedPoints env)
+  ret <- runReaderT r env
+    { callStack = IntArgsMonoSet.insert node args (callStack env)
+    }
+  writeIORef (referencedPoints env) refs
+  return ret
 {-# INLINE withCall #-}
 
 recompute
@@ -166,9 +184,7 @@ recompute
   => GraphRef graph
   => Datafixable (DependencyM graph domain)
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
-recompute node args = withCall node args $ do
-  deleteUnstable node args
-  oldInfo <- withReaderT graph (Graph.clearReferences node args)
+recompute node args = withCall node args $ mdo
   prob <- asks problem
   let dom = Proxy :: Proxy dom
   let depm = Proxy :: Proxy (DependencyM graph domain cod)
@@ -178,17 +194,33 @@ recompute node args = withCall node args $ do
   let DM iterate' = uncurrys dom depm (transfer prob node') args
   let detectChange' = uncurrys dom eq (detectChange prob node') args
   ib <- asks iterationBound
-  newVal <- case (value oldInfo, ib) of
-    (Just oldVal, AbortAfter n abort)
-      | iterations oldInfo >= n
-      -> return (uncurrys dom cod2cod abort args oldVal)
-    _ -> iterate'
-  newInfo <- withReaderT graph (Graph.updateNodeValue node args newVal)
+  -- 'oldInfo' is where we tie a knot!
+  -- We can savely access it because it won't have any reference
+  -- to 'newVal' or 'refs'.
+  newVal <- --case (value oldInfo, ib) of
+    -- (Just oldVal, AbortAfter n abort)
+    --   | iterations oldInfo >= n
+    --   -> return (uncurrys dom cod2cod abort args oldVal)
+    -- _ -> do
+    --   traceM "b"
+      iterate'
+  refs <- asks referencedPoints >>= lift . readIORef
+  oldInfo <- withReaderT graph (Graph.updatePoint node args newVal refs)
+  deleteUnstable node args
   case value oldInfo of
     Just oldVal | not (detectChange' oldVal newVal) ->
       return ()
-    _ ->
-      forM_ (IntArgsMonoSet.toList (referrers newInfo)) (uncurry enqueueUnstable)
+    _ -> do
+      forM_ (IntArgsMonoSet.toList (referrers oldInfo)) $
+        uncurry enqueueUnstable
+      when (IntArgsMonoSet.member node args refs) $
+        -- This is a little unfortunate: The 'oldInfo' will
+        -- not have listed the current node itself as a refererrer
+        -- in case of a loop, so we have to check for
+        -- that case manually in the new 'references' set.
+        -- The info stored in the graph has the right 'referrers'
+        -- set, though.
+        enqueueUnstable node args
   return newVal
 {-# INLINE recompute #-}
 
@@ -206,30 +238,26 @@ dependOn _ (Node node) = currys dom cod impl
       isStable <- zoomUnstable $
         not . IntArgsMonoSet.member node args <$> get
       maybeNodeInfo <- withReaderT graph (Graph.lookup node args)
-      val <-
-        case maybeNodeInfo >>= value of
-          -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
-          -- Otherwise, the node wasn't part of the call stack and thus will either
-          -- have a 'value' assigned or will not have been discovered at all.
-          Nothing | cycleDetected ->
-            -- Somewhere in an outer activation record we already compute this one.
-            -- We don't recurse again and just return an optimistic approximation,
-            -- such as 'bottom'.
-            -- Otherwise, 'recompute' will immediately add a 'NodeInfo' before
-            -- any calls to 'dependOn' for a cycle to even be possible.
-            optimisticApproximation node args
-          Just val | isStable || cycleDetected ->
-            -- No brainer
-            return val
-          maybeVal ->
-            -- No cycle && (unstable || undiscovered). Apply one of the schemes
-            -- outlined in
-            -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-            scheme2 maybeVal node args
-      -- save that we depend on this value
-      (curNode, curArgs) <- fromMaybe (error "`dependOn` can only be called in an activation record") <$> asks current
-      withReaderT graph (Graph.addReference curNode curArgs node args)
-      return val
+      zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
+      case maybeNodeInfo >>= value of
+        -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
+        -- Otherwise, the node wasn't part of the call stack and thus will either
+        -- have a 'value' assigned or will not have been discovered at all.
+        Nothing | cycleDetected ->
+          -- Somewhere in an outer activation record we already compute this one.
+          -- We don't recurse again and just return an optimistic approximation,
+          -- such as 'bottom'.
+          -- Otherwise, 'recompute' will immediately add a 'NodeInfo' before
+          -- any calls to 'dependOn' for a cycle to even be possible.
+          optimisticApproximation node args
+        Just val | isStable || cycleDetected ->
+          -- No brainer
+          return val
+        maybeVal ->
+          -- No cycle && (unstable || undiscovered). Apply one of the schemes
+          -- outlined in
+          -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+          scheme2 maybeVal node args
 {-# INLINE dependOn #-}
 
 -- | Compute an optimistic approximation for a point of a given node that is
@@ -267,10 +295,9 @@ scheme1, scheme2, scheme3
 scheme1 maybeVal node args =
   case maybeVal of
     Nothing -> do
-      _ <- withReaderT graph (Graph.clearReferences node args)
       enqueueUnstable node args
       optimisticApproximation node args
-    Just val -> do
+    Just val ->
       return val
 
 -- | scheme 2 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).

@@ -37,6 +37,7 @@ allocateNode f = NodeAllocator $ do
     lift (GV.pushBack vec entry) >>= put
     unwrapNodeAllocator (f (Node node))
   return result
+{-# INLINE allocateNode #-}
 
 -- | Runs the allocator, beginning with an empty mapping.
 runAllocator :: NodeAllocator v a -> (a, Array v)
@@ -45,3 +46,4 @@ runAllocator (NodeAllocator alloc) = unsafePerformIO $ do
   (a, vec') <- runStateT alloc vec
   vec'' <- GV.freeze vec'
   pure (a, vec'')
+{-# INLINE runAllocator #-}

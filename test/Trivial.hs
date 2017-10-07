@@ -5,7 +5,6 @@
 module Trivial (tests) where
 
 import           Algebra.Lattice
-import           Data.Proxy
 import           Datafix
 import           Datafix.Worklist (Density (..), IterationBound (..),
                                    fixProblem)

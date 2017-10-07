@@ -72,6 +72,17 @@ insertLookupWithKey f i k v (Map m) = coerce (IntMap.alterF alterMonoMap i m)
     alterMonoMap Nothing        = (Nothing, Just (MonoMap.singleton k v))
     alterMonoMap (Just monoMap) = Just <$> MonoMap.insertLookupWithKey (f i) k v monoMap
 
+insertWith
+  :: MonoMapKey k
+  => (v -> v -> v)
+  -> Int
+  -> k
+  -> v
+  -> IntArgsMonoMap k v
+  -> IntArgsMonoMap k v
+insertWith f i k v (Map m) = Map $
+  IntMap.insertWith (const $ MonoMap.insertWith f k v) i (MonoMap.singleton k v) m
+
 updateLookupWithKey
   :: MonoMapKey k
   => (Int -> k -> v -> Maybe v)

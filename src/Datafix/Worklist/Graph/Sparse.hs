@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies     #-}
 
 module Datafix.Worklist.Graph.Sparse where
 
@@ -10,9 +11,12 @@ import           Data.IORef
 import           Data.Maybe                 (fromMaybe)
 import           Datafix.IntArgsMonoMap     (IntArgsMonoMap)
 import qualified Datafix.IntArgsMonoMap     as IntArgsMonoMap
+import           Datafix.IntArgsMonoSet     (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet     as IntArgsMonoSet
+import           Datafix.MonoMap            (MonoMapKey)
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph
+import           Debug.Trace
 
 type Graph domain
   = IntArgsMonoMap (Products (Domains domain)) (NodeInfo domain)
@@ -30,33 +34,37 @@ fromState st = do
   let (a, g') = runState st g
   lift (writeIORef ref g')
   pure a
+{-# INLINE fromState #-}
 
 instance GraphRef Ref where
-  clearReferences node args = fromState $ do
-    let merger _ _ _ old = old { references = IntArgsMonoSet.empty }
+  updatePoint node args val refs = fromState $ do
+    -- if we are lucky (e.g. no refs changed), we get away with one map access
+    -- first update `node`s NodeInfo
+    let freshInfo = emptyNodeInfo
+          { value = Just (val)
+          , references = refs
+          , iterations = 1
+          }
+    let merger _ _ new old = new
+          { referrers = referrers old
+          , iterations = iterations old + 1
+          }
     oldInfo <- fromMaybe emptyNodeInfo <$>
-      state (IntArgsMonoMap.insertLookupWithKey merger node args emptyNodeInfo)
-    let deleteReferrer ni =
-          ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
-    forM_ (IntArgsMonoSet.toList (references oldInfo)) $ \(depNode, depArgs) ->
-      modify' (IntArgsMonoMap.adjust deleteReferrer depNode depArgs)
-    return oldInfo
-  {-# INLINE clearReferences #-}
+      state (IntArgsMonoMap.insertLookupWithKey merger node args freshInfo)
 
-  updateNodeValue node args val = fromState $ do
-    let update ni = ni { value = Just val, iterations = iterations ni + 1 }
-    let updater _ _ = Just . update
-    oldInfo <- fromMaybe (error "There should be an entry when this is called") <$>
-      state (IntArgsMonoMap.updateLookupWithKey updater node args)
-    return (update oldInfo)
-  {-# INLINE updateNodeValue #-}
+    -- Now compute the diff of changed references
+    let diff = computeDiff (references oldInfo) refs
 
-  addReference node args depNode depArgs = fromState $ do
-    let adjustReferences ni = ni { references = IntArgsMonoSet.insert depNode depArgs (references ni) }
-    modify' (IntArgsMonoMap.adjust adjustReferences node args)
-    let adjustReferrers ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
-    modify' (IntArgsMonoMap.adjust adjustReferrers depNode depArgs)
-  {-# INLINE addReference #-}
+    -- finally register/unregister at all references as referrer.
+    let updater f (depNode, depArgs) = modify' $
+          IntArgsMonoMap.insertWith (const f) depNode depArgs (f emptyNodeInfo)
+    let addReferrer ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
+    let removeReferrer ni = ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
+    forM_ (IntArgsMonoSet.toList (added diff)) (updater addReferrer)
+    forM_ (IntArgsMonoSet.toList (removed diff)) (updater removeReferrer)
+
+    return (oldInfo)
+  {-# INLINE updatePoint #-}
 
   lookup node args = fromState $ IntArgsMonoMap.lookup node args <$> get
   {-# INLINE lookup #-}
