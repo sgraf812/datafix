@@ -29,10 +29,8 @@ singleton :: MonoMapKey k => Int -> k -> v -> IntArgsMonoMap k v
 singleton i k v = Map (IntMap.singleton i (MonoMap.singleton k v))
 
 insert :: MonoMapKey k => Int -> k -> v -> IntArgsMonoMap k v -> IntArgsMonoMap k v
-insert i k v (Map m) = Map (IntMap.alter f i m)
-  where
-    f Nothing        = Just (MonoMap.singleton k v)
-    f (Just monoMap) = Just (MonoMap.insert k v monoMap)
+insert i k v (Map m) =
+  Map (IntMap.insertWith (const (MonoMap.insert k v)) i (MonoMap.singleton k v) m)
 
 delete :: MonoMapKey k => Int -> k -> IntArgsMonoMap k v -> IntArgsMonoMap k v
 delete i k (Map m) = Map (IntMap.update f i m)
