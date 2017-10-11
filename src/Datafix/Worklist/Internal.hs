@@ -13,8 +13,9 @@
 module Datafix.Worklist.Internal where
 
 import           Algebra.Lattice
-import           Control.Monad                 (forM_, when)
+import           Control.Monad                 (forM_, guard, when)
 import           Control.Monad.Trans.Class
+import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State
 import           Data.IORef
@@ -36,7 +37,7 @@ import           System.IO.Unsafe              (unsafePerformIO)
 
 newtype DependencyM graph domain a
   = DM (ReaderT (Env graph domain) IO a)
-  -- ^ Why does this use 'IO'? Actually, we only need `IO` here, but that
+  -- ^ Why does this use 'IO'? Actually, we only need 'IO' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
   -- This ultimately leaks badly into the exported interface in 'fixProblem':
@@ -72,7 +73,7 @@ data Env graph domain
   -- or rather specific points in the 'domain' of each 'Node'.
   , referencedPoints :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
-  -- The set of points the currently `recompute`d node references so far.
+  -- The set of points the currently 'recompute'd node references so far.
   , unstable         :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
   -- Unstable nodes that will be 'recompute'd by the 'work'list algorithm.
@@ -193,17 +194,27 @@ recompute node args = withCall node args $ mdo
   let node' = Node node
   let DM iterate' = uncurrys dom depm (transfer prob node') args
   let detectChange' = uncurrys dom eq (detectChange prob node') args
+  -- We need to access the graph at three different points in time:
+  --
+  --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
+  --    2. directly after the call to 'iterate', to get the 'oldInfo'
+  --    3. And again to actually write the 'newInfo'
+  --
+  -- The last two can be merged, whereas it's crucial that 'oldInfo'
+  -- is captured *after* the call to 'iterate', otherwise we might
+  -- not pick up all 'referrers'.
   ib <- asks iterationBound
-  -- 'oldInfo' is where we tie a knot!
-  -- We can savely access it because it won't have any reference
-  -- to 'newVal' or 'refs'.
-  newVal <- --case (value oldInfo, ib) of
-    -- (Just oldVal, AbortAfter n abort)
-    --   | iterations oldInfo >= n
-    --   -> return (uncurrys dom cod2cod abort args oldVal)
-    -- _ -> do
-    --   traceM "b"
-      iterate'
+  -- If abortion is required, 'mAbortedVal' will not be 'Nothing'.
+  mAbortedVal <- runMaybeT $ do
+    AbortAfter n abort <- return ib
+    Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
+    guard (iterations preInfo >= n)
+    Just oldVal <- return (value preInfo)
+    return (uncurrys dom cod2cod abort args oldVal)
+  -- For the 'Nothing' case, we proceed by iterating the transfer function.
+  newVal <- maybe iterate' return mAbortedVal
+  -- When abortion is required, 'iterate'' is not called and
+  -- 'refs' will be empty, thus the node will never be marked unstable again.
   refs <- asks referencedPoints >>= lift . readIORef
   oldInfo <- withReaderT graph (Graph.updatePoint node args newVal refs)
   deleteUnstable node args

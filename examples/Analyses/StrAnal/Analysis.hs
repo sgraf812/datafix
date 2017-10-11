@@ -1,6 +1,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
+{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
 module Analyses.StrAnal.Analysis (analyse, analyseDense) where
 

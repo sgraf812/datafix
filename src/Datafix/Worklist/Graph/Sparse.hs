@@ -3,17 +3,17 @@
 
 module Datafix.Worklist.Graph.Sparse where
 
-import           Control.Monad              (forM_)
+import           Control.Monad                    (forM_)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Reader
-import           Control.Monad.Trans.State
+import           Control.Monad.Trans.State.Strict
 import           Data.IORef
-import           Data.Maybe                 (fromMaybe)
-import           Datafix.IntArgsMonoMap     (IntArgsMonoMap)
-import qualified Datafix.IntArgsMonoMap     as IntArgsMonoMap
-import           Datafix.IntArgsMonoSet     (IntArgsMonoSet)
-import qualified Datafix.IntArgsMonoSet     as IntArgsMonoSet
-import           Datafix.MonoMap            (MonoMapKey)
+import           Data.Maybe                       (fromMaybe)
+import           Datafix.IntArgsMonoMap           (IntArgsMonoMap)
+import qualified Datafix.IntArgsMonoMap           as IntArgsMonoMap
+import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
+import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
+import           Datafix.MonoMap                  (MonoMapKey)
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph
 import           Debug.Trace
@@ -32,16 +32,16 @@ fromState st = do
   Ref ref <- ask
   g <- lift (readIORef ref)
   let (a, g') = runState st g
-  lift (writeIORef ref g')
+  g' `seq` lift (writeIORef ref g')
   pure a
 {-# INLINE fromState #-}
 
 instance GraphRef Ref where
   updatePoint node args val refs = fromState $ do
     -- if we are lucky (e.g. no refs changed), we get away with one map access
-    -- first update `node`s NodeInfo
+    -- first update 'node's NodeInfo
     let freshInfo = emptyNodeInfo
-          { value = Just (val)
+          { value = Just val
           , references = refs
           , iterations = 1
           }
@@ -63,11 +63,15 @@ instance GraphRef Ref where
     forM_ (IntArgsMonoSet.toList (added diff)) (updater addReferrer)
     forM_ (IntArgsMonoSet.toList (removed diff)) (updater removeReferrer)
 
-    return (oldInfo)
+    return oldInfo
   {-# INLINE updatePoint #-}
 
-  lookup node args = fromState $ IntArgsMonoMap.lookup node args <$> get
+  lookup node args = do
+    Ref ref <- ask
+    IntArgsMonoMap.lookup node args <$> lift (readIORef ref)
   {-# INLINE lookup #-}
 
-  lookupLT node args = fromState $ IntArgsMonoMap.lookupLT node args <$> get
+  lookupLT node args = do
+    Ref ref <- ask
+    IntArgsMonoMap.lookupLT node args <$> lift (readIORef ref)
   {-# INLINE lookupLT #-}
