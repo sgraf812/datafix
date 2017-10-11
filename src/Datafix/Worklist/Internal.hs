@@ -170,6 +170,7 @@ withCall
   -> ReaderT (Env graph domain) IO a
 withCall node args r = ReaderT $ \env -> do
   refs <- readIORef (referencedPoints env)
+  refs `seq` writeIORef (referencedPoints env) IntArgsMonoSet.empty
   ret <- runReaderT r env
     { callStack = IntArgsMonoSet.insert node args (callStack env)
     }
@@ -202,10 +203,9 @@ recompute node args = withCall node args $ do
   -- The last two can be merged, whereas it's crucial that 'oldInfo'
   -- is captured *after* the call to 'iterate', otherwise we might
   -- not pick up all 'referrers'.
-  ib <- asks iterationBound
   -- If abortion is required, 'maybeAbortedVal' will not be 'Nothing'.
   maybeAbortedVal <- runMaybeT $ do
-    AbortAfter n abort <- return ib
+    AbortAfter n abort <- lift (asks iterationBound)
     Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
     guard (iterations preInfo >= n)
     Just oldVal <- return (value preInfo)

@@ -121,7 +121,7 @@ class Currying as b where
   currys   :: Proxy as -> Proxy b -> (Products as -> b) -> Arrows as b
 
 instance Currying '[] b where
-  uncurrys _ _ f () = f
+  uncurrys _ _ f = \() -> f
   currys   _ _ f = f ()
 
 instance Currying (a ': '[]) b where
