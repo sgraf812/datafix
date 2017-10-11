@@ -5,7 +5,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
@@ -13,27 +12,27 @@
 module Datafix.Worklist.Internal where
 
 import           Algebra.Lattice
-import           Control.Monad                 (forM_, guard, when)
+import           Control.Monad                    (forM_, guard, when)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
-import           Control.Monad.Trans.State
+import           Control.Monad.Trans.State.Strict
 import           Data.IORef
-import           Data.Maybe                    (fromMaybe, listToMaybe,
-                                                mapMaybe)
-import           Data.Proxy                    (Proxy (..))
-import           Datafix                       hiding (dependOn)
+import           Data.Maybe                       (fromMaybe, listToMaybe,
+                                                   mapMaybe)
+import           Data.Proxy                       (Proxy (..))
+import           Datafix                          hiding (dependOn)
 import qualified Datafix
-import           Datafix.IntArgsMonoSet        (IntArgsMonoSet)
-import qualified Datafix.IntArgsMonoSet        as IntArgsMonoSet
-import           Datafix.MonoMap               (MonoMapKey)
+import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
+import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
+import           Datafix.MonoMap                  (MonoMapKey)
 import           Datafix.Utils.TypeLevel
-import           Datafix.Worklist.Graph        (GraphRef, NodeInfo (..))
-import qualified Datafix.Worklist.Graph        as Graph
-import qualified Datafix.Worklist.Graph.Dense  as DenseGraph
-import qualified Datafix.Worklist.Graph.Sparse as SparseGraph
+import           Datafix.Worklist.Graph           (GraphRef, NodeInfo (..))
+import qualified Datafix.Worklist.Graph           as Graph
+import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
+import qualified Datafix.Worklist.Graph.Sparse    as SparseGraph
 import           Debug.Trace
-import           System.IO.Unsafe              (unsafePerformIO)
+import           System.IO.Unsafe                 (unsafePerformIO)
 
 newtype DependencyM graph domain a
   = DM (ReaderT (Env graph domain) IO a)
@@ -125,7 +124,7 @@ zoomIORef s = do
   ref <- ask
   uns <- lift $ readIORef ref
   let (res, uns') = runState s uns
-  lift $ writeIORef ref uns'
+  uns' `seq` lift $ writeIORef ref uns'
   return res
 {-# INLINE zoomIORef #-}
 
@@ -185,7 +184,7 @@ recompute
   => GraphRef graph
   => Datafixable (DependencyM graph domain)
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
-recompute node args = withCall node args $ mdo
+recompute node args = withCall node args $ do
   prob <- asks problem
   let dom = Proxy :: Proxy dom
   let depm = Proxy :: Proxy (DependencyM graph domain cod)
@@ -204,15 +203,15 @@ recompute node args = withCall node args $ mdo
   -- is captured *after* the call to 'iterate', otherwise we might
   -- not pick up all 'referrers'.
   ib <- asks iterationBound
-  -- If abortion is required, 'mAbortedVal' will not be 'Nothing'.
-  mAbortedVal <- runMaybeT $ do
+  -- If abortion is required, 'maybeAbortedVal' will not be 'Nothing'.
+  maybeAbortedVal <- runMaybeT $ do
     AbortAfter n abort <- return ib
     Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
     guard (iterations preInfo >= n)
     Just oldVal <- return (value preInfo)
     return (uncurrys dom cod2cod abort args oldVal)
   -- For the 'Nothing' case, we proceed by iterating the transfer function.
-  newVal <- maybe iterate' return mAbortedVal
+  newVal <- maybe iterate' return maybeAbortedVal
   -- When abortion is required, 'iterate'' is not called and
   -- 'refs' will be empty, thus the node will never be marked unstable again.
   refs <- asks referencedPoints >>= lift . readIORef
