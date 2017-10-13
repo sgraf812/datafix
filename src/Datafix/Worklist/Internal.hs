@@ -31,7 +31,6 @@ import           Datafix.Worklist.Graph           (GraphRef, NodeInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
 import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
 import qualified Datafix.Worklist.Graph.Sparse    as SparseGraph
-import           Debug.Trace
 import           System.IO.Unsafe                 (unsafePerformIO)
 
 newtype DependencyM graph domain a
@@ -288,7 +287,7 @@ optimisticApproximation node args = do
   -- more optimistic than necessary.
   return (joins (mapMaybe (value . snd) points))
 
-scheme1, scheme2, scheme3
+scheme1, scheme2
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
   => Maybe (CoDomain domain)
@@ -297,7 +296,6 @@ scheme1, scheme2, scheme3
   -> ReaderT (Env graph domain) IO (CoDomain domain)
 {-# INLINE scheme1 #-}
 {-# INLINE scheme2 #-}
-{-# INLINE scheme3 #-}
 
 -- | scheme 1 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
 --
@@ -325,12 +323,6 @@ scheme2 maybeVal node args =
       -- We don't discover any new nodes and should rather
       -- rely on the ordering in the worklist.
       return val
-
--- | scheme 3 (see https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like).
---
--- Descend into unstable nodes when there is no cycle.
--- It's unclear if this leads to better performance than 'scheme2'.
-scheme3 _ = recompute
 
 whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 whileJust_ cond action = go

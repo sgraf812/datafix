@@ -22,6 +22,7 @@ import           GHC
 import qualified GHC.Paths
 import           Id
 import           Name
+import           Outputable
 import           Packages
 import           VarEnv                 (emptyTidyEnv)
 
@@ -45,6 +46,7 @@ compileCoreExpr modulePath = runGhc (Just GHC.Paths.libdir) $ do
   m <- liftIO (canonicalizePath modulePath) >>= compileToCoreModule
   pure $
     tidyExpr emptyTidyEnv
+    -- . pprTraceIt "expr"
     . fromMaybe (error "Could not find top-level non-recursive binding `expr`")
     . findTopLevelDecl "expr"
     . cm_binds

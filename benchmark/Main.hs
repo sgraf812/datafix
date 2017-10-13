@@ -46,6 +46,9 @@ main = defaultMain
       , strAnalGroup "nestedRecursive1" nestedRecursive1
       , strAnalFileGroup "examples/exprs/const.hs"
       , strAnalFileGroup "examples/exprs/findLT.hs"
+      , strAnalFileGroup "examples/exprs/kahan.hs"
+      , strAnalFileGroup "examples/exprs/sieve.hs"
+      , strAnalFileGroup "examples/exprs/lambda.hs"
       ]
   ] where
       sumGroup n =
