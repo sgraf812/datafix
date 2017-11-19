@@ -31,10 +31,6 @@ resolver: lts-9.2
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
-- location: 
-    git: https://github.com/sgraf812/pomaps/ 
-    commit: 6d077d3413c3fcc0de05955c2d6b9bd82c085a85
-  extra-dep: true
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
