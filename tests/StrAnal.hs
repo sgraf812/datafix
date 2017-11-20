@@ -236,8 +236,8 @@ tests =
       ]
   , coincidesWithAdHoc "simpleRecursive1" simpleRecursive1
   , coincidesWithAdHoc "nestedRecursive1" nestedRecursive1
-  , coincidesWithAdHocOnFile "examples/exprs/const.hs"
-  , coincidesWithAdHocOnFile "examples/exprs/findLT.hs"
+  , coincidesWithAdHocOnFile "exprs/const.hs"
+  , coincidesWithAdHocOnFile "exprs/findLT.hs"
   ] where
       coincidesWithAdHoc desc e =
         testGroup desc

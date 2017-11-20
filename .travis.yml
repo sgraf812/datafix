@@ -64,7 +64,7 @@ matrix:
     addons: {apt: {packages: [libgmp-dev]}}
 
   # This just checks style rules
-  - env: BUILD=style GHCVER=8.0.2 STACK_YAML=stack.yaml
+  - env: BUILD=style GHCVER=8.0.2
     compiler: ": #stack 8.0.2 style"
     addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
 
@@ -155,9 +155,7 @@ script:
   set -ex
   case "$BUILD" in
     style)
-      hlint src/
-      hlint tests/
-      hlint bench/
+      curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src/ tests/ bench/ examples/
       stack --system-ghc --no-terminal build --pedantic
       ;;
     stack)

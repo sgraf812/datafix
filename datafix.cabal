@@ -19,11 +19,11 @@ cabal-version:       >=1.24
 extra-source-files:
   README.md
   stack.yaml
-  examples/exprs/const.hs
-  examples/exprs/findLT.hs
-  examples/exprs/kahan.hs
-  examples/exprs/lambda.hs
-  examples/exprs/sieve.hs
+  exprs/const.hs
+  exprs/findLT.hs
+  exprs/kahan.hs
+  exprs/lambda.hs
+  exprs/sieve.hs
 
 source-repository head
   type:     git
@@ -75,7 +75,7 @@ test-suite datafix-test
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs:    test examples
+  hs-source-dirs:    tests examples
   main-is:           Main.hs
   other-modules:     Analyses.AdHocStrAnal
                      Analyses.StrAnal
@@ -115,8 +115,8 @@ test-suite datafix-doctest
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs:    doctest
-  main-is:           Main.hs
+  hs-source-dirs:    tests
+  main-is:           doctest.hs
   build-depends:     base >= 4.8 && < 5
                    , doctest >=0.10
                    , Glob >= 0.7
@@ -127,7 +127,7 @@ benchmark datafix-benchmark
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
-  hs-source-dirs:    benchmark examples
+  hs-source-dirs:    bench examples
   main-is:           Main.hs
   other-modules:     Sum
                      Analyses.AdHocStrAnal

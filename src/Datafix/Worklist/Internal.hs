@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
@@ -327,7 +328,7 @@ scheme2 maybeVal node args =
 whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 whileJust_ cond action = go
   where
-    go = cond >>= \m -> case m of
+    go = cond >>= \case
       Nothing -> return ()
       Just a  -> action a >> go
 {-# INLINE whileJust_ #-}
