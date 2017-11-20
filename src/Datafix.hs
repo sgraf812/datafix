@@ -40,8 +40,8 @@ type TransferFunction m domain
 
 data DataFlowProblem m
   = DFP
-  { transfer     :: !(Node -> TransferFunction m (Domain m))
-  , detectChange :: !(Node -> ChangeDetector (Domain m))
+  { dfpTransfer     :: !(Node -> TransferFunction m (Domain m))
+  , dfpDetectChange :: !(Node -> ChangeDetector (Domain m))
   }
 
 class Monad m => MonadDependency m where

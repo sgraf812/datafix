@@ -6,8 +6,9 @@ module Trivial (tests) where
 
 import           Algebra.Lattice
 import           Datafix
-import           Datafix.Worklist (Density (..), IterationBound (..),
-                                   fixProblem)
+import           Datafix.Worklist       (Density (..), IterationBound (..),
+                                         fixProblem)
+import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -22,6 +23,8 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
+fixFib, fixFac, fixMutualRecursive
+  :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
 fixFib density n = fixProblem fibProblem (density (Node n)) NeverAbort (Node n)
 fixFac density n = fixProblem facProblem (density (Node n)) NeverAbort (Node n)
 fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 1)) NeverAbort (Node n)

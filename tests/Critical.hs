@@ -7,8 +7,9 @@ module Critical (tests) where
 import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
-import           Datafix.Worklist (Density (..), IterationBound (..),
-                                   fixProblem)
+import           Datafix.Worklist       (Density (..), IterationBound (..),
+                                         fixProblem)
+import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural
 import           Test.Tasty
 import           Test.Tasty.HUnit
@@ -19,6 +20,9 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
+
+fixLoop, fixDoubleDependency
+  :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
 fixLoop density n = fixProblem loopProblem (density (Node 0)) NeverAbort (Node n)
 fixDoubleDependency density n = fixProblem doubleDependencyProblem (density (Node 1)) NeverAbort (Node n)
 
@@ -55,6 +59,7 @@ loopProblem = mkDFP transfer
     transfer (Node 0) = do -- stabilizes at 10
       n <- dependOn (Proxy :: Proxy m) (Node 0)
       return (min (n + 1) 10)
+    transfer (Node _) = error "Invalid node"
 
 -- | Two node graph (nodes @A@, @B@), where @A@ `dependOn` @B@ twice and @B@
 -- has a loop.
@@ -75,3 +80,4 @@ doubleDependencyProblem = mkDFP transfer
     transfer (Node 1) = do -- stabilizes at 2
       n <- dependOn p (Node 1)
       return (min (n + 1) 2)
+    transfer (Node _) = error "Invalid node"

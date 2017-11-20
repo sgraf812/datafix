@@ -28,3 +28,4 @@ mutualRecursiveProblem = DFP transfer (const (eqChangeDetector p))
     transfer (Node 1) = do
       a <- dependOn p (Node 0)
       return (min 10 a) -- So the overall fixpoint of this is 10
+    transfer (Node _) = error "Invalid node"

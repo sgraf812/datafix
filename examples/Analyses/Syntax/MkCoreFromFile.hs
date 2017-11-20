@@ -27,7 +27,6 @@ import           GHC
 import qualified GHC.Paths
 import           Id
 import           Name
-import           Outputable
 import           Packages
 import           VarEnv                             (emptyTidyEnv)
 

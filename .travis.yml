@@ -156,7 +156,7 @@ script:
   case "$BUILD" in
     style)
       curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src/ tests/ bench/ examples/
-      stack --system-ghc --no-terminal build --pedantic
+      stack --system-ghc --no-terminal build --test --bench --no-run-tests --no-run-benchmarks --pedantic
       ;;
     stack)
       stack --no-terminal test --bench --no-run-benchmarks --haddock --no-haddock-deps $ARGS

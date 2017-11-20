@@ -9,7 +9,6 @@ module Datafix.Utils.GrowableVector
 
 import           Control.Monad.Primitive
 import           Data.Primitive.Array
-import           Data.Primitive.MutVar
 import           Prelude                 hiding (length)
 
 data GrowableVector s v

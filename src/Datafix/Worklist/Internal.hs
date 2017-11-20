@@ -192,8 +192,8 @@ recompute node args = withCall node args $ do
   let eq = Proxy :: Proxy (cod -> cod -> Bool)
   let cod2cod = Proxy :: Proxy (cod -> cod)
   let node' = Node node
-  let DM iterate' = uncurrys dom depm (transfer prob node') args
-  let detectChange' = uncurrys dom eq (detectChange prob node') args
+  let DM iterate' = uncurrys dom depm (dfpTransfer prob node') args
+  let detectChange' = uncurrys dom eq (dfpDetectChange prob node') args
   -- We need to access the graph at three different points in time:
   --
   --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required

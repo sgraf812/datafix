@@ -11,12 +11,9 @@ import           Data.IORef
 import           Data.Maybe                       (fromMaybe)
 import           Datafix.IntArgsMonoMap           (IntArgsMonoMap)
 import qualified Datafix.IntArgsMonoMap           as IntArgsMonoMap
-import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
-import           Datafix.MonoMap                  (MonoMapKey)
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph
-import           Debug.Trace
 
 type Graph domain
   = IntArgsMonoMap (Products (Domains domain)) (NodeInfo domain)

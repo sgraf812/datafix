@@ -75,12 +75,11 @@ main = defaultMain
 seqStrLattice :: StrLattice -> ()
 seqStrLattice l = strType l `seq` annotations l `seq` ()
 
-x, x1, x2, y, z, b, b1, b2, f, g :: Id
-[x, x1, x2, y, z, b, b1, b2, f, g] = mkTestIds
+x, x1, x2, z, b, b1, b2, f, g :: Id
+[x, x1, x2, z, b, b1, b2, f, g] = mkTestIds
   [ ("x", int)
   , ("x1", int)
   , ("x2", int)
-  , ("y", int)
   , ("z", int)
   , ("b", bool)
   , ("b1", bool)
