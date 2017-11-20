@@ -4,11 +4,11 @@
 module Analyses.StrAnal.Arity where
 
 import           Algebra.Lattice
-import           Algebra.Lattice.Op
 import           Algebra.PartialOrd
 import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
 import           Data.Maybe         (maybeToList)
+import           Data.Ord           (Down (..))
 import           GHC.Exts           (coerce)
 
 import           Datafix.MonoMap
@@ -28,7 +28,7 @@ instance Show Arity where
   show (Arity i) = show i
 
 instance Ord Arity where
-  compare (Arity a) (Arity b) = compare (Op a) (Op b)
+  compare (Arity a) (Arity b) = compare (Down a) (Down b)
 
 instance PartialOrd Arity where
   leq a b = a <= b

@@ -71,7 +71,7 @@ library
     hs-source-dirs:  lattices
     exposed-modules: Algebra.Lattice
 
-test-suite datafix-test
+test-suite tests
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -109,9 +109,12 @@ test-suite datafix-test
                    , filepath
                    , turtle
                    , text
-                   , lattices < 2
+  if flag(use-lattices)
+    build-depends:   lattices < 2
+  if !flag(use-lattices)
+    build-depends:   pomaps < 0.0.1.0
 
-test-suite datafix-doctest
+test-suite doctests
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -123,7 +126,7 @@ test-suite datafix-doctest
                    , QuickCheck >= 2.5
                    , datafix
 
-benchmark datafix-benchmark
+benchmark benchmarks
   type:              exitcode-stdio-1.0
   default-language:  Haskell2010
   ghc-options:       -Wall -O2 -threaded -rtsopts -with-rtsopts=-N
@@ -155,4 +158,7 @@ benchmark datafix-benchmark
                    , filepath
                    , turtle
                    , text
-                   , lattices < 2
+  if flag(use-lattices)
+    build-depends:   lattices < 2
+  if !flag(use-lattices)
+    build-depends:   pomaps < 0.0.1.0

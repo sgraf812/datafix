@@ -1,12 +1,8 @@
 {-# LANGUAGE CPP                #-}
-{-# LANGUAGE FlexibleInstances  #-}
-#if __GLASGOW_HASKELL__ >=710 && MIN_VERSION_unordered_containers(0,2,6)
-{-# LANGUAGE Safe               #-}
-#else
-{-# LANGUAGE Trustworthy        #-}
-#endif
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE Safe               #-}
 #if __GLASGOW_HASKELL__ >= 707 && __GLASGOW_HASKELL__ < 709
 {-# OPTIONS_GHC -fno-warn-amp #-}
 #endif
@@ -30,7 +26,7 @@
 module Algebra.Lattice (
     -- * Unbounded lattices
     JoinSemiLattice(..), MeetSemiLattice(..), Lattice,
-    joinLeq, joins1, meetLeq, meets1,
+    joinLeq, meetLeq,
 
     -- * Bounded lattices
     BoundedJoinSemiLattice(..), BoundedMeetSemiLattice(..), BoundedLattice,
@@ -45,34 +41,23 @@ module Algebra.Lattice (
     gfp, gfpFrom, unsafeGfp,
   ) where
 
-import           Prelude                 ()
-import           Prelude.Compat
+import qualified Algebra.PartialOrd    as PO
 
-import qualified Algebra.PartialOrd      as PO
+import           Control.Monad.Zip     (MonadZip (..))
+import           Data.Data             (Data, Typeable)
+import           Data.Proxy            (Proxy (..))
+import           Data.Semigroup        (All (..), Any (..), Endo (..),
+                                        Semigroup (..))
+import           Data.Void             (Void)
+import           GHC.Generics          (Generic)
 
-import           Data.Universe.Class     (Finite (..), Universe (..))
+import qualified Data.IntMap           as IM
+import qualified Data.IntSet           as IS
+import qualified Data.Map              as M
+import qualified Data.Set              as S
 
-import           Control.Monad.Zip       (MonadZip (..))
-import           Data.Data               (Data, Typeable)
-import           Data.Hashable           (Hashable (..))
-import           Data.Proxy              (Proxy (..))
-import           Data.Semigroup          (All (..), Any (..), Endo (..),
-                                          Semigroup (..))
-import           Data.Tagged             (Tagged (..))
-import           Data.Void               (Void)
-import           GHC.Generics            (Generic)
-
-import qualified Data.IntMap             as IM
-import qualified Data.IntSet             as IS
-import qualified Data.Map                as M
-import qualified Data.Set                as S
-
-import qualified Data.HashMap.Lazy       as HM
-import qualified Data.HashSet            as HS
-
-import           Control.Applicative     (Const (..))
-import           Data.Functor.Identity   (Identity (..))
-import           Data.Semigroup.Foldable (Foldable1 (..))
+import           Control.Applicative   (Const (..))
+import           Data.Functor.Identity (Identity (..))
 
 infixr 6 /\ -- This comment needed because of CPP
 infixr 5 \/
@@ -137,10 +122,6 @@ class JoinSemiLattice a => BoundedJoinSemiLattice a where
 joins :: (BoundedJoinSemiLattice a, Foldable f) => f a -> a
 joins = getJoin . foldMap Join
 
--- | The join of at a list of join-semilattice elements (of length at least one)
-joins1 :: (JoinSemiLattice a, Foldable1 f) => f a -> a
-joins1 =  getJoin . foldMap1 Join
-
 -- | A meet-semilattice with some element |top| that /\ approaches.
 --
 -- > Identity: x /\ top == x
@@ -150,10 +131,6 @@ class MeetSemiLattice a => BoundedMeetSemiLattice a where
 -- | The meet of a list of meet-semilattice elements
 meets :: (BoundedMeetSemiLattice a, Foldable f) => f a -> a
 meets = getMeet . foldMap Meet
---
--- | The meet of at a list of meet-semilattice elements (of length at least one)
-meets1 :: (MeetSemiLattice a, Foldable1 f) => f a -> a
-meets1 = getMeet . foldMap1 Meet
 
 -- | Lattices with both bounds
 class (Lattice a, BoundedJoinSemiLattice a, BoundedMeetSemiLattice a) => BoundedLattice a where
@@ -178,11 +155,6 @@ instance Ord a => Lattice (S.Set a) where
 instance Ord a => BoundedJoinSemiLattice (S.Set a) where
     bottom = S.empty
 
-instance (Ord a, Finite a) => BoundedMeetSemiLattice (S.Set a) where
-    top = S.fromList universeF
-
-instance (Ord a, Finite a) => BoundedLattice (S.Set a) where
-
 --
 -- IntSets
 --
@@ -199,21 +171,6 @@ instance BoundedJoinSemiLattice IS.IntSet where
     bottom = IS.empty
 
 --
--- HashSet
---
-
-instance (Eq a, Hashable a) => JoinSemiLattice (HS.HashSet a) where
-    (\/) = HS.union
-
-instance (Eq a, Hashable a) => MeetSemiLattice (HS.HashSet a) where
-    (/\) = HS.intersection
-
-instance (Eq a, Hashable a) => Lattice (HS.HashSet a)
-
-instance (Eq a, Hashable a) => BoundedJoinSemiLattice (HS.HashSet a) where
-    bottom = HS.empty
-
---
 -- Maps
 --
 
@@ -227,11 +184,6 @@ instance (Ord k, Lattice v) => Lattice (M.Map k v) where
 
 instance (Ord k, JoinSemiLattice v) => BoundedJoinSemiLattice (M.Map k v) where
     bottom = M.empty
-
-instance (Ord k, Finite k, BoundedMeetSemiLattice v) => BoundedMeetSemiLattice (M.Map k v) where
-    top = M.fromList (universeF `zip` repeat top)
-
-instance (Ord k, Finite k, BoundedLattice v) => BoundedLattice (M.Map k v) where
 
 --
 -- IntMaps
@@ -247,20 +199,6 @@ instance MeetSemiLattice v => MeetSemiLattice (IM.IntMap v) where
     (/\) = IM.intersectionWith (/\)
 
 instance Lattice v => Lattice (IM.IntMap v)
-
-
---
--- HashMaps
---
-
-instance (Eq k, Hashable k) => JoinSemiLattice (HM.HashMap k v) where
-    (\/) = HM.union
-
-instance (Eq k, Hashable k) => MeetSemiLattice (HM.HashMap k v) where
-    (/\) = HM.intersection
-
-instance (Eq k, Hashable k) => BoundedJoinSemiLattice (HM.HashMap k v) where
-    bottom = HM.empty
 
 --
 -- Functions
@@ -367,12 +305,6 @@ instance Monad Join where
 instance MonadZip Join where
   mzip (Join x) (Join y) = Join (x, y)
 
-instance Universe a => Universe (Join a) where
-  universe = fmap Join universe
-
-instance Finite a => Finite (Join a) where
-  universeF = fmap Join universeF
-
 -- | Monoid wrapper for MeetSemiLattice
 newtype Meet a = Meet { getMeet :: a }
   deriving (Eq, Ord, Read, Show, Bounded, Typeable, Data, Generic)
@@ -399,12 +331,6 @@ instance Monad Meet where
 
 instance MonadZip Meet where
   mzip (Meet x) (Meet y) = Meet (x, y)
-
-instance Universe a => Universe (Meet a) where
-  universe = fmap Meet universe
-
-instance Finite a => Finite (Meet a) where
-  universeF = fmap Meet universeF
 
 -- All
 instance JoinSemiLattice All where
@@ -453,22 +379,6 @@ instance BoundedMeetSemiLattice a => BoundedMeetSemiLattice (Endo a) where
 
 instance Lattice a => Lattice (Endo a) where
 instance BoundedLattice a => BoundedLattice (Endo a) where
-
--- Tagged
-instance JoinSemiLattice a => JoinSemiLattice (Tagged t a) where
-  Tagged a \/ Tagged b = Tagged $ a \/ b
-
-instance BoundedJoinSemiLattice a => BoundedJoinSemiLattice (Tagged t a) where
-  bottom = Tagged bottom
-
-instance MeetSemiLattice a => MeetSemiLattice (Tagged t a) where
-  Tagged a /\ Tagged b = Tagged $ a /\ b
-
-instance BoundedMeetSemiLattice a => BoundedMeetSemiLattice (Tagged t a) where
-  top = Tagged top
-
-instance Lattice a => Lattice (Tagged t a) where
-instance BoundedLattice a => BoundedLattice (Tagged t a) where
 
 -- Proxy
 instance JoinSemiLattice (Proxy a) where
