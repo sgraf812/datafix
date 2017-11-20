@@ -1,5 +1,5 @@
 name:                datafix
-version:             0.1.0.0
+version:             0.0.0.1
 synopsis:            Fixing data-flow problems
 description:         Fixing data-flow problems in expression trees
 
