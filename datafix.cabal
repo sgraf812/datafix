@@ -12,15 +12,18 @@ homepage:            https://github.com/sgraf812/datafix
 bug-reports:         https://github.com/sgraf812/datafix/issues
 
 category:            Compiler
-build-type:          Simple
+build-type:          Custom
 stability:           alpha (experimental)
-cabal-version:       >=1.10
+cabal-version:       >=1.24
 
 extra-source-files:
   README.md
   stack.yaml
   examples/exprs/const.hs
   examples/exprs/findLT.hs
+  examples/exprs/kahan.hs
+  examples/exprs/lambda.hs
+  examples/exprs/sieve.hs
 
 source-repository head
   type:     git
@@ -29,6 +32,13 @@ source-repository head
 flag use-lattices
   description: Depend on the lattices package.
   default: True
+
+custom-setup
+  setup-depends:
+      base
+    , Cabal
+    -- let cabal-toolkit choose the right Cabal and base versions
+    , cabal-toolkit == 0.0.4
 
 library
   default-language:  Haskell2010
@@ -49,9 +59,12 @@ library
   build-depends:     base >= 4.8 && < 5
                    , containers >= 0.5 && < 0.6
                    , transformers < 0.6
-                   , vector
-                   , primitive
-                   , pomaps
+                   -- Just Data.Vector.Mutable, which has been there for ages
+                   , vector < 0.13
+                   -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
+                   , primitive >= 0.6.2.0 && < 0.7
+                   -- has not reached the first major version, so quite unstable
+                   , pomaps < 0.0.1.0
   if flag(use-lattices)
     build-depends:   lattices < 2
   if !flag(use-lattices)
@@ -80,6 +93,9 @@ test-suite datafix-test
                      Trivial
                      StrAnal
   build-depends:     base >= 4.8 && < 5
+                   -- let cabal-toolkit choose the Cabal version
+                   , Cabal
+                   , cabal-toolkit == 0.0.4
                    , tasty >= 0.11
                    , tasty-hunit >= 0.9
                    , tasty-smallcheck >= 0.8
@@ -124,6 +140,9 @@ benchmark datafix-benchmark
                      Analyses.Syntax.MkCoreFromFile
                      Analyses.Templates.LetDn
   build-depends:     base >= 4.8 && < 5
+                   -- let cabal-toolkit choose the Cabal version
+                   , Cabal
+                   , cabal-toolkit == 0.0.4
                    , criterion >= 1.1
                    , deepseq
                    , containers

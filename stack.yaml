@@ -31,10 +31,17 @@ resolver: lts-9.2
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
+- location: 
+    git: https://github.com/sgraf812/cabal-toolkit/
+    commit: https://github.com/sgraf812/cabal-toolkit/commit/5a083bc6f88673a7cd199b152b39d0a799b28773
+  extra-dep: true
+
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - containers-0.5.10.2
+- pomaps-0.0.0.1
+- lattices-1.7
 
 # Override default flag values for local packages and extra-deps
 flags: {}

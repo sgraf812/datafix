@@ -19,3 +19,6 @@ cabal.sandbox.config
 .stack-work/
 cabal.project.local
 .HTF/
+# cabal-toolkit files
+.lbi.buildinfo
+.pkg_descr.buildinfo

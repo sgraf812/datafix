@@ -1,4 +1,6 @@
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 -- | This whole module is basically a huge hack that
 -- compiles a haskell module and returns the expression
@@ -6,17 +8,20 @@
 module Analyses.Syntax.MkCoreFromFile where
 
 import           Control.Monad.IO.Class
-import           Data.Maybe             (fromMaybe)
-import           Data.Monoid            (First (..))
-import qualified Data.Text              as Text
-import           Prelude                hiding (FilePath)
+import           Data.Maybe                         (fromMaybe)
+import           Data.Monoid                        (First (..))
+import qualified Data.Text                          as Text
+import           Distribution.Simple.LocalBuildInfo
+import           Distribution.Simple.Toolkit        (getGHCPackageDBFlags,
+                                                     localBuildInfoQ)
+import           Prelude                            hiding (FilePath)
 import qualified Prelude
-import           System.Directory       (canonicalizePath)
-import           System.FilePath        (splitSearchPath)
+import           System.Directory                   (canonicalizePath)
+import           System.FilePath                    (splitSearchPath)
 import           Turtle
 
 import           CoreSyn
-import           CoreTidy               (tidyExpr)
+import           CoreTidy                           (tidyExpr)
 import           DynFlags
 import           GHC
 import qualified GHC.Paths
@@ -24,8 +29,7 @@ import           Id
 import           Name
 import           Outputable
 import           Packages
-import           VarEnv                 (emptyTidyEnv)
-
+import           VarEnv                             (emptyTidyEnv)
 
 findTopLevelDecl :: String -> CoreProgram -> Maybe CoreExpr
 findTopLevelDecl occ = getFirst . foldMap (First . findName)
@@ -41,8 +45,8 @@ compileCoreExpr modulePath = runGhc (Just GHC.Paths.libdir) $ do
   -- Don't generate any artifacts
   _ <- getSessionDynFlags >>= setSessionDynFlags . (\df -> df { hscTarget = HscNothing })
   -- Set up the package database
-  Just dbs <- stackPkgDbs
-  addPkgDbs dbs
+
+  addPkgDbs $(localBuildInfoQ)
   m <- liftIO (canonicalizePath modulePath) >>= compileToCoreModule
   pure $
     tidyExpr emptyTidyEnv
@@ -61,21 +65,16 @@ stackPkgDbs = do
     else pure Nothing
 
 
--- | Add a package database to the Ghc monad
-addPkgDb :: (MonadIO m, GhcMonad m) => Prelude.FilePath -> m ()
-addPkgDb db = addPkgDbs [db]
-
-
--- | Add a list of package databases to the Ghc monad
--- This should be equivalen to
--- > addPkgDbs ls = mapM_ addPkgDb ls
--- but it is actaully faster, because it does the package
--- reintialization after adding all the databases
-addPkgDbs :: (MonadIO m, GhcMonad m) => [Prelude.FilePath] -> m ()
-addPkgDbs fps = do
+-- | Add a list of package databases to the Ghc monad.
+addPkgDbs :: (MonadIO m, GhcMonad m) => LocalBuildInfo -> m ()
+addPkgDbs lbi = do
   dfs <- getSessionDynFlags
-  let pkgs = map PkgConfFile fps
+  let pkgs = getGHCPackageDBFlags lbi
+#if MIN_VERSION_Cabal(2,0,0)
+  let dfs' = dfs { packageDBFlags = pkgs }
+#else
   let dfs' = dfs { extraPkgConfs = (pkgs ++) . extraPkgConfs dfs }
+#endif
   _ <- setSessionDynFlags dfs'
   _ <- liftIO $ initPackages dfs'
   return ()
