@@ -49,7 +49,7 @@ tests =
       ]
   ]
 
-mkDFP :: forall m . (MonadDependency m, Domain m ~ Natural) => (Node -> TransferFunction m Natural) -> DataFlowProblem m
+mkDFP :: forall m . (Domain m ~ Natural) => (Node -> TransferFunction m Natural) -> DataFlowProblem m
 mkDFP transfer = DFP transfer (const (eqChangeDetector (Proxy :: Proxy m)))
 
 -- | One node graph with loop that stabilizes after 10 iterations.

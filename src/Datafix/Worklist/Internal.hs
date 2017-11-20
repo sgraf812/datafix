@@ -79,8 +79,7 @@ data Env graph domain
   }
 
 initialEnv
-  :: GraphRef graph
-  => IntArgsMonoSet (Products (Domains domain))
+  :: IntArgsMonoSet (Products (Domains domain))
   -> DataFlowProblem (DependencyM graph domain)
   -> IterationBound domain
   -> IO (graph domain)
