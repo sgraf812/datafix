@@ -54,17 +54,13 @@ matrix:
     compiler: ": #stack default"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-7"
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-7.yaml"
     compiler: ": #stack 8.0.1"
     addons: {apt: {packages: [libgmp-dev]}}
 
-  - env: BUILD=stack ARGS="--resolver lts-8"
-    compiler: ": #stack 8.0.2"
-    addons: {apt: {packages: [libgmp-dev]}}
-
   # Check that the build succeeds when not depending on `lattices`
-  - env: BUILD=stack ARGS="--resolver lts-8 --flag pomaps:-use-lattices"
-    compiler: ": #stack 8.0.2 without lattices"
+  - env: BUILD=stack ARGS="--flag pomaps:-use-lattices"
+    compiler: ": #stack default without lattices"
     addons: {apt: {packages: [libgmp-dev]}}
 
   # This just checks style rules
@@ -83,12 +79,8 @@ matrix:
     os: osx
 
   # Travis includes an macOS which is incompatible with GHC 7.8.4
-  - env: BUILD=stack ARGS="--resolver lts-7"
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-7.yaml"
     compiler: ": #stack 8.0.1 osx"
-    os: osx
-
-  - env: BUILD=stack ARGS="--resolver lts-8"
-    compiler: ": #stack 8.0.2 osx"
     os: osx
 
   - env: BUILD=stack ARGS="--resolver nightly"
@@ -144,7 +136,7 @@ install:
       stack --system-ghc --no-terminal install hlint
       ;;
     stack)
-      stack --no-terminal --install-ghc $ARGS test --bench --only-dependencies
+      stack --no-terminal --install-ghc test --bench --only-dependencies $ARGS
       ;;
     cabal)
       cabal --version
@@ -169,7 +161,7 @@ script:
       stack --system-ghc --no-terminal build --pedantic
       ;;
     stack)
-      stack --no-terminal $ARGS test --bench --no-run-benchmarks --haddock --no-haddock-deps
+      stack --no-terminal test --bench --no-run-benchmarks --haddock --no-haddock-deps $ARGS
       ;;
     cabal)
       cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
