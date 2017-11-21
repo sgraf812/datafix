@@ -34,9 +34,14 @@ import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
 import qualified Datafix.Worklist.Graph.Sparse    as SparseGraph
 import           System.IO.Unsafe                 (unsafePerformIO)
 
+-- | The concrete 'MonadDependency' for this worklist-based solver.
+--
+-- This essentially tracks the current approximation of the solution to the
+-- 'DataFlowProblem' as mutable state while 'fixProblem' makes sure we will eventually
+-- halt with a conservative approximation.
 newtype DependencyM graph domain a
   = DM (ReaderT (Env graph domain) IO a)
-  -- ^ Why does this use 'IO'? Actually, we only need 'IO' here, but that
+  -- ^ Why does this use 'IO'? Actually, we only need 'ST' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
   -- This ultimately leaks badly into the exported interface in 'fixProblem':
@@ -55,6 +60,7 @@ newtype DependencyM graph domain a
   -- must never be an instance of 'MonadIO' for this.
   deriving (Functor, Applicative, Monad)
 
+-- | The iteration state of 'DependencyM'/'fixProblem'.
 data Env graph domain
   = Env
   { problem          :: !(DataFlowProblem (DependencyM graph domain))
@@ -105,10 +111,34 @@ instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDepend
   dependOn = dependOn
   {-# INLINE dependOn #-}
 
+-- | Specifies the /density/ of the problem, e.g. whether the domain of
+-- 'Node's can be confined to a finite range, in which case 'fixProblem'
+-- tries to use a "Data.Vector" based graph representation rather than
+-- one based on "Data.IntMap".
 data Density graph where
   Sparse :: Density SparseGraph.Ref
   Dense :: Node -> Density DenseGraph.Ref
 
+-- | A function that computes a sufficiently conservative approximation
+-- of a point in the abstract domain for when the solution algorithm
+-- decides to have iterated the node often enough.
+--
+-- When 'domain' is a 'BoundedMeetSemilattice'/'BoundedLattice', the
+-- simplest abortion function would be to constantly return 'top'.
+--
+-- As is the case for 'TransferFunction' and 'ChangeDetector', this
+-- carries little semantic meaning if viewed in isolation, so here
+-- are a few examples for how the synonym expands:
+--
+-- @
+--   AbortionFunction Int ~ Int -> Int
+--   AbortionFunction (String -> Int) ~ String -> Int -> Int
+--   AbortionFunction (a -> b -> c -> PowerSet) ~ a -> b -> c -> PowerSet -> PowerSet
+-- @
+--
+-- E.g., the current value of the point is passed in (the tuple @(a, b, c, PowerSet)@)
+-- and the function returns an appropriate conservative approximation in that
+-- point.
 type AbortionFunction domain
   = Arrows (Domains domain) (CoDomain domain -> CoDomain domain)
 
