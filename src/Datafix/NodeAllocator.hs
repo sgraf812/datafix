@@ -1,5 +1,16 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
+-- |
+-- Module      :  Datafix.NodeAllocator
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Helpers for allocating 'Node's in an ergonomic manner, e.g.
+-- taking care to get 'mfix' right under the hood for allocation
+-- in recursive bindings groups through the key primitive 'allocateNode'.
+
 module Datafix.NodeAllocator
   ( NodeAllocator
   , allocateNode
@@ -11,7 +22,7 @@ import           Control.Monad.Primitive
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.State.Strict
 import           Data.Primitive.Array
-import           Datafix
+import           Datafix.Description
 import           Datafix.Utils.GrowableVector     (GrowableVector)
 import qualified Datafix.Utils.GrowableVector     as GV
 import           System.IO.Unsafe                 (unsafePerformIO)

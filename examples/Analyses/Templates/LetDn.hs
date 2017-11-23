@@ -16,8 +16,6 @@ import           Data.Proxy               (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
 import           Datafix
-import           Datafix.NodeAllocator
-import           Datafix.Utils.TypeLevel
 
 import           CoreSyn
 import           VarEnv

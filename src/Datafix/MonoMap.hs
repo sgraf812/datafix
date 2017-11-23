@@ -3,6 +3,17 @@
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 
+-- |
+-- Module      :  Datafix.MonoMap
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Helpers for allocating 'Node's in an ergonomic manner, e.g.
+-- taking care to get 'mfix' right under the hood for allocation
+-- in recursive bindings groups through the key primitive 'allocateNode'.
+
 module Datafix.MonoMap where
 
 import           Algebra.PartialOrd

@@ -10,6 +10,16 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
+-- |
+-- Module      :  Datafix.Worklist.Internal
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Internal module, does not follow the PVP. Breaking changes may happen at
+-- any minor version.
+
 module Datafix.Worklist.Internal where
 
 import           Algebra.Lattice
@@ -22,8 +32,8 @@ import           Data.IORef
 import           Data.Maybe                       (fromMaybe, listToMaybe,
                                                    mapMaybe)
 import           Data.Proxy                       (Proxy (..))
-import           Datafix                          hiding (dependOn)
-import qualified Datafix
+import           Datafix.Description              hiding (dependOn)
+import qualified Datafix.Description
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
@@ -97,6 +107,47 @@ initialEnv unstable_ prob ib newGraphRef =
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
+-- | A constraint synonym for the constraints 'm' and its associated
+-- 'Domain' have to suffice.
+--
+-- This is actually a lot less scary than you might think.
+-- Assuming we got [quantified class constraints](http://i.cs.hku.hk/~bruno/papers/hs2017.pdf),
+-- @Datafixable@ is a specialized version of this:
+--
+-- @
+-- type Datafixable m =
+--   ( forall r. Currying (Domains (Domain m)) r
+--   , MonoMapKey (Products (Domains (Domain m)))
+--   , BoundedJoinSemiLattice (CoDomain (Domain m))
+--   )
+-- @
+--
+-- Now, let's assume a concrete @Domain m ~ String -> Bool -> Int@, so that
+-- @'Domains' (String -> Bool -> Int)@ expands to the type-level list @'[String, Bool]@
+-- and @'Products' '[String, Bool]@ reduces to @(String, Bool)@.
+--
+-- Then this constraint makes sure we are able to
+--
+--  1.  Curry the domain of @String -> Bool -> r@ for all @r@ to e.g. @(String, Bool) -> r@.
+--      See 'Currying'. This constraint should always be discharged automatically by the
+--      type-checker as soon as 'Domains' and 'CoDomains' reduce for the 'Domain' argument,
+--      which happens when the concrete @'MonadDependency' m@ is known.
+--
+--      (Actually, we do this for multiple concrete @r@ because of the missing
+--      support for quantified class constraints)
+--
+--  2.  We want to use a [monotone](https://en.wikipedia.org/wiki/Monotonic_function)
+--      map of @(String, Bool)@ to @Int@ (the @CoDomain (Domain m)@). This is
+--      ensured by the @'MonoMapKey' (String, Bool)@ constraint.
+--
+--      Note that the monotonicity requirement means we have to pull non-monotone
+--      arguments in @Domain m@ into the 'Node' portion of the 'DataFlowProblem'.
+--
+--  3.  For fixed-point iteration to work at all, the values which we iterate
+--      naturally have to be instances of 'BoundedJoinSemiLattice'.
+--      That type-class allows us to start iteration from a most-optimistic 'bottom'
+--      value and successively iterate towards a conservative approximation using
+--      the '(\/)' operator.
 type Datafixable m =
   ( Currying (Domains (Domain m)) (CoDomain (Domain m))
   , Currying (Domains (Domain m)) (m (CoDomain (Domain m)))
@@ -106,6 +157,9 @@ type Datafixable m =
   , BoundedJoinSemiLattice (CoDomain (Domain m))
   )
 
+-- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
+-- with 'fixProblem'.
+-- The 'Domain' is extracted from a type parameter.
 instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
   dependOn = dependOn
@@ -142,9 +196,40 @@ data Density graph where
 type AbortionFunction domain
   = Arrows (Domains domain) (CoDomain domain -> CoDomain domain)
 
+-- | Aborts iteration of a value by 'const'antly returning the 'top' element
+-- of the assumed 'BoundedMeetSemiLattice' of the 'CoDomain'.
+abortWithTop
+  :: forall domain
+   . Currying (Domains domain) (CoDomain domain -> CoDomain domain)
+  => BoundedMeetSemiLattice (CoDomain domain)
+  => AbortionFunction domain
+abortWithTop =
+  currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain -> CoDomain domain)) $
+    const top
+{-# INLINE abortWithTop #-}
+
+-- | Expresses that iteration should or shouldn't stop after a point has
+-- been iterated a finite number of times.
 data IterationBound domain
   = NeverAbort
+  -- ^ Will keep on iterating until a precise, yet conservative approximation
+  -- has been reached. Make sure that your 'domain' satisfies the
+  -- [ascending chain condition](https://en.wikipedia.org/wiki/Ascending_chain_condition),
+  -- e.g. that fixed-point iteration always comes to a halt!
   | AbortAfter Int (AbortionFunction domain)
+  -- ^ For when your 'domain' doesn't satisfy the ascending chain condition
+  -- or when you are sensitive about solution performance.
+  --
+  -- The 'Int'eger determines the maximum number of iterations of a single point
+  -- of a 'Node' (with which an entire function with many points may be associated)
+  -- before iteration aborts in that point by calling the supplied 'AbortionFunction'.
+  -- The responsibility of the 'AbortionFunction' is to find a sufficiently
+  -- conservative approximation for the current value at that point.
+  --
+  -- When your 'CoDomain' is an instance of 'BoundedMeetSemiLattice',
+  -- 'abortWithTop' might be a worthwhile option.
+  -- A more sophisticated solution would trim the current value to a certain
+  -- cut-off depth, depending on the first parameter, instead.
 
 zoomIORef
   :: State s a
@@ -207,6 +292,17 @@ withCall node args r = ReaderT $ \env -> do
   return ret
 {-# INLINE withCall #-}
 
+-- | The first of the two major functions of this module.
+--
+-- 'recompute node args' iterates the value of the passed 'node'
+-- at the point 'args' by invoking its 'TransferFunction'.
+-- It does so in a way that respects the 'IterationBound'.
+--
+-- This function is not exported, and is only called by 'work'
+-- and 'dependOn', for when the iteration strategy decides that
+-- the 'node' needs to be (and can be) re-iterated.
+-- It performs tracking of which 'Node's the 'TransferFunction'
+-- depended on, do that the worklist algorithm can do its magic.
 recompute
   :: forall domain graph dom cod
    . dom ~ Domains domain
@@ -354,6 +450,15 @@ scheme2 maybeVal node args =
       -- rely on the ordering in the worklist.
       return val
 
+-- There used to be a third scheme that is no longer possible with the current
+-- mode of dependency tracking.
+-- See https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+
+-- |As long as the supplied "Maybe" expression returns "Just _", the loop
+-- body will be called and passed the value contained in the 'Just'.  Results
+-- are discarded.
+--
+-- Taken from 'Control.Monad.Loops.whileJust_'.
 whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 whileJust_ cond action = go
   where
@@ -362,6 +467,11 @@ whileJust_ cond action = go
       Just a  -> action a >> go
 {-# INLINE whileJust_ #-}
 
+-- | Defined as 'work = whileJust_ highestPriorityUnstableNode (uncurry recompute)'.
+--
+-- Tries to dequeue the 'highestPriorityUnstableNode' and 'recompute's the value of
+-- one of its 'unstable' points, until the worklist is empty, indicating that a
+-- fixed-point has been reached.
 work
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
@@ -369,14 +479,36 @@ work
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
+-- | Computes a solution to the described 'DataFlowProblem' by iterating
+-- 'TransferFunction's until a fixed-point is reached.
+--
+-- It does do by employing a worklist algorithm, iterating unstable 'Node's
+-- only.
+-- 'Node's become unstable when the point of another 'Node' their 'TransferFunction'
+-- 'dependOn'ed changed.
+--
+-- The sole initially unstable 'Node' is the last parameter, and if your
+-- 'domain' is function-valued (so the returned 'Arrows' expands to a function),
+-- then any further parameters specify the exact point in the 'Node's transfer
+-- function you are interested in.
 fixProblem
   :: forall domain graph
    . GraphRef graph
   => Datafixable (DependencyM graph domain)
   => DataFlowProblem (DependencyM graph domain)
+  -- ^ The description of the @DataFlowProblem@ to solve.
   -> Density graph
+  -- ^ Describes if the algorithm is free to use a 'Dense', 'Vector'-based
+  -- graph representation or has to go with a 'Sparse' one based on 'IntMap'.
   -> IterationBound domain
+  -- ^ Whether the solution algorithm should respect a maximum bound on the
+  -- number of iterations per point. Pass 'NeverAbort' if you don't care.
   -> Node
+  -- ^ The @Node@ that is initially assumed to be unstable. This should be
+  -- the @Node@ you are interested in, e.g. @Node 42@ if you are interested
+  -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
+  -- @Node@ denoting the root expression of your data-flow analysis
+  -- you specified via the @DataFlowProblem@.
   -> Arrows (Domains domain) (CoDomain domain)
 fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
   where

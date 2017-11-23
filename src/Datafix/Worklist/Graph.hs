@@ -3,6 +3,13 @@
 {-# LANGUAGE TypeFamilies         #-}
 {-# LANGUAGE UndecidableInstances #-}
 
+-- |
+-- Module      :  Datafix.MonoMap
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+
 module Datafix.Worklist.Graph where
 
 import           Control.Monad.Trans.Reader

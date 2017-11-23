@@ -1,7 +1,7 @@
--- TODO: Figure out license used in the agda codebase
 -- This is literally
 -- https://github.com/agda/agda/blob/0aff32aa29652db1a7026f81bc57dc15d5930124/src/full/Agda/Utils/TypeLevel.hs
 -- with some default-extensions added.
+-- Let's just hope that they don't sue ;)
 
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
@@ -18,6 +18,14 @@
 -- and @Domains@ and @CoDomain@ using @If@ for instance.
 {-# LANGUAGE UndecidableInstances  #-}
 
+-- |
+-- Module      :  Datafix.Utils.TypeLevel
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Some type-level helpers for 'curry'/'uncurry'ing arbitrary function types.
 module Datafix.Utils.TypeLevel where
 
 import           Data.Proxy
@@ -77,11 +85,12 @@ type family Constant (b :: l) (as :: [k]) :: [l] where
 -- | @Arrows [a1,..,an] r@ corresponds to @a1 -> .. -> an -> r@
 type Arrows   (as :: [*]) (r :: *) = Foldr (->) r as
 
--- | @Products []@ corresponds to @()@
--- @Products [a1,..,an]@ corresponds to @(a1, (..,( an)..))@
+-- | @Products []@ corresponds to @()@,
+-- @Products [a]@ corresponds to @a@,
+-- @Products [a1,..,an]@ corresponds to @(a1, (..,( an)..))@.
 --
 -- So, not quite a right fold, because we want to optimize for the
--- singleton case.
+-- empty, singleton and pair case.
 type family Products (as :: [*]) where
   Products '[]       = ()
   Products '[a]      = a

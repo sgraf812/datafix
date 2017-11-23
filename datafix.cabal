@@ -45,6 +45,7 @@ library
   ghc-options:       -Wall
   hs-source-dirs:    src
   exposed-modules:   Datafix
+                     Datafix.Description
                      Datafix.MonoMap
                      Datafix.NodeAllocator
                      Datafix.IntArgsMonoMap

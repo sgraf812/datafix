@@ -1,3 +1,13 @@
+-- |
+-- Module      :  Datafix.GrowableVector
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Internal module, does not follow the PVP. Breaking changes may happen at
+-- any minor version.
+
 module Datafix.Utils.GrowableVector
   ( GrowableVector
   , new
