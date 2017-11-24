@@ -38,7 +38,7 @@ import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
 import           Datafix.Utils.TypeLevel
-import           Datafix.Worklist.Graph           (GraphRef, NodeInfo (..))
+import           Datafix.Worklist.Graph           (GraphRef, PointInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
 import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
 import qualified Datafix.Worklist.Graph.Sparse    as SparseGraph
@@ -372,9 +372,9 @@ dependOn _ (Node node) = currys dom cod impl
       cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
       isStable <- zoomUnstable $
         not . IntArgsMonoSet.member node args <$> get
-      maybeNodeInfo <- withReaderT graph (Graph.lookup node args)
+      maybePointInfo <- withReaderT graph (Graph.lookup node args)
       zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
-      case maybeNodeInfo >>= value of
+      case maybePointInfo >>= value of
         -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
         -- Otherwise, the node wasn't part of the call stack and thus will either
         -- have a 'value' assigned or will not have been discovered at all.
@@ -382,7 +382,7 @@ dependOn _ (Node node) = currys dom cod impl
           -- Somewhere in an outer activation record we already compute this one.
           -- We don't recurse again and just return an optimistic approximation,
           -- such as 'bottom'.
-          -- Otherwise, 'recompute' will immediately add a 'NodeInfo' before
+          -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
           -- any calls to 'dependOn' for a cycle to even be possible.
           optimisticApproximation node args
         Just val | isStable || cycleDetected ->
@@ -408,7 +408,7 @@ optimisticApproximation
   => Int -> Products (Domains domain) -> ReaderT (Env graph domain) IO (CoDomain domain)
 optimisticApproximation node args = do
   points <- withReaderT graph (Graph.lookupLT node args)
-  -- Note that 'points' might contain 'NodeInfo's that have no 'value'.
+  -- Note that 'points' might contain 'PointInfo's that have no 'value'.
   -- It's OK to filter these out: At worst, the approximation will be
   -- more optimistic than necessary.
   return (joins (mapMaybe (value . snd) points))

@@ -1,7 +1,19 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies     #-}
 
-module Datafix.Worklist.Graph.Sparse where
+-- |
+-- Module      :  Datafix.Worklist.Graph
+-- Copyright   :  (c) Sebastian Graf 2017
+-- License     :  ISC
+-- Maintainer  :  sgraf1337@gmail.com
+-- Portability :  portable
+--
+-- Sparse data-flow graph representation based on 'Data.IntMap.Strict.IntMap'.
+
+module Datafix.Worklist.Graph.Sparse
+  ( Ref
+  , newRef
+  ) where
 
 import           Control.Monad                    (forM_)
 import           Control.Monad.Trans.Class
@@ -15,12 +27,16 @@ import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph
 
+-- | Models a data-flow graph as a map from 'Node's to
+-- associated points of their transfer function.
 type Graph domain
-  = IntArgsMonoMap (Products (Domains domain)) (NodeInfo domain)
+  = IntArgsMonoMap (Products (Domains domain)) (PointInfo domain)
 
+-- | Reference to a sparse data-flow graph representation.
 newtype Ref domain =
   Ref (IORef (Graph domain))
 
+-- | Allocates a new sparse graph 'Ref'.
 newRef :: IO (Ref domain)
 newRef = Ref <$> newIORef IntArgsMonoMap.empty
 
@@ -36,8 +52,8 @@ fromState st = do
 instance GraphRef Ref where
   updatePoint node args val refs = fromState $ do
     -- if we are lucky (e.g. no refs changed), we get away with one map access
-    -- first update 'node's NodeInfo
-    let freshInfo = emptyNodeInfo
+    -- first update 'node's PointInfo
+    let freshInfo = emptyPointInfo
           { value = Just val
           , references = refs
           , iterations = 1
@@ -46,7 +62,7 @@ instance GraphRef Ref where
           { referrers = referrers old
           , iterations = iterations old + 1
           }
-    oldInfo <- fromMaybe emptyNodeInfo <$>
+    oldInfo <- fromMaybe emptyPointInfo <$>
       state (IntArgsMonoMap.insertLookupWithKey merger node args freshInfo)
 
     -- Now compute the diff of changed references
@@ -54,7 +70,7 @@ instance GraphRef Ref where
 
     -- finally register/unregister at all references as referrer.
     let updater f (depNode, depArgs) = modify' $
-          IntArgsMonoMap.insertWith (const f) depNode depArgs (f emptyNodeInfo)
+          IntArgsMonoMap.insertWith (const f) depNode depArgs (f emptyPointInfo)
     let addReferrer ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
     let removeReferrer ni = ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
     forM_ (IntArgsMonoSet.toList (added diff)) (updater addReferrer)

@@ -10,9 +10,8 @@
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
 --
--- Helpers for allocating 'Node's in an ergonomic manner, e.g.
--- taking care to get 'mfix' right under the hood for allocation
--- in recursive bindings groups through the key primitive 'allocateNode'.
+-- A uniform interface for ordered maps that can be used to model
+-- monotone functions.
 
 module Datafix.MonoMap where
 
@@ -23,9 +22,30 @@ import           Data.Maybe         (maybeToList)
 import           Data.POMap.Strict  (POMap)
 import qualified Data.POMap.Strict  as POMap
 
+-- | Chooses an appropriate 'MonoMap' for a given key type.
+--
+-- @MonoMap@s should all be ordered maps, which feature
+-- efficient variants of the 'lookupLT' and 'lookupMin' combinators.
+-- This unifies "Data.Maybe", "Data.IntMap.Strict", "Data.Map.Strict" and "Data.POMap.Strict"
+-- under a common type class, for which instances can delegate to the
+-- most efficient variant available.
+--
+-- Because of 'lookupLT', this class lends itself well to approximating
+-- monotone functions.
+--
+-- The default implementation delegates to 'POMap', so when there is no
+-- specially crafted map data-structure for your key type, all you need to do
+-- is to make sure it satisfies 'PartialOrd'. Then you can do
+--
+-- >>> import Data.IntSet
+-- >>> instance MonoMapKey IntSet
+--
+-- to make use of the default implementation.
 class Foldable (MonoMap k) => MonoMapKey k where
   type MonoMap k = (r :: * -> *) | r -> k
+  -- ^ The particular ordered map implementation to use for the key type 'k'.
   type MonoMap k = POMap k
+  -- ^ The default implementation delegates to 'POMap'.
   empty :: MonoMap k v
   default empty :: (MonoMap k v ~ POMap k v) => MonoMap k v
   empty = POMap.empty
@@ -42,6 +62,8 @@ class Foldable (MonoMap k) => MonoMapKey k where
   default lookup :: (MonoMap k v ~ POMap k v, PartialOrd k) => k -> MonoMap k v -> Maybe v
   lookup = POMap.lookup
   lookupLT :: k -> MonoMap k v -> [(k, v)]
+  -- ^ Key point of this interface! Note that it returns a list of
+  -- lower bounds, to account for the 'PartialOrd' case.
   default lookupLT :: (MonoMap k v ~ POMap k v, PartialOrd k) => k -> MonoMap k v -> [(k, v)]
   lookupLT = POMap.lookupLT
   lookupMin :: MonoMap k v -> [(k, v)]
@@ -69,6 +91,7 @@ class Foldable (MonoMap k) => MonoMapKey k where
   default adjust :: (MonoMap k v ~ POMap k v, PartialOrd k) => (v -> v) -> k -> MonoMap k v -> MonoMap k v
   adjust = POMap.adjust
 
+-- | Delegates to 'Maybe'.
 instance MonoMapKey () where
   type MonoMap () = Maybe
   empty = Nothing
@@ -90,6 +113,7 @@ instance MonoMapKey () where
   alter f _ = f
   adjust f _ = fmap f
 
+-- | Delegates to 'IntMap'.
 instance MonoMapKey Int where
   type MonoMap Int = IntMap
   empty = IntMap.empty
