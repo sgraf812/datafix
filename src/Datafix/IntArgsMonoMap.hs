@@ -9,9 +9,7 @@
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
 --
--- Helpers for allocating 'Node's in an ergonomic manner, e.g.
--- taking care to get 'mfix' right under the hood for allocation
--- in recursive bindings groups through the key primitive 'allocateNode'.
+-- Composes 'IntMap' with a 'MonoMap'.
 
 module Datafix.IntArgsMonoMap where
 

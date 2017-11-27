@@ -140,6 +140,9 @@ initialEnv unstable_ prob ib newGraphRef =
 --      map of @(String, Bool)@ to @Int@ (the @CoDomain (Domain m)@). This is
 --      ensured by the @'MonoMapKey' (String, Bool)@ constraint.
 --
+--      This constraint has to be discharged manually, but should amount to a
+--      single line of boiler-plate in most cases, see 'MonoMapKey'.
+--
 --      Note that the monotonicity requirement means we have to pull non-monotone
 --      arguments in @Domain m@ into the 'Node' portion of the 'DataFlowProblem'.
 --

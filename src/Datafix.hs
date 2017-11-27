@@ -12,7 +12,7 @@
 --
 -- This is the top-level, import-all, kitchen sink module.
 --
--- We'll do a little tutorial here, while we are at it!
+-- Look at "Datafix.Tutorial" for a tour guided by use cases.
 
 module Datafix
   ( module Datafix.Description
