@@ -29,9 +29,9 @@ source-repository head
   type:     git
   location: https://github.com/sgraf812/datafix
 
-flag use-lattices
-  description: Depend on the lattices package.
-  default: True
+flag no-lattices
+  description: Don't depend on the lattices package.
+  default: False
 
 custom-setup
   setup-depends:
@@ -67,10 +67,10 @@ library
                    -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
                    , primitive >= 0.6.2.0 && < 0.7
                    -- has not reached the first major version, so quite unstable
-                   , pomaps < 0.0.1.0
-  if flag(use-lattices)
+                   , pomaps >= 0.0.0.2 && < 0.0.1.0
+  if !flag(no-lattices)
     build-depends:   lattices < 2
-  if !flag(use-lattices)
+  if flag(no-lattices)
     hs-source-dirs:  lattices
     exposed-modules: Algebra.Lattice
 
@@ -112,10 +112,10 @@ test-suite tests
                    , filepath
                    , turtle
                    , text
-  if flag(use-lattices)
+  if !flag(no-lattices)
     build-depends:   lattices < 2
-  if !flag(use-lattices)
-    build-depends:   pomaps < 0.0.1.0
+  if flag(no-lattices)
+    build-depends:   pomaps >= 0.0.0.2 && < 0.0.1.0
 
 test-suite doctests
   type:              exitcode-stdio-1.0
@@ -161,7 +161,7 @@ benchmark benchmarks
                    , filepath
                    , turtle
                    , text
-  if flag(use-lattices)
+  if !flag(no-lattices)
     build-depends:   lattices < 2
-  if !flag(use-lattices)
-    build-depends:   pomaps < 0.0.1.0
+  if flag(no-lattices)
+    build-depends:   pomaps >= 0.0.0.2 && < 0.0.1.0

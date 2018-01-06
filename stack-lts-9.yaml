@@ -9,7 +9,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-7.24
+resolver: lts-9.21
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -31,22 +31,14 @@ resolver: lts-7.24
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
-- location: 
-    git: https://github.com/sgraf812/cabal-toolkit/
-    commit: 1706c5ab21616a46b0dd940e679e5d22dc4b89a4
-  extra-dep: true
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - containers-0.5.10.2
-- pomaps-0.0.0.1
-- semigroupoids-5.2.1 # for lattices
+- pomaps-0.0.0.2
+- cabal-toolkit-0.0.4
 - lattices-1.7
-- primitive-0.6.2.0 # for sizeofArray
-- vector-0.12.0.1 # for primitive-0.6.2.0
-- scientific-0.3.4.15 # because of vector
-- integer-logarithms-1.0.2 # for scientific
 
 # Override default flag values for local packages and extra-deps
 flags: {}

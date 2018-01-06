@@ -16,14 +16,14 @@ module Datafix.IntArgsMonoSet where
 import           Data.Maybe             (isJust)
 import           Datafix.IntArgsMonoMap (IntArgsMonoMap)
 import qualified Datafix.IntArgsMonoMap as Map
-import           Datafix.MonoMap        (MonoMapKey)
+import           Datafix.MonoMap        (MonoMap, MonoMapKey)
 import           GHC.Exts               (coerce)
 
 newtype IntArgsMonoSet k
   = Set (IntArgsMonoMap k ())
 
-deriving instance Eq (IntArgsMonoMap k ()) => Eq (IntArgsMonoSet k)
-deriving instance Show (IntArgsMonoMap k ()) => Show (IntArgsMonoSet k)
+deriving instance Eq (MonoMap k ()) => Eq (IntArgsMonoSet k)
+deriving instance Show (MonoMap k ()) => Show (IntArgsMonoSet k)
 
 empty :: IntArgsMonoSet k
 empty = Set Map.empty
