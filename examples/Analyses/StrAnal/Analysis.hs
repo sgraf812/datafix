@@ -1,8 +1,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
-{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
+--{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
 
+-- | This module defines a strictness analysis in the style of GHC's
+-- projection-based backwards analysis by defining a 'transferFunctionAlg'
+-- that is passed on to @Analyses.Templates.LetDn.'buildProblem'@,
+-- yielding a 'DataFlowProblem' to be solved by @Datafix.'fixProblem'@.
 module Analyses.StrAnal.Analysis (analyse, analyseDense) where
 
 import           Algebra.Lattice
@@ -33,6 +37,15 @@ applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
 applyWhen False _ = id
 
+-- | This specifies the strictness as a 'TransferAlgebra'. Note the absence
+-- of any recursion! That's all abstracted into
+-- @Analyses.Tempaltes.LetDn.'buildProblem'@, so that this function definition
+-- is completely compositional: It is only concerned with peeling off a single
+-- layer of the 'CoreExprF' and interpret that in terms of the
+-- 'TransferFunction' over the @Arity -> StrLattice@ 'Domain'.
+--
+-- Because there is no explicit fixpointing going on, the resulting analysis
+-- logic is clear and to the point.
 transferFunctionAlg :: TransferAlgebra (Arity -> StrLattice)
 transferFunctionAlg _ _ env expr arity =
   case expr of
