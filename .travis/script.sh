@@ -1,48 +1,34 @@
 #!/bin/bash
 
-echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
-
-if [ -f configure.ac ]; then 
-  autoreconf -i
-fi
-
 set -ex
-
-# From https://github.com/travis-ci/travis-build/blob/af4b84614590336a137310a1b82688f3d32a03e4/lib/travis/build/templates/header.sh
-# Couldn't figure out how to make this visible in the sub script
-travis_retry() {
-  local result=0
-  local count=1
-  while [ $count -le 3 ]; do
-    [ $result -ne 0 ] && {
-      echo -e "\n${ANSI_RED}The command \"$@\" failed. Retrying, $count of 3.${ANSI_RESET}\n" >&2
-    }
-    "$@" && { result=0 && break; } || result=$?
-    count=$(($count + 1))
-    sleep 1
-  done
-  [ $count -gt 3 ] && {
-    echo -e "\n${ANSI_RED}The command \"$@\" failed 3 times.${ANSI_RESET}\n" >&2
-  }
-  return $result
-}
 
 case "$BUILD" in
   style)
+    curl -sL https://raw.github.com/ndmitchell/hlint/master/misc/travis.sh | sh -s src/ tests/ bench/ examples/
+    stack --system-ghc --no-terminal build --test --bench --no-run-tests --no-run-benchmarks --pedantic
+    cabal check
     ;;
   stack)
-    # Build the dependencies
-    stack --no-terminal --install-ghc -j1 build $ARGS Cabal
-    stack --no-terminal --install-ghc test --bench --only-dependencies $ARGS
+    stack --no-terminal test --bench --no-run-benchmarks --haddock --no-haddock-deps --haddock-hyperlink-source $ARGS
     ;;
   cabal)
-    cabal --version
-    travis_retry cabal update
+    cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
 
-    # Get the list of packages from the stack.yaml file
-    # But ignore packages in .stack-work (such as extra-deps)
-    PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | xargs -d "\n" -I{} bash -c "! [[ '{}' =~ \\.stack-work ]] && echo '{}'" | tr -d '[:space:]')
-
-    cabal install --only-dependencies --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
+    ORIGDIR=$(pwd)
+    for dir in $PACKAGES
+    do
+      cd $dir
+      cabal check || [ "$CABALVER" == "1.16" ]
+      cabal sdist
+      PKGVER=$(cabal info . | awk '{print $2;exit}')
+      SRC_TGZ=$PKGVER.tar.gz
+      cd dist
+      tar zxfv "$SRC_TGZ"
+      cd "$PKGVER"
+      cabal configure --enable-tests
+      cabal build
+      cabal test
+      cd $ORIGDIR
+    done
     ;;
 esac
