@@ -23,7 +23,7 @@ cache:
 
 env:
   global:
-  - ENCRYPTION_LABEL: "21e18173560c"
+  - ENCRYPTION_LABEL: "8a44b50cd00b"
   - COMMIT_AUTHOR_EMAIL: "sgraf1337@gmail.com"
 
 # The different configurations we want to test. We have BUILD=cabal which uses
@@ -71,9 +71,9 @@ matrix:
     addons: {apt: {packages: [libgmp-dev]}}
 
   # This just checks style rules
-  - env: BUILD=style GHCVER=8.0.2
-    compiler: ": #stack 8.0.2 style"
-    addons: {apt: {packages: [cabal-install-1.24,ghc-8.0.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
+  - env: BUILD=style GHCVER=8.2.2
+    compiler: ": #stack 8.2.2 style"
+    addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
 
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
