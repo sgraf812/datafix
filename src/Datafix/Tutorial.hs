@@ -25,8 +25,8 @@
 -- except that the dependency graph of data-flow problems doesn't need to be
 -- acyclic.
 --
--- Data-flow problems are declared with the primitives in "Datafix.Description"
--- and solved by @Datafix.Worklist.'fixProblem'@.
+-- Data-flow problems are declared with the primitives in
+-- @"Datafix.Description"@ and solved by @Datafix.Worklist.'fixProblem'@.
 --
 -- With that out of the way, let's set in place the GHCi environment of our
 -- examples:
@@ -80,7 +80,7 @@
 -- That's one of Haskell's pet issues: Expressing dynamic programs as lists
 -- through laziness.
 --
--- As promised in the previous section, we can do the same using @Datafix@.
+-- As promised in the previous section, we can do the same using @datafix@.
 -- First, we need to declare a 'TransferFunction' that makes the data
 -- dependencies for the recursive case explicit, as if we were using
 -- 'Data.Function.fix' to eliminate the recursion:
@@ -250,12 +250,9 @@
 --
 --  1.  Solution logic of the data-flow problem is intertwined with its
 --      specification.
---
 --  2.  Solution logic is duplicated among multiple analyses, violating DRY.
---
 --  3.  A consequence of the last two points is that performance tweaks
 --      have to be adapted for every analysis separately.
---
 --      In the case of GHC's Demand Analyser, going from chaotic iteration
 --      (which corresponds to naive iterated tree traversals) to an iteration
 --      scheme that caches results of inner let-bindings, annotations to the
@@ -268,8 +265,8 @@
 -- order to this library :)
 --
 -- For a principled approach of how to do that, read this blog post on the
--- matter TODO, where I discuss how to do a simple strictness analysis for
--- on GHC Core.
+-- matter TODO, where I discuss how to do a simple strictness analysis on GHC
+-- Core.
 
 module Datafix.Tutorial () where
 
