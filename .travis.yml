@@ -166,7 +166,7 @@ script:
       cabal check
       ;;
     stack)
-      stack --no-terminal test --bench --no-run-benchmarks --haddock --no-haddock-deps $ARGS
+      stack --no-terminal test --bench --no-run-benchmarks --haddock --no-haddock-deps --haddock-hyperlink-source $ARGS
       ;;
     cabal)
       cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
@@ -216,8 +216,7 @@ script:
     rm -rf out/**/* || exit 0
 
     # Copy over the docs
-    stack haddock --no-haddock-deps
-    cp -r .stack-work/install/*/doc/* out/
+    cp -r .stack-work/install/x86_64-linux/lts-*/*/doc/* out/
     
     # Now let's go have some fun with the cloned repo
     cd out
