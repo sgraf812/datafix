@@ -15,7 +15,7 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 -- We need undecidable instances for the definition of @Foldr@,
--- and @Domains@ and @CoDomain@ using @If@ for instance.
+-- and @ParamTypes@ and @ReturnType@ using @If@ for instance.
 {-# LANGUAGE UndecidableInstances  #-}
 
 -- |
@@ -102,19 +102,19 @@ type family IsBase (t :: *) :: Bool where
   IsBase (a -> t) = 'False
   IsBase a        = 'True
 
--- | Using @IsBase@ we can define notions of @Domains@ and @CoDomains@
+-- | Using @IsBase@ we can define notions of @ParamTypes@ and @ReturnTypes@
 --   which *reduce* under positive information @IsBase t ~ 'True@ even
 --   though the shape of @t@ is not formally exposed
 
-type family Domains (t :: *) :: [*] where
-  Domains t = If (IsBase t) '[] (Domains' t)
-type family Domains' (t :: *) :: [*] where
-  Domains' (a -> t) = a ': Domains t
+type family ParamTypes (t :: *) :: [*] where
+  ParamTypes t = If (IsBase t) '[] (ParamTypes' t)
+type family ParamTypes' (t :: *) :: [*] where
+  ParamTypes' (a -> t) = a ': ParamTypes t
 
-type family CoDomain (t :: *) :: * where
-  CoDomain t = If (IsBase t) t (CoDomain' t)
-type family CoDomain' (t :: *) :: * where
-  CoDomain' (a -> t) = CoDomain t
+type family ReturnType (t :: *) :: * where
+  ReturnType t = If (IsBase t) t (ReturnType' t)
+type family ReturnType' (t :: *) :: * where
+  ReturnType' (a -> t) = ReturnType t
 
 ------------------------------------------------------------------
 -- TYPECLASS MAGIC

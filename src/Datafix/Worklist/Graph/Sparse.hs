@@ -30,7 +30,7 @@ import           Datafix.Worklist.Graph
 -- | Models a data-flow graph as a map from 'Node's to
 -- associated points of their transfer function.
 type Graph domain
-  = IntArgsMonoMap (Products (Domains domain)) (PointInfo domain)
+  = IntArgsMonoMap (Products (ParamTypes domain)) (PointInfo domain)
 
 -- | Reference to a sparse data-flow graph representation.
 newtype Ref domain =

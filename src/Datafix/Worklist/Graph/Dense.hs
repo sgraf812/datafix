@@ -31,14 +31,14 @@ import           Datafix.Worklist.Graph
 -- | Models the points of a transfer function of a single
 -- data-flow 'Node'.
 type PointMap domain
-  = MonoMap (Products (Domains domain)) (PointInfo domain)
+  = MonoMap (Products (ParamTypes domain)) (PointInfo domain)
 
 -- | Reference to a dense data-flow graph representation.
 newtype Ref domain
   = Ref (IOVector (PointMap domain))
 
 -- | Allocates a new dense graph 'Ref'.
-newRef :: MonoMapKey (Products (Domains domain)) => Int -> IO (Ref domain)
+newRef :: MonoMapKey (Products (ParamTypes domain)) => Int -> IO (Ref domain)
 newRef size = Ref <$> V.replicate size MonoMap.empty
 
 zoomNode :: Int -> State (PointMap domain) a -> ReaderT (Ref domain) IO a

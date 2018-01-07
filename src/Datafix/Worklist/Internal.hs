@@ -79,23 +79,23 @@ data Env graph domain
   , iterationBound   :: !(IterationBound domain)
   -- ^ Constant.
   -- Whether to abort after a number of iterations or not.
-  , callStack        :: !(IntArgsMonoSet (Products (Domains domain)))
+  , callStack        :: !(IntArgsMonoSet (Products (ParamTypes domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
   , graph            :: !(graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
-  , referencedPoints :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  , referencedPoints :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
   -- The set of points the currently 'recompute'd node references so far.
-  , unstable         :: !(IORef (IntArgsMonoSet (Products (Domains domain))))
+  , unstable         :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
   -- Unstable nodes that will be 'recompute'd by the 'work'list algorithm.
   }
 
 initialEnv
-  :: IntArgsMonoSet (Products (Domains domain))
+  :: IntArgsMonoSet (Products (ParamTypes domain))
   -> DataFlowProblem (DependencyM graph domain)
   -> IterationBound domain
   -> IO (graph domain)
@@ -116,28 +116,28 @@ initialEnv unstable_ prob ib newGraphRef =
 --
 -- @
 -- type Datafixable m =
---   ( forall r. Currying (Domains (Domain m)) r
---   , MonoMapKey (Products (Domains (Domain m)))
---   , BoundedJoinSemiLattice (CoDomain (Domain m))
+--   ( forall r. Currying (ParamTypes (Domain m)) r
+--   , MonoMapKey (Products (ParamTypes (Domain m)))
+--   , BoundedJoinSemiLattice (ReturnType (Domain m))
 --   )
 -- @
 --
 -- Now, let's assume a concrete @Domain m ~ String -> Bool -> Int@, so that
--- @'Domains' (String -> Bool -> Int)@ expands to the type-level list @'[String, Bool]@
+-- @'ParamTypes' (String -> Bool -> Int)@ expands to the type-level list @'[String, Bool]@
 -- and @'Products' '[String, Bool]@ reduces to @(String, Bool)@.
 --
 -- Then this constraint makes sure we are able to
 --
 --  1.  Curry the domain of @String -> Bool -> r@ for all @r@ to e.g. @(String, Bool) -> r@.
 --      See 'Currying'. This constraint should always be discharged automatically by the
---      type-checker as soon as 'Domains' and 'CoDomains' reduce for the 'Domain' argument,
+--      type-checker as soon as 'ParamTypes' and 'ReturnTypes' reduce for the 'Domain' argument,
 --      which happens when the concrete @'MonadDependency' m@ is known.
 --
 --      (Actually, we do this for multiple concrete @r@ because of the missing
 --      support for quantified class constraints)
 --
 --  2.  We want to use a [monotone](https://en.wikipedia.org/wiki/Monotonic_function)
---      map of @(String, Bool)@ to @Int@ (the @CoDomain (Domain m)@). This is
+--      map of @(String, Bool)@ to @Int@ (the @ReturnType (Domain m)@). This is
 --      ensured by the @'MonoMapKey' (String, Bool)@ constraint.
 --
 --      This constraint has to be discharged manually, but should amount to a
@@ -152,12 +152,12 @@ initialEnv unstable_ prob ib newGraphRef =
 --      value and successively iterate towards a conservative approximation using
 --      the '(\/)' operator.
 type Datafixable m =
-  ( Currying (Domains (Domain m)) (CoDomain (Domain m))
-  , Currying (Domains (Domain m)) (m (CoDomain (Domain m)))
-  , Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
-  , Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m))
-  , MonoMapKey (Products (Domains (Domain m)))
-  , BoundedJoinSemiLattice (CoDomain (Domain m))
+  ( Currying (ParamTypes (Domain m)) (ReturnType (Domain m))
+  , Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m)))
+  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
+  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m))
+  , MonoMapKey (Products (ParamTypes (Domain m)))
+  , BoundedJoinSemiLattice (ReturnType (Domain m))
   )
 
 -- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
@@ -197,17 +197,17 @@ data Density graph where
 -- and the function returns an appropriate conservative approximation in that
 -- point.
 type AbortionFunction domain
-  = Arrows (Domains domain) (CoDomain domain -> CoDomain domain)
+  = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain)
 
 -- | Aborts iteration of a value by 'const'antly returning the 'top' element
--- of the assumed 'BoundedMeetSemiLattice' of the 'CoDomain'.
+-- of the assumed 'BoundedMeetSemiLattice' of the 'ReturnType'.
 abortWithTop
   :: forall domain
-   . Currying (Domains domain) (CoDomain domain -> CoDomain domain)
-  => BoundedMeetSemiLattice (CoDomain domain)
+   . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain)
+  => BoundedMeetSemiLattice (ReturnType domain)
   => AbortionFunction domain
 abortWithTop =
-  currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain -> CoDomain domain)) $
+  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain)) $
     const top
 {-# INLINE abortWithTop #-}
 
@@ -229,7 +229,7 @@ data IterationBound domain
   -- The responsibility of the 'AbortionFunction' is to find a sufficiently
   -- conservative approximation for the current value at that point.
   --
-  -- When your 'CoDomain' is an instance of 'BoundedMeetSemiLattice',
+  -- When your 'ReturnType' is an instance of 'BoundedMeetSemiLattice',
   -- 'abortWithTop' might be a worthwhile option.
   -- A more sophisticated solution would trim the current value to a certain
   -- cut-off depth, depending on the first parameter, instead.
@@ -246,33 +246,33 @@ zoomIORef s = do
 {-# INLINE zoomIORef #-}
 
 zoomReferencedPoints
-  :: State (IntArgsMonoSet (Products (Domains domain))) a
+  :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
   -> ReaderT (Env graph domain) IO a
 zoomReferencedPoints = withReaderT referencedPoints . zoomIORef
 {-# INLINE zoomReferencedPoints #-}
 
 zoomUnstable
-  :: State (IntArgsMonoSet (Products (Domains domain))) a
+  :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
   -> ReaderT (Env graph domain) IO a
 zoomUnstable = withReaderT unstable . zoomIORef
 {-# INLINE zoomUnstable #-}
 
 enqueueUnstable
-  :: k ~ Products (Domains domain)
+  :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
   => Int -> k -> ReaderT (Env graph domain) IO ()
 enqueueUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.insert i k))
 {-# INLINE enqueueUnstable #-}
 
 deleteUnstable
-  :: k ~ Products (Domains domain)
+  :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
   => Int -> k -> ReaderT (Env graph domain) IO ()
 deleteUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.delete i k))
 {-# INLINE deleteUnstable #-}
 
 highestPriorityUnstableNode
-  :: k ~ Products (Domains domain)
+  :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
   => ReaderT (Env graph domain) IO (Maybe (Int, k))
 highestPriorityUnstableNode = zoomUnstable $
@@ -282,7 +282,7 @@ highestPriorityUnstableNode = zoomUnstable $
 withCall
   :: Datafixable (DependencyM graph domain)
   => Int
-  -> Products (Domains domain)
+  -> Products (ParamTypes domain)
   -> ReaderT (Env graph domain) IO a
   -> ReaderT (Env graph domain) IO a
 withCall node args r = ReaderT $ \env -> do
@@ -308,8 +308,8 @@ withCall node args r = ReaderT $ \env -> do
 -- depended on, do that the worklist algorithm can do its magic.
 recompute
   :: forall domain graph dom cod
-   . dom ~ Domains domain
-  => cod ~ CoDomain domain
+   . dom ~ ParamTypes domain
+  => cod ~ ReturnType domain
   => GraphRef graph
   => Datafixable (DependencyM graph domain)
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
@@ -369,8 +369,8 @@ dependOn
   => Proxy (DependencyM graph domain) -> Node -> TransferFunction (DependencyM graph domain) domain
 dependOn _ (Node node) = currys dom cod impl
   where
-    dom = Proxy :: Proxy (Domains domain)
-    cod = Proxy :: Proxy (DependencyM graph domain (CoDomain domain))
+    dom = Proxy :: Proxy (ParamTypes domain)
+    cod = Proxy :: Proxy (DependencyM graph domain (ReturnType domain))
     impl args = DM $ do
       cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
       isStable <- zoomUnstable $
@@ -408,7 +408,7 @@ dependOn _ (Node node) = currys dom cod impl
 optimisticApproximation
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
-  => Int -> Products (Domains domain) -> ReaderT (Env graph domain) IO (CoDomain domain)
+  => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
 optimisticApproximation node args = do
   points <- withReaderT graph (Graph.lookupLT node args)
   -- Note that 'points' might contain 'PointInfo's that have no 'value'.
@@ -419,10 +419,10 @@ optimisticApproximation node args = do
 scheme1, scheme2
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
-  => Maybe (CoDomain domain)
+  => Maybe (ReturnType domain)
   -> Int
-  -> Products (Domains domain)
-  -> ReaderT (Env graph domain) IO (CoDomain domain)
+  -> Products (ParamTypes domain)
+  -> ReaderT (Env graph domain) IO (ReturnType domain)
 {-# INLINE scheme1 #-}
 {-# INLINE scheme2 #-}
 
@@ -512,8 +512,8 @@ fixProblem
   -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
   -- @Node@ denoting the root expression of your data-flow analysis
   -- you specified via the @DataFlowProblem@.
-  -> Arrows (Domains domain) (CoDomain domain)
-fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (Domains domain)) (Proxy :: Proxy (CoDomain domain)) impl
+  -> Arrows (ParamTypes domain) (ReturnType domain)
+fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")

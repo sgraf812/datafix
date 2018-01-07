@@ -32,8 +32,8 @@ type TransferAlgebra lattice
 buildProblem
   :: forall m
    . MonadDependency m
-  => Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
-  => Eq (CoDomain (Domain m))
+  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
+  => Eq (ReturnType (Domain m))
   => TransferAlgebra (Domain m)
   -> CoreExpr
   -> (Node, Node, DataFlowProblem m)

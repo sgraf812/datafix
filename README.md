@@ -3,5 +3,4 @@
 
 Library for separating specification of a data-flow problem from computing its solution.
 
-This is all work in progress documentation and performance wise, but should
-mostly work by now.
+See the haddocks in `Datafix.Tutorial` for an introduction and the `examples/` folder for more advanced material.

@@ -75,7 +75,7 @@ newtype Node
 -- >>> cd 123 (f 123) (g 123)
 -- False
 type ChangeDetector domain
-  = Arrows (Domains domain) (CoDomain domain -> CoDomain domain -> Bool)
+  = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
 
 -- | Data-flow problems denote 'Node's in the data-flow graph
 -- by monotone transfer functions.
@@ -98,7 +98,7 @@ type ChangeDetector domain
 -- depending on 'TransferFunction's of other 'Node's for the
 -- 'MonadDependency' case.
 type TransferFunction m domain
-  = Arrows (Domains domain) (m (CoDomain domain))
+  = Arrows (ParamTypes domain) (m (ReturnType domain))
 
 -- | Models a data-flow problem, where each 'Node' is mapped to
 -- its denoting 'TransferFunction' and a means to detect when
@@ -191,12 +191,12 @@ class Monad m => MonadDependency m where
 -- node values.
 eqChangeDetector
   :: forall m
-   . Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
-  => Eq (CoDomain (Domain m))
+   . Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
+  => Eq (ReturnType (Domain m))
   => Proxy m
   -> ChangeDetector (Domain m)
 eqChangeDetector _ =
-  currys (Proxy :: Proxy (Domains (Domain m))) (Proxy :: Proxy (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)) $
+  currys (Proxy :: Proxy (ParamTypes (Domain m))) (Proxy :: Proxy (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)) $
     const (/=)
 {-# INLINE eqChangeDetector #-}
 
@@ -206,9 +206,9 @@ eqChangeDetector _ =
 -- Beware of cycles in the resulting dependency graph, though!
 alwaysChangeDetector
   :: forall m
-   . Currying (Domains (Domain m)) (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)
+   . Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
   => Proxy m -> ChangeDetector (Domain m)
 alwaysChangeDetector _ =
-  currys (Proxy :: Proxy (Domains (Domain m))) (Proxy :: Proxy (CoDomain (Domain m) -> CoDomain (Domain m) -> Bool)) $
+  currys (Proxy :: Proxy (ParamTypes (Domain m))) (Proxy :: Proxy (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)) $
     \_ _ _ -> True
 {-# INLINE alwaysChangeDetector #-}
