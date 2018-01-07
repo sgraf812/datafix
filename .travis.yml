@@ -216,7 +216,7 @@ script:
     rm -rf out/* || exit 0
 
     # Copy over the docs
-    cp -r .stack-work/install/x86_64-linux/lts-*/*/doc/datafix-*/* out/
+    cp -r .stack-work/install/x86_64-linux/*/*/doc/* out/
     
     # Now let's go have some fun with the cloned repo
     cd out
