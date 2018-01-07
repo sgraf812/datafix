@@ -213,7 +213,7 @@ script:
     cd ..
 
     # Clean out existing contents
-    rm -rf out/**/* || exit 0
+    rm -rf out/* || exit 0
 
     # Copy over the docs
     cp -r .stack-work/install/x86_64-linux/lts-*/*/doc/datafix-*/* out/
