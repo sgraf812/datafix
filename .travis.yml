@@ -215,7 +215,8 @@ script:
     # Clean out existing contents
     rm -rf out/**/* || exit 0
 
-    # Copy over the docs the build generated
+    # Copy over the docs
+    stack haddock --no-haddock-deps
     cp -r .stack-work/install/*/doc/* out/
     
     # Now let's go have some fun with the cloned repo
