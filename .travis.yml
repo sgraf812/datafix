@@ -190,6 +190,11 @@ script:
       ;;
   esac
 
+  set +ex
+
+after_success:
+- |
+  set -ex
   # Inspired by https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
   if [ "x$DOCS" = "xdeploy" ]; then
     SOURCE_BRANCH="master"
@@ -197,7 +202,7 @@ script:
 
     if [ "$TRAVIS_PULL_REQUEST" != "false" -o "$TRAVIS_BRANCH" != "$SOURCE_BRANCH" ]; then
       echo "Skipping deploy"
-      exit 0
+      travis_terminate 0
     fi
 
     # Save some useful information
@@ -213,7 +218,7 @@ script:
     cd ..
 
     # Clean out existing contents
-    rm -rf out/* || exit 0
+    rm -rf out/* || travis_terminate 0
 
     # Copy over the docs
     cp -r .stack-work/install/x86_64-linux/*/*/doc/* out/
@@ -226,11 +231,11 @@ script:
     # Commit the "changes", i.e. the new version.
     # The delta will show diffs between new and old versions.
     git add -A .
-    
+
     # If there are no changes to the compiled out (e.g. this is a README update) then just bail.
     if git diff --cached --quiet; then
         echo "No changes to the output on this push; exiting."
-        exit 0
+        travis_terminate 0
     fi
 
     git commit -m "Deploy to GitHub Pages: ${SHA}"
