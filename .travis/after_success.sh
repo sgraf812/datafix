@@ -1,4 +1,7 @@
+#!/bin/bash
+
 set -ex
+
 # Inspired by https://gist.github.com/domenic/ec8b0fc8ab45f39403dd
 if [ "x$DOCS" = "xdeploy" ]; then
   SOURCE_BRANCH="master"

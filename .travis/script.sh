@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -ex
 
 echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"

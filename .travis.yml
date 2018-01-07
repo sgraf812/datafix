@@ -98,18 +98,17 @@ matrix:
   - env: BUILD=stack ARGS="--resolver nightly"
 
 before_install:
+# Using compiler above sets CC to an invalid value, so unset it
+- unset CC
+
+# We want to always allow newer versions of packages when building on GHC HEAD
+- CABALARGS=""
+- if [ "x$GHCVER" = "xhead" ]; then CABALARGS=--allow-newer; fi
+
+# Download and unpack the stack executable
+- export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$HOME/.local/bin:/opt/alex/$ALEXVER/bin:/opt/happy/$HAPPYVER/bin:$HOME/.cabal/bin:$PATH
+- mkdir -p ~/.local/bin
 - |
-  # Using compiler above sets CC to an invalid value, so unset it
-  unset CC
-
-  # We want to always allow newer versions of packages when building on GHC HEAD
-  CABALARGS=""
-  if [ "x$GHCVER" = "xhead" ]; then CABALARGS=--allow-newer; fi
-
-  # Download and unpack the stack executable
-  export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$HOME/.local/bin:/opt/alex/$ALEXVER/bin:/opt/happy/$HAPPYVER/bin:$HOME/.cabal/bin:$PATH
-  mkdir -p ~/.local/bin
-
   if [ `uname` = "Darwin" ]
   then
     travis_retry curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin
@@ -129,4 +128,4 @@ before_install:
 
 install: .travis/install.sh
 script: .travis/script.sh
-after_success: .travis/upload_docs.sh
+after_success: .travis/after_success.sh
