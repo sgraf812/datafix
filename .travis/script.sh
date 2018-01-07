@@ -1,22 +1,23 @@
 #!/bin/bash
 
-set -ex
-
 echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
 
 if [ -f configure.ac ]; then 
   autoreconf -i
 fi
 
+set -ex
+
 case "$BUILD" in
   style)
-    # This should be resolved (and removed) by Stack 1.6
-    # Follows from https://github.com/commercialhaskell/stack/issues/3178
-    stack --system-ghc --no-terminal install happy
-    
-    stack --system-ghc --no-terminal install hlint
     ;;
   stack)
+    # Add in extra-deps for older snapshots, as necessary
+    stack --no-terminal --install-ghc $ARGS test --bench --dry-run || ( \
+      stack --no-terminal $ARGS build cabal-install && \
+      stack --no-terminal $ARGS solver --update-config)
+
+    # Build the dependencies
     stack --no-terminal --install-ghc -j1 build $ARGS Cabal
     stack --no-terminal --install-ghc test --bench --only-dependencies $ARGS
     ;;
