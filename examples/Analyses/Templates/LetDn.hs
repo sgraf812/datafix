@@ -6,6 +6,19 @@
 {-# LANGUAGE TypeFamilies          #-}
 {-# OPTIONS_GHC -fexpose-all-unfoldings #-}
 
+-- | This module provides a template for backward analyses in the style of
+-- GHC's projection-based strictness analysis. Defining property is the way
+-- in which let-bindings are handled: Strictness types are unleashed at call
+-- sites depending on incoming argument strictness.
+--
+-- The idea is that users of this module only need to provide a
+-- 'TransferAlgebra' for 'buildProblem' to get a specification for the desired
+-- data-flow problem. Remarkably, 'buildProblem' completely abstracts away
+-- recursive bindings: The passed 'TransferAlgebra' is non-recursive and thus
+-- doesn't need to do any allocation of 'Node's or calls to 'dependOn'.
+-- As a result, 'TransferAlgebra's operate in a clean @forall m. Monad m@
+-- constraint, guaranteeing purity.
+
 module Analyses.Templates.LetDn
   ( TransferAlgebra
   , buildProblem
@@ -20,6 +33,17 @@ import           Datafix
 import           CoreSyn
 import           VarEnv
 
+-- | A 'TransferAlgebra' for a given @lattice@ interprets a single layer of
+-- 'CoreExprF' in terms of a 'TransferFunction m lattice', for any possible
+-- @'Monad' m@. It has access to a 'VarEnv' of 'TransferFunction's for every
+-- free variable in the expression in order to do so.
+--
+-- The suffix @Algebra@ is inspired by recursion schemes. 'TransferAlgebra's
+-- are <F-algebras https://en.wikipedia.org/wiki/F-algebra>, where the
+-- /base functor/ is 'CoreExprF' and the /carrier/ is
+-- @TransferFunction m lattice@.
+--
+-- By the same analogy, 'buildProblem' is the associated recursion scheme.
 type TransferAlgebra lattice
   = forall m
    . Monad m
@@ -29,6 +53,24 @@ type TransferAlgebra lattice
   -> CoreExprF (TransferFunction m lattice)
   -> TransferFunction m lattice
 
+-- | Given a 'TransferAlgebra', this function takes care of building a
+-- 'DataFlowProblem' for 'CoreExpr's.
+-- It allocates 'Node's and ties knots for recursive bindings
+-- through calls to 'dependOn'. These are then hidden in a 'VarEnv'
+-- and passed on to the 'TransferAlgebra', which can stay completely
+-- agnostic of node allocation and 'MonadDependency' this way.
+--
+-- It returns the root 'Node', denoting the passed expression, and the maximum
+-- allocated 'Node', which allows to configure 'fixProblem' with a dense
+-- 'GraphRep'. The final return value is the 'DataFlowProblem' reflecting
+-- the analysis specified by the 'TransferAlgebra' applied to the given
+-- 'CoreExpr'.
+--
+-- Continuing the recursion schemes analogy from 'TransferAlgebra',
+-- 'buildProblem' is a recursion scheme. Applying it to a 'TransferAlgebra'
+-- yields a catamorphism. It is special in that recursive let-bindings
+-- lead to non-structural recursion, so termination isn't obvious and
+-- demands some confidence in domain theory by the programmer.
 buildProblem
   :: forall m
    . MonadDependency m
@@ -119,6 +161,8 @@ buildRoot p alg' = buildExpr emptyVarEnv
             [] -> pure (env, [])
             ((id_, rhs):binders') ->
               allocateNode $ \node -> do
+                -- This block is where we tie the knot through
+                -- 'MonadDependency'!
                 let deref = dependOn p node
                 let env' = extendVarEnv env id_ deref
                 (env'', transferredBind) <- impl env' binders'
