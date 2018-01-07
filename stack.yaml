@@ -36,7 +36,6 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - pomaps-0.0.0.2
-- cabal-toolkit-0.0.4
 
 allow-newer: true
 
