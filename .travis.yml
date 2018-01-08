@@ -20,6 +20,7 @@ cache:
   - $HOME/.ghc
   - $HOME/.cabal
   - $HOME/.stack
+  - .stack-work
 
 env:
   global:
