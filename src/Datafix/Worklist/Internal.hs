@@ -32,7 +32,7 @@ import           Data.IORef
 import           Data.Maybe                       (fromMaybe, listToMaybe,
                                                    mapMaybe)
 import           Data.Proxy                       (Proxy (..))
-import           Datafix.Description              hiding (dependOn)
+import           Datafix.Description              hiding (datafix)
 import qualified Datafix.Description
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
@@ -49,8 +49,8 @@ import           System.IO.Unsafe                 (unsafePerformIO)
 -- This essentially tracks the current approximation of the solution to the
 -- 'DataFlowProblem' as mutable state while 'fixProblem' makes sure we will eventually
 -- halt with a conservative approximation.
-newtype DependencyM graph domain a
-  = DM (ReaderT (Env graph domain) IO a)
+newtype DependencyM domain a
+  = DM (ReaderT (Env domain) IO a)
   -- ^ Why does this use 'IO'? Actually, we only need 'ST' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
@@ -71,7 +71,7 @@ newtype DependencyM graph domain a
   deriving (Functor, Applicative, Monad)
 
 -- | The iteration state of 'DependencyM'/'fixProblem'.
-data Env graph domain
+data Env domain
   = Env
   { problem          :: !(DataFlowProblem (DependencyM graph domain))
   -- ^ Constant.
@@ -82,7 +82,7 @@ data Env graph domain
   , callStack        :: !(IntArgsMonoSet (Products (ParamTypes domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
-  , graph            :: !(graph domain)
+  , graph            :: !(Graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
@@ -96,13 +96,12 @@ data Env graph domain
 
 initialEnv
   :: IntArgsMonoSet (Products (ParamTypes domain))
-  -> DataFlowProblem (DependencyM graph domain)
+  -> DataFlowProblem (DependencyM domain)
   -> IterationBound domain
-  -> IO (graph domain)
-  -> IO (Env graph domain)
-initialEnv unstable_ prob ib newGraphRef =
+  -> IO (Env domain)
+initialEnv unstable_ prob ib =
   Env prob ib IntArgsMonoSet.empty
-    <$> newGraphRef
+    <$> Graph.new
     <*> newIORef IntArgsMonoSet.empty
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
@@ -163,18 +162,18 @@ type Datafixable m =
 -- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
 -- with 'fixProblem'.
 -- The 'Domain' is extracted from a type parameter.
-instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
-  type Domain (DependencyM graph domain) = domain
-  dependOn = dependOn
-  {-# INLINE dependOn #-}
+instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain) where
+  type Domain (DependencyM domain) = domain
+  datafix = datafix
+  {-# INLINE datafix #-}
 
 -- | Specifies the /density/ of the problem, e.g. whether the domain of
 -- 'Node's can be confined to a finite range, in which case 'fixProblem'
 -- tries to use a "Data.Vector" based graph representation rather than
 -- one based on "Data.IntMap".
-data Density graph where
-  Sparse :: Density SparseGraph.Ref
-  Dense :: Node -> Density DenseGraph.Ref
+data Density where
+  Sparse :: Density
+  Dense :: Node -> Density
 
 -- | A function that computes a sufficiently conservative approximation
 -- of a point in the abstract domain for when the solution algorithm
@@ -302,7 +301,7 @@ withCall node args r = ReaderT $ \env -> do
 -- It does so in a way that respects the 'IterationBound'.
 --
 -- This function is not exported, and is only called by 'work'
--- and 'dependOn', for when the iteration strategy decides that
+-- and 'datafix', for when the iteration strategy decides that
 -- the 'node' needs to be (and can be) re-iterated.
 -- It performs tracking of which 'Node's the 'TransferFunction'
 -- depended on, do that the worklist algorithm can do its magic.
@@ -362,40 +361,52 @@ recompute node args = withCall node args $ do
   return newVal
 {-# INLINE recompute #-}
 
-dependOn
-  :: forall domain graph
-   . Datafixable (DependencyM graph domain)
-  => GraphRef graph
-  => Proxy (DependencyM graph domain) -> Node -> TransferFunction (DependencyM graph domain) domain
-dependOn _ (Node node) = currys dom cod impl
+datafix
+  :: forall domain
+   . Datafixable (DependencyM domain)
+  => ChangeDetector domain
+  => (TransferFunction (DependencyM domain) domain -> TransferFunction (DependencyM domain) domain)
+  -> TransferFunction (DependencyM domain) domain
+datafix cd f = currys dom cod impl
   where
     dom = Proxy :: Proxy (ParamTypes domain)
-    cod = Proxy :: Proxy (DependencyM graph domain (ReturnType domain))
+    cod = Proxy :: Proxy (DependencyM domain (ReturnType domain))
     impl args = DM $ do
-      cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
-      isStable <- zoomUnstable $
-        not . IntArgsMonoSet.member node args <$> get
-      maybePointInfo <- withReaderT graph (Graph.lookup node args)
-      zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
-      case maybePointInfo >>= value of
-        -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
-        -- Otherwise, the node wasn't part of the call stack and thus will either
-        -- have a 'value' assigned or will not have been discovered at all.
-        Nothing | cycleDetected ->
-          -- Somewhere in an outer activation record we already compute this one.
-          -- We don't recurse again and just return an optimistic approximation,
-          -- such as 'bottom'.
-          -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
-          -- any calls to 'dependOn' for a cycle to even be possible.
-          optimisticApproximation node args
-        Just val | isStable || cycleDetected ->
-          -- No brainer
-          return val
-        maybeVal ->
-          -- No cycle && (unstable || undiscovered). Apply one of the schemes
-          -- outlined in
-          -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-          scheme2 maybeVal node args
+      node <- withReaderT graph (Graph.allocateNode cd (f . currys dom cod . dependOn))
+      dependOn node args
+{-# INLINE datafix #-}
+
+dependOn
+  :: forall domain
+   . Datafixable (DependencyM domain)
+  => Node
+  -> Product (ParamTypes domain)
+  -> DependencyM domain (ReturnType domain)
+dependOn node args = DM $ do
+  cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
+  isStable <- zoomUnstable $
+    not . IntArgsMonoSet.member node args <$> get
+  maybePointInfo <- withReaderT graph (Graph.lookup node args)
+  zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
+  case maybePointInfo >>= value of
+    -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
+    -- Otherwise, the node wasn't part of the call stack and thus will either
+    -- have a 'value' assigned or will not have been discovered at all.
+    Nothing | cycleDetected ->
+      -- Somewhere in an outer activation record we already compute this one.
+      -- We don't recurse again and just return an optimistic approximation,
+      -- such as 'bottom'.
+      -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
+      -- any calls to 'datafix' for a cycle to even be possible.
+      optimisticApproximation node args
+    Just val | isStable || cycleDetected ->
+      -- No brainer
+      return val
+    maybeVal ->
+      -- No cycle && (unstable || undiscovered). Apply one of the schemes
+      -- outlined in
+      -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+      scheme2 maybeVal node args
 {-# INLINE dependOn #-}
 
 -- | Compute an optimistic approximation for a point of a given node that is
@@ -488,30 +499,23 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 -- It does do by employing a worklist algorithm, iterating unstable 'Node's
 -- only.
 -- 'Node's become unstable when the point of another 'Node' their 'TransferFunction'
--- 'dependOn'ed changed.
+-- 'datafix'ed changed.
 --
 -- The sole initially unstable 'Node' is the last parameter, and if your
 -- 'domain' is function-valued (so the returned 'Arrows' expands to a function),
 -- then any further parameters specify the exact point in the 'Node's transfer
 -- function you are interested in.
 fixProblem
-  :: forall domain graph
-   . GraphRef graph
-  => Datafixable (DependencyM graph domain)
-  => DataFlowProblem (DependencyM graph domain)
+  :: forall domain
+   . Datafixable (DependencyM domain)
+  => DataFlowProblem (DependencyM domain)
   -- ^ The description of the @DataFlowProblem@ to solve.
-  -> Density graph
+  -> Density
   -- ^ Describes if the algorithm is free to use a 'Dense', 'Vector'-based
   -- graph representation or has to go with a 'Sparse' one based on 'IntMap'.
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
-  -> Node
-  -- ^ The @Node@ that is initially assumed to be unstable. This should be
-  -- the @Node@ you are interested in, e.g. @Node 42@ if you are interested
-  -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
-  -- @Node@ denoting the root expression of your data-flow analysis
-  -- you specified via the @DataFlowProblem@.
   -> Arrows (ParamTypes domain) (ReturnType domain)
 fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
   where
@@ -522,9 +526,6 @@ fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes doma
     runProblem args = unsafePerformIO $ do
       -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
       -- of 'DependencyM' for why we 'unsafePerformIO'.
-      let newGraphRef = case density of
-            Sparse               -> SparseGraph.newRef
-            Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
-      env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
+      env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib
       runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE fixProblem #-}

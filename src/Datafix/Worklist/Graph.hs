@@ -17,10 +17,20 @@
 
 module Datafix.Worklist.Graph where
 
+import           Control.Monad                    (forM_)
+import           Control.Monad.Primitive          (PrimState)
 import           Control.Monad.Trans.Reader
-import           Datafix.IntArgsMonoSet     (IntArgsMonoSet)
-import qualified Datafix.IntArgsMonoSet     as IntArgsMonoSet
-import           Datafix.MonoMap            (MonoMapKey)
+import           Control.Monad.Trans.State.Strict
+import           Data.IORef
+import           Data.Maybe                       (fromMaybe)
+import           Datafix.Description              (ChangeDetector, Domain,
+                                                   Node (..), TransferFunction)
+import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
+import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
+import           Datafix.MonoMap                  (MonoMap, MonoMapKey)
+import qualified Datafix.MonoMap                  as MonoMap
+import           Datafix.Utils.GrowableVector     (GrowableVector)
+import qualified Datafix.Utils.GrowableVector     as GrowableVector
 import           Datafix.Utils.TypeLevel
 
 -- | The data associated with each point in the transfer function of a data-flow
@@ -58,12 +68,103 @@ computeDiff :: MonoMapKey k => IntArgsMonoSet k -> IntArgsMonoSet k -> Diff k
 computeDiff a b =
   Diff (IntArgsMonoSet.difference b a) (IntArgsMonoSet.difference a b)
 
--- | Abstracts over the concrete representation of the data-flow graph.
---
--- There are two instances: The default 'Datafix.Graph.Sparse.Ref'
--- for sparse graphs based on an 'IntMap' and 'Datafix.Graph.Dense.Ref' for
--- the dense case, storing the 'Node' mapping in a 'Data.IOVector'.
-class GraphRef (ref :: * -> *) where
-  updatePoint :: MonoMapKey (Products (ParamTypes domain)) => Int -> Products (ParamTypes domain) -> ReturnType domain -> IntArgsMonoSet (Products (ParamTypes domain)) -> ReaderT (ref domain) IO (PointInfo domain)
-  lookup :: MonoMapKey (Products (ParamTypes domain)) => Int -> Products (ParamTypes domain) -> ReaderT (ref domain) IO (Maybe (PointInfo domain))
-  lookupLT :: MonoMapKey (Products (ParamTypes domain)) => Int -> Products (ParamTypes domain) -> ReaderT (ref domain) IO [(Products (ParamTypes domain), PointInfo domain)]
+-- | Models the points of a transfer function of a single
+-- data-flow 'Node'.
+type PointMap domain
+  = MonoMap (Products (ParamTypes domain)) (PointInfo domain)
+
+data NodeInfo m
+  = NodeInfo
+  { changeDetector :: !(ChangeDetector m)
+  , transfer       :: !(TransferFunction m)
+  , points         :: !(PointMap (Domain m))
+  }
+
+newNodeInfo
+  :: MonoMapKey (Products (ParamTypes (Domain m)))
+  => ChangeDetector m
+  -> TransferFunction m
+  -> NodeInfo m
+newNodeInfo cd tf = NodeInfo cd tf MonoMap.empty
+
+-- | A dense data-flow graph representation.
+newtype Graph m
+  = Graph (IORef (GrowableVector (PrimState IO) (NodeInfo m)))
+
+-- | Allocates a new dense graph 'Graph'.
+new :: MonoMapKey (Products (ParamTypes (Domain m))) => IO (Graph m)
+new = Graph <$> (GrowableVector.new 1024 >>= newIORef)
+
+allocateNode
+  :: MonoMapKey (Products (ParamTypes (Domain m)))
+  => ChangeDetector m
+  -> TransferFunction m
+  -> ReaderT (Graph m) IO Int
+allocateNode cd tf = ReaderT $ \(Graph ref) -> do
+  vec <- readIORef ref
+  vec' <- GrowableVector.pushBack vec (newNodeInfo cd tf)
+  writeIORef ref vec'
+  return (GrowableVector.length vec')
+{-# INLINE allocateNode #-}
+
+zoomPoints :: Int -> State (PointMap (Domain m)) a -> ReaderT (Graph m) IO a
+zoomPoints node s = ReaderT $ \(Graph ref) -> do
+  vec <- readIORef ref
+  ni <- GrowableVector.read vec node
+  let (ret, points') = runState s (points ni)
+  points' `seq` GrowableVector.write vec node ni { points = points' }
+  return ret
+{-# INLINE zoomPoints #-}
+
+updatePoint
+  :: MonoMapKey (Products (ParamTypes (Domain m)))
+  => Node
+  -> Products (ParamTypes (Domain m))
+  -> ReturnType (Domain m)
+  -> IntArgsMonoSet (Products (ParamTypes (Domain m)))
+  -> ReaderT (Graph m) IO (PointInfo (Domain m))
+updatePoint (Node node) args val refs = do
+  -- if we are lucky (e.g. no refs changed), we get away with one map access
+  -- first update `node`s PointInfo
+  let freshInfo = emptyPointInfo
+        { value = Just val
+        , references = refs
+        , iterations = 1
+        }
+  let merger _ new_ old = new_
+        { referrers = referrers old
+        , iterations = iterations old + 1
+        }
+
+  oldInfo <- fmap (fromMaybe emptyPointInfo) $ zoomPoints node $ state $
+    MonoMap.insertLookupWithKey merger args freshInfo
+
+  -- Now compute the diff of changed references
+  let diff = computeDiff (references oldInfo) refs
+
+  -- finally register/unregister at all references as referrer.
+  let updater f (depNode, depArgs) = zoomPoints depNode $ modify' $
+        MonoMap.insertWith (const f) depArgs (f emptyPointInfo)
+  let addReferrer ni = ni { referrers = IntArgsMonoSet.insert node args (referrers ni) }
+  let removeReferrer ni = ni { referrers = IntArgsMonoSet.delete node args (referrers ni) }
+  forM_ (IntArgsMonoSet.toList (added diff)) (updater addReferrer)
+  forM_ (IntArgsMonoSet.toList (removed diff)) (updater removeReferrer)
+
+  return oldInfo
+{-# INLINE updatePoint #-}
+
+lookupNode :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> ReaderT (Graph m) IO (NodeInfo m)
+lookupNode node = ReaderT $ \(Graph ref) -> do
+  graph <- readIORef ref
+  GrowableVector.read graph node
+{-# INLINE lookupNode #-}
+
+lookup :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> Products (ParamTypes (Domain m)) -> ReaderT (Graph m) IO (Maybe (PointInfo (Domain m)))
+lookup node args = MonoMap.lookup args . points <$> lookupNode node
+{-# INLINE lookup #-}
+
+lookupLT :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> Products (ParamTypes (Domain m)) -> ReaderT (Graph m) IO [(Products (ParamTypes (Domain m)), PointInfo (Domain m))]
+lookupLT node args = ReaderT $ \(Graph ref) -> do
+  graph <- readIORef ref
+  MonoMap.lookupLT args . points <$> GrowableVector.read graph node
+{-# INLINE lookupLT #-}

@@ -8,18 +8,21 @@
 -- Internal module, does not follow the PVP. Breaking changes may happen at
 -- any minor version.
 
+{-# OPTIONS_GHC -funbox-strict-fields #-}
+
 module Datafix.Utils.GrowableVector
   ( GrowableVector
   , new
   , length
   , pushBack
+  , read
   , write
   , freeze
   ) where
 
 import           Control.Monad.Primitive
 import           Data.Primitive.Array
-import           Prelude                 hiding (length)
+import           Prelude                 hiding (length, read)
 
 data GrowableVector s v
   = GrowableVector
@@ -28,11 +31,10 @@ data GrowableVector s v
   }
 
 notInitializedError :: a
-notInitializedError = error "newGrowableVector: Accessed uninitialized value"
+notInitializedError = error "GrowableVector.new: Accessed uninitialized value"
 
 new :: PrimMonad m => Int -> m (GrowableVector (PrimState m) v)
-new c =
-  GrowableVector <$> newArray c notInitializedError <*> pure 0
+new c = GrowableVector <$> newArray c notInitializedError <*> pure 0
 {-# INLINE new #-}
 
 capacity :: GrowableVector s v -> Int
@@ -58,6 +60,10 @@ pushBack vec v = do
   writeArray (buffer vec') (len vec') v
   return vec' { len = len vec' + 1 }
 {-# INLINE pushBack #-}
+
+read :: PrimMonad m => GrowableVector (PrimState m) v -> Int -> m v
+read = readArray . buffer
+{-# INLINE read #-}
 
 write :: PrimMonad m => GrowableVector (PrimState m) v -> Int -> v -> m ()
 write = writeArray . buffer

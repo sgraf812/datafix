@@ -52,8 +52,6 @@ library
                      Datafix.Utils.TypeLevel
                      Datafix.Worklist
                      Datafix.Worklist.Graph
-                     Datafix.Worklist.Graph.Dense
-                     Datafix.Worklist.Graph.Sparse
                      Datafix.Worklist.Internal
   other-modules:
                      Datafix.Utils.GrowableVector
