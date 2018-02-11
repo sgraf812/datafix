@@ -28,7 +28,7 @@ import qualified Datafix.Utils.GrowableVector     as GV
 import           System.IO.Unsafe                 (unsafePerformIO)
 
 -- | A state monad wrapping a mapping from 'Node' to some 'v'
--- which we will instantiate to appropriate 'TransferFunction's.
+-- which we will instantiate to appropriate 'LiftFunc's.
 newtype NodeAllocator v a
   = NodeAllocator { unwrapNodeAllocator :: StateT (GrowableVector (PrimState IO) v) IO a }
   deriving (Functor, Applicative, Monad)

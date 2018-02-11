@@ -81,7 +81,7 @@
 -- through laziness.
 --
 -- As promised in the previous section, we can do the same using @datafix@.
--- First, we need to declare a 'TransferFunction' that makes the data
+-- First, we need to declare a 'LiftFunc' that makes the data
 -- dependencies for the recursive case explicit, as if we were using
 -- 'Data.Function.fix' to eliminate the recursion:
 --
@@ -103,8 +103,8 @@
 --
 -- Every point of the fibonacci series is modeled as a seperate 'Node' of the
 -- data-flow graph.
--- By looking at the definition of 'TransferFunction', we can see that
--- @TransferFunction m Natural ~ m Natural@, so for our simple
+-- By looking at the definition of 'LiftFunc', we can see that
+-- @LiftFunc m Natural ~ m Natural@, so for our simple
 -- 'Natural' 'Domain', the transfer function is specified directly in
 -- 'MonadDependency'.
 --
@@ -188,7 +188,7 @@
 --     :: (MonadDependency m, Domain m ~ Int)
 --     => Proxy m
 --     -> Node
---     -> TransferFunction m Int
+--     -> LiftFunc m Int
 --   transferF p (Node n)
 --     | even n = (* 2) <$> dependOn p (Node (n `div` 2))
 --     | odd n  = (subtract 1) <$> dependOn p (Node (n + 1))

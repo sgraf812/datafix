@@ -24,7 +24,7 @@ import           Control.Monad.Trans.State.Strict
 import           Data.IORef
 import           Data.Maybe                       (fromMaybe)
 import           Datafix.Description              (ChangeDetector, Domain,
-                                                   Node (..), TransferFunction)
+                                                   LiftFunc, Node (..))
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMap, MonoMapKey)
@@ -75,15 +75,15 @@ type PointMap domain
 
 data NodeInfo m
   = NodeInfo
-  { changeDetector :: !(ChangeDetector m)
-  , transfer       :: !(TransferFunction m)
-  , points         :: !(PointMap (Domain m))
+  { changeDetector   :: !(ChangeDetector (Domain m))
+  , transferFunction :: !(LiftFunc (Domain m) m)
+  , points           :: !(PointMap (Domain m))
   }
 
 newNodeInfo
   :: MonoMapKey (Products (ParamTypes (Domain m)))
-  => ChangeDetector m
-  -> TransferFunction m
+  => ChangeDetector (Domain m)
+  -> LiftFunc (Domain m) m
   -> NodeInfo m
 newNodeInfo cd tf = NodeInfo cd tf MonoMap.empty
 
@@ -97,14 +97,15 @@ new = Graph <$> (GrowableVector.new 1024 >>= newIORef)
 
 allocateNode
   :: MonoMapKey (Products (ParamTypes (Domain m)))
-  => ChangeDetector m
-  -> TransferFunction m
+  => ChangeDetector (Domain m)
+  -> (Int -> LiftFunc (Domain m) m)
   -> ReaderT (Graph m) IO Int
-allocateNode cd tf = ReaderT $ \(Graph ref) -> do
+allocateNode cd tieKnot = ReaderT $ \(Graph ref) -> do
   vec <- readIORef ref
-  vec' <- GrowableVector.pushBack vec (newNodeInfo cd tf)
+  let node = GrowableVector.length vec
+  vec' <- GrowableVector.pushBack vec (newNodeInfo cd (tieKnot node))
   writeIORef ref vec'
-  return (GrowableVector.length vec')
+  return node
 {-# INLINE allocateNode #-}
 
 zoomPoints :: Int -> State (PointMap (Domain m)) a -> ReaderT (Graph m) IO a
@@ -118,12 +119,12 @@ zoomPoints node s = ReaderT $ \(Graph ref) -> do
 
 updatePoint
   :: MonoMapKey (Products (ParamTypes (Domain m)))
-  => Node
+  => Int
   -> Products (ParamTypes (Domain m))
   -> ReturnType (Domain m)
   -> IntArgsMonoSet (Products (ParamTypes (Domain m)))
   -> ReaderT (Graph m) IO (PointInfo (Domain m))
-updatePoint (Node node) args val refs = do
+updatePoint node args val refs = do
   -- if we are lucky (e.g. no refs changed), we get away with one map access
   -- first update `node`s PointInfo
   let freshInfo = emptyPointInfo

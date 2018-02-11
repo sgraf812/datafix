@@ -34,14 +34,14 @@ import           CoreSyn
 import           VarEnv
 
 -- | A 'TransferAlgebra' for a given @lattice@ interprets a single layer of
--- 'CoreExprF' in terms of a 'TransferFunction m lattice', for any possible
--- @'Monad' m@. It has access to a 'VarEnv' of 'TransferFunction's for every
+-- 'CoreExprF' in terms of a 'LiftFunc m lattice', for any possible
+-- @'Monad' m@. It has access to a 'VarEnv' of 'LiftFunc's for every
 -- free variable in the expression in order to do so.
 --
 -- The suffix @Algebra@ is inspired by recursion schemes. 'TransferAlgebra's
 -- are <F-algebras https://en.wikipedia.org/wiki/F-algebra>, where the
 -- /base functor/ is 'CoreExprF' and the /carrier/ is
--- @TransferFunction m lattice@.
+-- @LiftFunc m lattice@.
 --
 -- By the same analogy, 'buildProblem' is the associated recursion scheme.
 type TransferAlgebra lattice
@@ -49,9 +49,9 @@ type TransferAlgebra lattice
    . Monad m
   => Proxy m
   -> Proxy lattice
-  -> VarEnv (TransferFunction m lattice)
-  -> CoreExprF (TransferFunction m lattice)
-  -> TransferFunction m lattice
+  -> VarEnv (LiftFunc m lattice)
+  -> CoreExprF (LiftFunc m lattice)
+  -> LiftFunc m lattice
 
 -- | Given a 'TransferAlgebra', this function takes care of building a
 -- 'DataFlowProblem' for 'CoreExpr's.
@@ -89,7 +89,7 @@ buildProblem alg e = (root, Node (sizeofArray arr - 1), DFP transfer changeDetec
       pure (root_, transferRoot)
 {-# INLINE buildProblem #-}
 
-type TF m = TransferFunction m (Domain m)
+type TF m = LiftFunc m (Domain m)
 
 buildRoot
   :: forall m

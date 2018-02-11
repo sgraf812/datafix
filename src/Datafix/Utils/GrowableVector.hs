@@ -8,6 +8,7 @@
 -- Internal module, does not follow the PVP. Breaking changes may happen at
 -- any minor version.
 
+{-# LANGUAGE BangPatterns #-}
 {-# OPTIONS_GHC -funbox-strict-fields #-}
 
 module Datafix.Utils.GrowableVector
@@ -57,7 +58,7 @@ pushBack vec v = do
   vec' <- if length vec == capacity vec
     then grow vec (max 1 (capacity vec))
     else return vec
-  writeArray (buffer vec') (len vec') v
+  write vec' (len vec') v
   return vec' { len = len vec' + 1 }
 {-# INLINE pushBack #-}
 
@@ -66,7 +67,7 @@ read = readArray . buffer
 {-# INLINE read #-}
 
 write :: PrimMonad m => GrowableVector (PrimState m) v -> Int -> v -> m ()
-write = writeArray . buffer
+write vec i !v = writeArray (buffer vec) i v
 {-# INLINE write #-}
 
 freeze :: PrimMonad m => GrowableVector (PrimState m) v -> m (Array v)

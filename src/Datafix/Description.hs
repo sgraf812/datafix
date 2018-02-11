@@ -18,7 +18,7 @@
 
 module Datafix.Description
   ( Node (..)
-  , TransferFunction
+  , LiftFunc
   , ChangeDetector
   , DataFlowProblem (..)
   , MonadDependency (..)
@@ -77,8 +77,8 @@ newtype Node
 -- >>> let g x = iterate negate x !! 1
 -- >>> cd 123 (f 123) (g 123)
 -- False
-type ChangeDetector m
-  = Proxy m -> Arrows (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
+type ChangeDetector domain
+  = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
 
 -- | Data-flow problems denote 'Node's in the data-flow graph
 -- by monotone transfer functions.
@@ -88,28 +88,28 @@ type ChangeDetector m
 -- this alias reduces to a normal form:
 --
 -- @
---   TransferFunction m Int ~ m Int
---   TransferFunction m (Bool -> Int) ~ Bool -> m Int
---   TransferFunction m (a -> b -> Int) ~ a -> b -> m Int
---   TransferFunction m (a -> b -> c -> Int) ~ a -> b -> c -> m Int
+--   LiftFunc m Int ~ m Int
+--   LiftFunc m (Bool -> Int) ~ Bool -> m Int
+--   LiftFunc m (a -> b -> Int) ~ a -> b -> m Int
+--   LiftFunc m (a -> b -> c -> Int) ~ a -> b -> c -> m Int
 -- @
 --
 -- @m@ will generally be an instance of 'MonadDependency' and the type alias
 -- effectively wraps @m@ around @domain@'s return type.
 -- The result is a function that produces its return value while
 -- potentially triggering side-effects in @m@, which amounts to
--- depending on 'TransferFunction's of other 'Node's for the
+-- depending on 'LiftFunc's of other 'Node's for the
 -- 'MonadDependency' case.
-type TransferFunction m
-  = Proxy m -> Arrows (ParamTypes (Domain m)) (m (ReturnType (Domain m)))
+type LiftFunc domain m
+  = Arrows (ParamTypes domain) (m (ReturnType domain))
 
 -- | Models a data-flow problem, where each 'Node' is mapped to
--- its denoting 'TransferFunction' and a means to detect when
+-- its denoting 'LiftFunc' and a means to detect when
 -- the iterated transfer function reached a fixed-point through
 -- a 'ChangeDetector'.
 newtype DataFlowProblem m
   = DFP
-  { dfpTransfer     :: TransferFunction m
+  { dfpTransfer     :: LiftFunc (Domain m) m
   -- ^ A transfer function per each 'Node' of the modeled data-flow problem.
   }
 
@@ -123,7 +123,7 @@ newtype DataFlowProblem m
 -- You can represent dynamic programs with this quite easily:
 --
 -- >>> :{
---   transferFib :: (MonadDependency m, Domain m ~ Int) => Proxy m -> Node -> TransferFunction m Int
+--   transferFib :: (MonadDependency m, Domain m ~ Int) => Proxy m -> Node -> LiftFunc m Int
 --   transferFib _ (Node 0) = return 0
 --   transferFib _ (Node 1) = return 1
 --   transferFib p (Node n) = (+) <$> dependOn p (Node (n-1)) <*> dependOn p (Node (n-2))
@@ -183,9 +183,9 @@ class Monad m => MonadDependency m where
   -- If you can't guarantee monotonicity, try to pull non-monotone arguments
   -- into 'Node's.
   datafix
-    :: ChangeDetector m
-    -> (TransferFunction m -> TransferFunction m)
-    -> TransferFunction m
+    :: ChangeDetector (Domain m)
+    -> (LiftFunc (Domain m) m -> LiftFunc (Domain m) m)
+    -> LiftFunc (Domain m) m
   -- ^ Expresses a dependency on a node of the data-flow graph, thus
   -- introducing a way of trackable recursion. That's similar
   -- to how you would use 'Data.Function.fix' to abstract over recursion.
@@ -195,19 +195,19 @@ datafixEq
    . MonadDependency m
   => Eq (ReturnType (Domain m))
   => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => (TransferFunction m -> TransferFunction m)
-  -> TransferFunction m
-datafixEq = datafix @m eqChangeDetector
+  => (LiftFunc (Domain m) m -> LiftFunc (Domain m) m)
+  -> LiftFunc (Domain m) m
+datafixEq = datafix @m (eqChangeDetector @(Domain m))
 
 -- | A 'ChangeDetector' that delegates to the 'Eq' instance of the
 -- node values.
 eqChangeDetector
-  :: forall m
-   . Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => Eq (ReturnType (Domain m))
-  => ChangeDetector m
-eqChangeDetector _ =
-  currys (Proxy :: Proxy (ParamTypes (Domain m))) (Proxy :: Proxy (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)) $
+  :: forall domain
+   . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  => Eq (ReturnType domain)
+  => ChangeDetector domain
+eqChangeDetector =
+  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
     const (/=)
 {-# INLINE eqChangeDetector #-}
 
@@ -216,10 +216,10 @@ eqChangeDetector _ =
 -- Use this when recomputing a node is cheaper than actually testing for the change.
 -- Beware of cycles in the resulting dependency graph, though!
 alwaysChangeDetector
-  :: forall m
-   . Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => ChangeDetector m
-alwaysChangeDetector _ =
-  currys (Proxy :: Proxy (ParamTypes (Domain m))) (Proxy :: Proxy (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)) $
+  :: forall domain
+   . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  => ChangeDetector domain
+alwaysChangeDetector =
+  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
     \_ _ _ -> True
 {-# INLINE alwaysChangeDetector #-}

@@ -21,7 +21,7 @@ mutualRecursiveProblem = DFP transfer (const (eqChangeDetector p))
   where
     p :: Proxy m
     p = Proxy
-    transfer :: Node -> TransferFunction m Natural
+    transfer :: Node -> LiftFunc m Natural
     transfer (Node 0) = do
       b <- dependOn p (Node 1)
       return (b + 1)

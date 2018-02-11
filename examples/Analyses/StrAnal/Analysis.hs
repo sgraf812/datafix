@@ -42,7 +42,7 @@ applyWhen False _ = id
 -- @Analyses.Tempaltes.LetDn.'buildProblem'@, so that this function definition
 -- is completely compositional: It is only concerned with peeling off a single
 -- layer of the 'CoreExprF' and interpret that in terms of the
--- 'TransferFunction' over the @Arity -> StrLattice@ 'Domain'.
+-- 'LiftFunc' over the @Arity -> StrLattice@ 'Domain'.
 --
 -- Because there is no explicit fixpointing going on, the resulting analysis
 -- logic is clear and to the point.

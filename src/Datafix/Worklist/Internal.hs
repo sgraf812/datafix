@@ -1,11 +1,12 @@
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE TypeApplications#-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE RankNTypes                #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
@@ -38,10 +39,8 @@ import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
 import           Datafix.Utils.TypeLevel
-import           Datafix.Worklist.Graph           (GraphRef, PointInfo (..))
+import           Datafix.Worklist.Graph           (Graph, PointInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
-import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
-import qualified Datafix.Worklist.Graph.Sparse    as SparseGraph
 import           System.IO.Unsafe                 (unsafePerformIO)
 
 -- | The concrete 'MonadDependency' for this worklist-based solver.
@@ -73,16 +72,13 @@ newtype DependencyM domain a
 -- | The iteration state of 'DependencyM'/'fixProblem'.
 data Env domain
   = Env
-  { problem          :: !(DataFlowProblem (DependencyM graph domain))
-  -- ^ Constant.
-  -- The specification of the data-flow problem we ought to solve.
-  , iterationBound   :: !(IterationBound domain)
+  { iterationBound   :: !(IterationBound domain)
   -- ^ Constant.
   -- Whether to abort after a number of iterations or not.
   , callStack        :: !(IntArgsMonoSet (Products (ParamTypes domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
-  , graph            :: !(Graph domain)
+  , graph            :: !(Graph (DependencyM domain))
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
@@ -95,14 +91,14 @@ data Env domain
   }
 
 initialEnv
-  :: IntArgsMonoSet (Products (ParamTypes domain))
-  -> DataFlowProblem (DependencyM domain)
+  :: Datafixable (DependencyM domain)
+  => Graph (DependencyM domain)
+  -> IntArgsMonoSet (Products (ParamTypes domain))
   -> IterationBound domain
   -> IO (Env domain)
-initialEnv unstable_ prob ib =
-  Env prob ib IntArgsMonoSet.empty
-    <$> Graph.new
-    <*> newIORef IntArgsMonoSet.empty
+initialEnv g unstable_ ib =
+  Env ib IntArgsMonoSet.empty g
+    <$> newIORef IntArgsMonoSet.empty
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
@@ -164,7 +160,7 @@ type Datafixable m =
 -- The 'Domain' is extracted from a type parameter.
 instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain) where
   type Domain (DependencyM domain) = domain
-  datafix = datafix
+  datafix = datafix @domain
   {-# INLINE datafix #-}
 
 -- | Specifies the /density/ of the problem, e.g. whether the domain of
@@ -182,7 +178,7 @@ data Density where
 -- When 'domain' is a 'BoundedMeetSemilattice'/'BoundedLattice', the
 -- simplest abortion function would be to constantly return 'top'.
 --
--- As is the case for 'TransferFunction' and 'ChangeDetector', this
+-- As is the case for 'LiftFunc' and 'ChangeDetector', this
 -- carries little semantic meaning if viewed in isolation, so here
 -- are a few examples for how the synonym expands:
 --
@@ -246,44 +242,44 @@ zoomIORef s = do
 
 zoomReferencedPoints
   :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
-  -> ReaderT (Env graph domain) IO a
+  -> ReaderT (Env domain) IO a
 zoomReferencedPoints = withReaderT referencedPoints . zoomIORef
 {-# INLINE zoomReferencedPoints #-}
 
 zoomUnstable
   :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
-  -> ReaderT (Env graph domain) IO a
+  -> ReaderT (Env domain) IO a
 zoomUnstable = withReaderT unstable . zoomIORef
 {-# INLINE zoomUnstable #-}
 
 enqueueUnstable
   :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
-  => Int -> k -> ReaderT (Env graph domain) IO ()
+  => Int -> k -> ReaderT (Env domain) IO ()
 enqueueUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.insert i k))
 {-# INLINE enqueueUnstable #-}
 
 deleteUnstable
   :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
-  => Int -> k -> ReaderT (Env graph domain) IO ()
+  => Int -> k -> ReaderT (Env domain) IO ()
 deleteUnstable i k = zoomUnstable (modify' (IntArgsMonoSet.delete i k))
 {-# INLINE deleteUnstable #-}
 
 highestPriorityUnstableNode
   :: k ~ Products (ParamTypes domain)
   => MonoMapKey k
-  => ReaderT (Env graph domain) IO (Maybe (Int, k))
+  => ReaderT (Env domain) IO (Maybe (Int, k))
 highestPriorityUnstableNode = zoomUnstable $
   listToMaybe . IntArgsMonoSet.highestPriorityNodes <$> get
 {-# INLINE highestPriorityUnstableNode #-}
 
 withCall
-  :: Datafixable (DependencyM graph domain)
+  :: Datafixable (DependencyM domain)
   => Int
   -> Products (ParamTypes domain)
-  -> ReaderT (Env graph domain) IO a
-  -> ReaderT (Env graph domain) IO a
+  -> ReaderT (Env domain) IO a
+  -> ReaderT (Env domain) IO a
 withCall node args r = ReaderT $ \env -> do
   refs <- readIORef (referencedPoints env)
   refs `seq` writeIORef (referencedPoints env) IntArgsMonoSet.empty
@@ -297,32 +293,32 @@ withCall node args r = ReaderT $ \env -> do
 -- | The first of the two major functions of this module.
 --
 -- 'recompute node args' iterates the value of the passed 'node'
--- at the point 'args' by invoking its 'TransferFunction'.
+-- at the point 'args' by invoking its 'LiftFunc'.
 -- It does so in a way that respects the 'IterationBound'.
 --
 -- This function is not exported, and is only called by 'work'
 -- and 'datafix', for when the iteration strategy decides that
 -- the 'node' needs to be (and can be) re-iterated.
--- It performs tracking of which 'Node's the 'TransferFunction'
+-- It performs tracking of which 'Node's the 'LiftFunc'
 -- depended on, do that the worklist algorithm can do its magic.
 recompute
-  :: forall domain graph dom cod
+  :: forall domain dom cod
    . dom ~ ParamTypes domain
   => cod ~ ReturnType domain
-  => GraphRef graph
-  => Datafixable (DependencyM graph domain)
-  => Int -> Products dom -> ReaderT (Env graph domain) IO cod
+  => Datafixable (DependencyM domain)
+  => Int -> Products dom -> ReaderT (Env domain) IO cod
 recompute node args = withCall node args $ do
-  prob <- asks problem
   let dom = Proxy :: Proxy dom
-  let depm = Proxy :: Proxy (DependencyM graph domain cod)
+  let depm = Proxy :: Proxy (DependencyM domain cod)
   let eq = Proxy :: Proxy (cod -> cod -> Bool)
   let cod2cod = Proxy :: Proxy (cod -> cod)
-  let node' = Node node
-  let DM iterate' = uncurrys dom depm (dfpTransfer prob node') args
-  let detectChange' = uncurrys dom eq (dfpDetectChange prob node') args
+  nodeInfo <- withReaderT graph (Graph.lookupNode node)
+  let DM iterate' = uncurrys dom depm (Graph.transferFunction nodeInfo) args
+  let detectChange' = uncurrys dom eq (Graph.changeDetector nodeInfo) args
   -- We need to access the graph at three different points in time:
+  -- TODO
   --
+  --    0. To get transfer function and change detector
   --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
   --    2. directly after the call to 'iterate', to get the 'oldInfo'
   --    3. And again to actually write the 'newInfo'
@@ -365,22 +361,22 @@ datafix
   :: forall domain
    . Datafixable (DependencyM domain)
   => ChangeDetector domain
-  => (TransferFunction (DependencyM domain) domain -> TransferFunction (DependencyM domain) domain)
-  -> TransferFunction (DependencyM domain) domain
+  -> (LiftFunc domain (DependencyM domain) -> LiftFunc domain (DependencyM domain))
+  -> LiftFunc domain (DependencyM domain)
 datafix cd f = currys dom cod impl
   where
     dom = Proxy :: Proxy (ParamTypes domain)
     cod = Proxy :: Proxy (DependencyM domain (ReturnType domain))
-    impl args = DM $ do
-      node <- withReaderT graph (Graph.allocateNode cd (f . currys dom cod . dependOn))
+    impl args = do
+      node <- DM (withReaderT graph (Graph.allocateNode cd (\node -> f (currys dom cod (dependOn node)))))
       dependOn node args
 {-# INLINE datafix #-}
 
 dependOn
   :: forall domain
    . Datafixable (DependencyM domain)
-  => Node
-  -> Product (ParamTypes domain)
+  => Int
+  -> Products (ParamTypes domain)
   -> DependencyM domain (ReturnType domain)
 dependOn node args = DM $ do
   cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
@@ -417,9 +413,8 @@ dependOn node args = DM $ do
 -- we can be more precise since we possibly have computed points for the node
 -- that are lower bounds to the current point.
 optimisticApproximation
-  :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
-  => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
+  :: Datafixable (DependencyM domain)
+  => Int -> Products (ParamTypes domain) -> ReaderT (Env domain) IO (ReturnType domain)
 optimisticApproximation node args = do
   points <- withReaderT graph (Graph.lookupLT node args)
   -- Note that 'points' might contain 'PointInfo's that have no 'value'.
@@ -428,12 +423,11 @@ optimisticApproximation node args = do
   return (joins (mapMaybe (value . snd) points))
 
 scheme1, scheme2
-  :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  :: Datafixable (DependencyM domain)
   => Maybe (ReturnType domain)
   -> Int
   -> Products (ParamTypes domain)
-  -> ReaderT (Env graph domain) IO (ReturnType domain)
+  -> ReaderT (Env domain) IO (ReturnType domain)
 {-# INLINE scheme1 #-}
 {-# INLINE scheme2 #-}
 
@@ -487,18 +481,17 @@ whileJust_ cond action = go
 -- one of its 'unstable' points, until the worklist is empty, indicating that a
 -- fixed-point has been reached.
 work
-  :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
-  => ReaderT (Env graph domain) IO ()
+  :: Datafixable (DependencyM domain)
+  => ReaderT (Env domain) IO ()
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
 -- | Computes a solution to the described 'DataFlowProblem' by iterating
--- 'TransferFunction's until a fixed-point is reached.
+-- 'LiftFunc's until a fixed-point is reached.
 --
 -- It does do by employing a worklist algorithm, iterating unstable 'Node's
 -- only.
--- 'Node's become unstable when the point of another 'Node' their 'TransferFunction'
+-- 'Node's become unstable when the point of another 'Node' their 'LiftFunc'
 -- 'datafix'ed changed.
 --
 -- The sole initially unstable 'Node' is the last parameter, and if your
@@ -510,14 +503,11 @@ fixProblem
    . Datafixable (DependencyM domain)
   => DataFlowProblem (DependencyM domain)
   -- ^ The description of the @DataFlowProblem@ to solve.
-  -> Density
-  -- ^ Describes if the algorithm is free to use a 'Dense', 'Vector'-based
-  -- graph representation or has to go with a 'Sparse' one based on 'IntMap'.
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
   -> Arrows (ParamTypes domain) (ReturnType domain)
-fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
+fixProblem (DFP transfer) ib = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")
@@ -526,6 +516,8 @@ fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes doma
     runProblem args = unsafePerformIO $ do
       -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
       -- of 'DependencyM' for why we 'unsafePerformIO'.
-      env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib
+      g <- Graph.new
+      node <- runReaderT (Graph.allocateNode (alwaysChangeDetector @domain) (const transfer)) g
+      env <- initialEnv g (IntArgsMonoSet.singleton node args) ib
       runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE fixProblem #-}
