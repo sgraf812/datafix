@@ -17,8 +17,7 @@
 -- Import this module transitively through "Datafix" and get access to "Datafix.Worklist" for functions that compute solutions to your 'DataFlowProblem's.
 
 module Datafix.Description
-  ( Node (..)
-  , LiftFunc
+  ( LiftFunc
   , ChangeDetector
   , DataFlowProblem (..)
   , MonadDependency (..)
@@ -35,15 +34,6 @@ import           Datafix.Utils.TypeLevel
 -- >>> :set -XScopedTypeVariables
 -- >>> import Data.Proxy
 --
-
--- | This is the type we use to index nodes in the data-flow graph.
---
--- The connection between syntactic things (e.g. 'Id's) and 'Node's is
--- made implicitly in code in analysis templates through an appropriate
--- allocation mechanism as in 'NodeAllocator'.
-newtype Node
-  = Node Int
-  deriving (Eq, Ord, Show)
 
 -- | A function that checks points of some function with type 'domain' for changes.
 -- If this returns 'True', the point of the function is assumed to have changed.

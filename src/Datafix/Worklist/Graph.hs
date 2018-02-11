@@ -24,7 +24,7 @@ import           Control.Monad.Trans.State.Strict
 import           Data.IORef
 import           Data.Maybe                       (fromMaybe)
 import           Datafix.Description              (ChangeDetector, Domain,
-                                                   LiftFunc, Node (..))
+                                                   LiftFunc)
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMap, MonoMapKey)

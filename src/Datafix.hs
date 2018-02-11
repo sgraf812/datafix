@@ -14,16 +14,9 @@
 --
 -- Look at "Datafix.Tutorial" for a tour guided by use cases.
 
-module Datafix
-  ( module Datafix.Description
-  , module Datafix.NodeAllocator
-  , Datafix.MonoMap.MonoMap
-  , module Datafix.Utils.TypeLevel
-  , module Datafix.Worklist
-  ) where
+module Datafix (Datafix.MonoMap.MonoMap, module X) where
 
-import           Datafix.Description
+import           Datafix.Description     as X
 import           Datafix.MonoMap
-import           Datafix.NodeAllocator
-import           Datafix.Utils.TypeLevel
-import           Datafix.Worklist
+import           Datafix.Utils.TypeLevel as X
+import           Datafix.Worklist        as X

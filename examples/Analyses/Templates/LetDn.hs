@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
@@ -34,14 +35,14 @@ import           CoreSyn
 import           VarEnv
 
 -- | A 'TransferAlgebra' for a given @lattice@ interprets a single layer of
--- 'CoreExprF' in terms of a 'LiftFunc m lattice', for any possible
+-- 'CoreExprF' in terms of a 'LiftFunc lattice m', for any possible
 -- @'Monad' m@. It has access to a 'VarEnv' of 'LiftFunc's for every
 -- free variable in the expression in order to do so.
 --
 -- The suffix @Algebra@ is inspired by recursion schemes. 'TransferAlgebra's
 -- are <F-algebras https://en.wikipedia.org/wiki/F-algebra>, where the
 -- /base functor/ is 'CoreExprF' and the /carrier/ is
--- @LiftFunc m lattice@.
+-- @LiftFunc lattice m@.
 --
 -- By the same analogy, 'buildProblem' is the associated recursion scheme.
 type TransferAlgebra lattice
@@ -49,9 +50,9 @@ type TransferAlgebra lattice
    . Monad m
   => Proxy m
   -> Proxy lattice
-  -> VarEnv (LiftFunc m lattice)
-  -> CoreExprF (LiftFunc m lattice)
-  -> LiftFunc m lattice
+  -> VarEnv (LiftFunc lattice m)
+  -> CoreExprF (LiftFunc lattice m)
+  -> LiftFunc lattice m
 
 -- | Given a 'TransferAlgebra', this function takes care of building a
 -- 'DataFlowProblem' for 'CoreExpr's.
@@ -74,31 +75,44 @@ type TransferAlgebra lattice
 buildProblem
   :: forall m
    . MonadDependency m
-  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => Eq (ReturnType (Domain m))
   => TransferAlgebra (Domain m)
   -> CoreExpr
-  -> (Node, Node, DataFlowProblem m)
-buildProblem alg e = (root, Node (sizeofArray arr - 1), DFP transfer changeDetector)
+  -> DataFlowProblem m
+buildProblem alg e = DFP (transfer emptyVarEnv e)
   where
     p = Proxy :: Proxy m
-    changeDetector _ = eqChangeDetector p
-    transfer (Node node) = indexArray arr node
-    (root, arr) = runAllocator $ allocateNode $ \root_ -> do
-      transferRoot <- buildRoot p alg e
-      pure (root_, transferRoot)
+    alg = alg' p (Proxy :: Proxy (Domain m))
+    transfer env = \case
+      Lit lit -> alg env (LitF lit)
+      Var id_ -> alg env (VarF id_)
+      Type ty -> alg env (TypeF ty)
+      Coercion co -> alg env (CoercionF co)
+      Cast e co -> alg env (CastF (transfer env e) co)
+      Tick t e -> alg env (TickF t (transfer env e))
+      App f a -> alg env (AppF (transfer env f) (transfer env a))
+      Lam id_ body -> alg env (LamF id_ (transfer env body))
+      Case scrut bndr ty alts ->
+        alg env (CaseF (transfer env scrut) bndr ty (transferAlts env alts))
+      -- Note that we pass the old env to 'alg'.
+      -- 'alg' should use 'transferredBind' for
+      -- annotated RHSs.
+      Let bind body
+        | (env', transferredBind) <- registerBindingGroup env bind
+        -> alg env (LetF transferredBind (transfer env' body))
+    {-# INLINE transfer #-}
+
 {-# INLINE buildProblem #-}
 
-type TF m = LiftFunc m (Domain m)
+type TF m = LiftFunc (Domain m) m
 
-buildRoot
+datafixTransferAlgebra
   :: forall m
    . MonadDependency m
   => Proxy m
   -> TransferAlgebra (Domain m)
   -> CoreExpr
-  -> NodeAllocator (TF m) (TF m)
-buildRoot p alg' = buildExpr emptyVarEnv
+  -> TF m
+datafixTransferAlgebra p alg' = buildExpr emptyVarEnv
   where
     alg = alg' p (Proxy :: Proxy (Domain m))
     buildExpr
@@ -171,4 +185,4 @@ buildRoot p alg' = buildExpr emptyVarEnv
                 -- with caching.
                 pure ((env'', (id_, deref):transferredBind), transferRHS)
     {-# INLINE registerBindingGroup #-}
-{-# INLINE buildRoot #-}
+{-# INLINE datafixTransferAlgebra #-}

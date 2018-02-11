@@ -163,14 +163,6 @@ instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain
   datafix = datafix @domain
   {-# INLINE datafix #-}
 
--- | Specifies the /density/ of the problem, e.g. whether the domain of
--- 'Node's can be confined to a finite range, in which case 'fixProblem'
--- tries to use a "Data.Vector" based graph representation rather than
--- one based on "Data.IntMap".
-data Density where
-  Sparse :: Density
-  Dense :: Node -> Density
-
 -- | A function that computes a sufficiently conservative approximation
 -- of a point in the abstract domain for when the solution algorithm
 -- decides to have iterated the node often enough.
