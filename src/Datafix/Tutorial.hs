@@ -14,7 +14,7 @@
 -- from computing their solutions by
 -- [fixed-point iteration](https://en.wikipedia.org/wiki/Fixed-point_iteration).
 --
--- The motivation for this library arose when I was combining two analyses
+-- The need for this library arose when I was combining two analyses
 -- within GHC for my master's thesis. I recently
 -- [held a talk](https://cdn.rawgit.com/sgraf812/hiw17/2645b206d3f2b5e6e7c95bc791dfa4bf9cbc8d12/slides.pdf)
 -- on that topic, feel free to click through if you want to know the details.
@@ -90,7 +90,7 @@
 --     :: (MonadDependency m, Domain m ~ Natural)
 --     => Proxy m
 --     -> Node
---     -> TransferFunction m Natural
+--     -> m Natural
 --   transferFib _ (Node 0) = return 0
 --   transferFib _ (Node 1) = return 1
 --   transferFib p (Node n) = do

@@ -93,7 +93,7 @@ type ChangeDetector domain
 --
 -- @m@ will generally be an instance of 'MonadDependency' and the type alias
 -- effectively wraps @m@ around @domain@'s return type.
--- The result is a function that is produces its return value while
+-- The result is a function that produces its return value while
 -- potentially triggering side-effects in @m@, which amounts to
 -- depending on 'TransferFunction's of other 'Node's for the
 -- 'MonadDependency' case.
