@@ -14,7 +14,7 @@
 </span><a name="line-14"></a><span class="hs-comment">-- from computing their solutions by</span><span>
 </span><a name="line-15"></a><span class="hs-comment">-- [fixed-point iteration](https://en.wikipedia.org/wiki/Fixed-point_iteration).</span><span>
 </span><a name="line-16"></a><span class="hs-comment">--</span><span>
-</span><a name="line-17"></a><span class="hs-comment">-- The motivation for this library arose when I was combining two analyses</span><span>
+</span><a name="line-17"></a><span class="hs-comment">-- The need for this library arose when I was combining two analyses</span><span>
 </span><a name="line-18"></a><span class="hs-comment">-- within GHC for my master's thesis. I recently</span><span>
 </span><a name="line-19"></a><span class="hs-comment">-- [held a talk](https://cdn.rawgit.com/sgraf812/hiw17/2645b206d3f2b5e6e7c95bc791dfa4bf9cbc8d12/slides.pdf)</span><span>
 </span><a name="line-20"></a><span class="hs-comment">-- on that topic, feel free to click through if you want to know the details.</span><span>
@@ -90,7 +90,7 @@
 </span><a name="line-90"></a><span class="hs-comment">--     :: (MonadDependency m, Domain m ~ Natural)</span><span>
 </span><a name="line-91"></a><span class="hs-comment">--     =&gt; Proxy m</span><span>
 </span><a name="line-92"></a><span class="hs-comment">--     -&gt; Node</span><span>
-</span><a name="line-93"></a><span class="hs-comment">--     -&gt; TransferFunction m Natural</span><span>
+</span><a name="line-93"></a><span class="hs-comment">--     -&gt; m Natural</span><span>
 </span><a name="line-94"></a><span class="hs-comment">--   transferFib _ (Node 0) = return 0</span><span>
 </span><a name="line-95"></a><span class="hs-comment">--   transferFib _ (Node 1) = return 1</span><span>
 </span><a name="line-96"></a><span class="hs-comment">--   transferFib p (Node n) = do</span><span>

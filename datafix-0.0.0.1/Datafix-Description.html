@@ -12,7 +12,7 @@ window.onload = function () {pageLoad();};
   TransferFunction m (a -&gt; b -&gt; c -&gt; Int) ~ a -&gt; b -&gt; c -&gt; m Int
 </pre><p><code>m</code> will generally be an instance of <code><a href="Datafix-Description.html#t:MonadDependency">MonadDependency</a></code> and the type alias
  effectively wraps <code>m</code> around <code>domain</code>'s return type.
- The result is a function that is produces its return value while
+ The result is a function that produces its return value while
  potentially triggering side-effects in <code>m</code>, which amounts to
  depending on <code><a href="Datafix-Description.html#t:TransferFunction">TransferFunction</a></code>s of other <code><a href="Datafix-Description.html#t:Node">Node</a></code>s for the
  <code><a href="Datafix-Description.html#t:MonadDependency">MonadDependency</a></code> case.</p></div></div><div class="top"><p class="src"><span class="keyword">type</span> <a id="t:ChangeDetector" class="def">ChangeDetector</a> domain = <a href="Datafix-Utils-TypeLevel.html#t:Arrows">Arrows</a> (<a href="Datafix-Utils-TypeLevel.html#t:ParamTypes">ParamTypes</a> domain) (<a href="Datafix-Utils-TypeLevel.html#t:ReturnType">ReturnType</a> domain -&gt; <a href="Datafix-Utils-TypeLevel.html#t:ReturnType">ReturnType</a> domain -&gt; <a href="../base-4.10.1.0/Data-Bool.html#t:Bool">Bool</a>) <a href="src/Datafix.Description.html#ChangeDetector" class="link">Source</a> <a href="#t:ChangeDetector" class="selflink">#</a></p><div class="doc"><p>A function that checks points of some function with type <code>domain</code> for changes.

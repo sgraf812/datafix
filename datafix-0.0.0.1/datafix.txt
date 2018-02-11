@@ -166,10 +166,10 @@ Node :: Int -> Node
 --   
 --   <tt>m</tt> will generally be an instance of <a>MonadDependency</a> and
 --   the type alias effectively wraps <tt>m</tt> around <tt>domain</tt>'s
---   return type. The result is a function that is produces its return
---   value while potentially triggering side-effects in <tt>m</tt>, which
---   amounts to depending on <a>TransferFunction</a>s of other <a>Node</a>s
---   for the <a>MonadDependency</a> case.
+--   return type. The result is a function that produces its return value
+--   while potentially triggering side-effects in <tt>m</tt>, which amounts
+--   to depending on <a>TransferFunction</a>s of other <a>Node</a>s for the
+--   <a>MonadDependency</a> case.
 type TransferFunction m domain = Arrows (ParamTypes domain) (m (ReturnType domain))
 
 -- | A function that checks points of some function with type
@@ -815,10 +815,10 @@ module Datafix
 --   problems</a> from computing their solutions by <a>fixed-point
 --   iteration</a>.
 --   
---   The motivation for this library arose when I was combining two
---   analyses within GHC for my master's thesis. I recently <a>held a
---   talk</a> on that topic, feel free to click through if you want to know
---   the details.
+--   The need for this library arose when I was combining two analyses
+--   within GHC for my master's thesis. I recently <a>held a talk</a> on
+--   that topic, feel free to click through if you want to know the
+--   details.
 --   
 --   You can think of data-flow problems as problems that are solvable by
 --   <a>dynamic programming</a> or <a>memoization</a>, except that the
@@ -910,7 +910,7 @@ module Datafix
 --       :: (MonadDependency m, Domain m ~ Natural)
 --       =&gt; Proxy m
 --       -&gt; Node
---       -&gt; TransferFunction m Natural
+--       -&gt; m Natural
 --     transferFib _ (Node 0) = return 0
 --     transferFib _ (Node 1) = return 1
 --     transferFib p (Node n) = do
