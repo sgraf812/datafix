@@ -12,6 +12,7 @@ module Datafix.Worklist
   ( Impl.DependencyM
   , Impl.Datafixable
   , Impl.IterationBound (..)
+  , Impl.compile
   , Impl.fixProblem
   ) where
 

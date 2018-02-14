@@ -16,7 +16,6 @@
 
 module Datafix (Datafix.MonoMap.MonoMap, module X) where
 
-import           Datafix.Description     as X
 import           Datafix.MonoMap
 import           Datafix.Utils.TypeLevel as X
 import           Datafix.Worklist        as X

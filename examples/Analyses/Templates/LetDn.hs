@@ -25,11 +25,11 @@ module Analyses.Templates.LetDn
   , buildProblem
   ) where
 
-import           Data.Primitive.Array     (indexArray, sizeofArray)
-import           Data.Proxy               (Proxy (..))
+import           Data.Proxy                (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
 import           Datafix
+import           Datafix.Worklist.Internal
 
 import           CoreSyn
 import           VarEnv
@@ -73,82 +73,47 @@ type TransferAlgebra lattice
 -- lead to non-structural recursion, so termination isn't obvious and
 -- demands some confidence in domain theory by the programmer.
 buildProblem
-  :: forall m
-   . MonadDependency m
-  => TransferAlgebra (Domain m)
+  :: forall domain
+   . TransferAlgebra domain
   -> CoreExpr
-  -> DataFlowProblem m
-buildProblem alg e = DFP (transfer emptyVarEnv e)
+  -> DataFlowProblem domain
+buildProblem alg' = Datafix.compile . buildExpr emptyVarEnv
   where
-    p = Proxy :: Proxy m
-    alg = alg' p (Proxy :: Proxy (Domain m))
-    transfer env = \case
-      Lit lit -> alg env (LitF lit)
-      Var id_ -> alg env (VarF id_)
-      Type ty -> alg env (TypeF ty)
-      Coercion co -> alg env (CoercionF co)
-      Cast e co -> alg env (CastF (transfer env e) co)
-      Tick t e -> alg env (TickF t (transfer env e))
-      App f a -> alg env (AppF (transfer env f) (transfer env a))
-      Lam id_ body -> alg env (LamF id_ (transfer env body))
-      Case scrut bndr ty alts ->
-        alg env (CaseF (transfer env scrut) bndr ty (transferAlts env alts))
-      -- Note that we pass the old env to 'alg'.
-      -- 'alg' should use 'transferredBind' for
-      -- annotated RHSs.
-      Let bind body
-        | (env', transferredBind) <- registerBindingGroup env bind
-        -> alg env (LetF transferredBind (transfer env' body))
-    {-# INLINE transfer #-}
-
-{-# INLINE buildProblem #-}
-
-type TF m = LiftFunc (Domain m) m
-
-datafixTransferAlgebra
-  :: forall m
-   . MonadDependency m
-  => Proxy m
-  -> TransferAlgebra (Domain m)
-  -> CoreExpr
-  -> TF m
-datafixTransferAlgebra p alg' = buildExpr emptyVarEnv
-  where
-    alg = alg' p (Proxy :: Proxy (Domain m))
+    p = Proxy :: Proxy (DependencyM domain)
+    alg = alg' p (Proxy :: Proxy domain)
     buildExpr
-      :: VarEnv (TF m)
+      :: VarEnv (LiftFunc domain (DependencyM domain))
       -> CoreExpr
-      -> NodeAllocator (TF m) (TF m)
-    buildExpr env expr =
-      case expr of
-        Lit lit -> pure (alg env (LitF lit))
-        Var id_ -> pure (alg env (VarF id_))
-        Type ty -> pure (alg env (TypeF ty))
-        Coercion co -> pure (alg env (CoercionF co))
-        Cast e co -> do
-          transferE <- buildExpr env e
-          pure (alg env (CastF transferE co))
-        Tick t e -> do
-          transferE <- buildExpr env e
-          pure (alg env (TickF t transferE))
-        App f a -> do
-          transferF <- buildExpr env f
-          transferA <- buildExpr env a
-          pure (alg env (AppF transferF transferA))
-        Lam id_ body -> do
-          transferBody <- buildExpr env body
-          pure (alg env (LamF id_ transferBody))
-        Case scrut bndr ty alts -> do
-          transferScrut <- buildExpr env scrut
-          transferAlts <- mapM (buildAlt env) alts
-          pure (alg env (CaseF transferScrut bndr ty transferAlts))
-        Let bind body -> do
-          (env', transferredBind) <- registerBindingGroup env bind
-          transferBody <- buildExpr env' body
-          -- Note that we pass the old env to 'alg'.
-          -- 'alg' should use 'transferredBind' for
-          -- annotated RHSs.
-          pure (alg env (LetF transferredBind transferBody))
+      -> Builder domain (LiftFunc domain (DependencyM domain))
+    buildExpr env = \case
+      Lit lit -> pure (alg env (LitF lit))
+      Var id_ -> pure (alg env (VarF id_))
+      Type ty -> pure (alg env (TypeF ty))
+      Coercion co -> pure (alg env (CoercionF co))
+      Cast e co -> do
+        transferE <- buildExpr env e
+        pure (alg env (CastF transferE co))
+      Tick t e -> do
+        transferE <- buildExpr env e
+        pure (alg env (TickF t transferE))
+      App f a -> do
+        transferF <- buildExpr env f
+        transferA <- buildExpr env a
+        pure (alg env (AppF transferF transferA))
+      Lam id_ body -> do
+        transferBody <- buildExpr env body
+        pure (alg env (LamF id_ transferBody))
+      Case scrut bndr ty alts -> do
+        transferScrut <- buildExpr env scrut
+        transferAlts <- mapM (buildAlt env) alts
+        pure (alg env (CaseF transferScrut bndr ty transferAlts))
+      Let bind body -> do
+        (env', transferredBind) <- datafixBindingGroup env bind
+        transferBody <- buildExpr env' body
+        -- Note that we pass the old env to 'alg'.
+        -- 'alg' should use 'transferredBind' for
+        -- annotated RHSs.
+        pure (alg env (LetF transferredBind transferBody))
     {-# INLINE buildExpr #-}
 
     buildAlt env (con, bndrs, e) = do
@@ -167,22 +132,18 @@ datafixTransferAlgebra p alg' = buildExpr emptyVarEnv
         _ -> error "NonRec, but multiple transferredBinds"
     {-# INLINE mapBinders #-}
 
-
-    registerBindingGroup = mapBinders impl
+    datafixBindingGroup = mapBinders impl
       where
         impl env binders =
           case binders of
             [] -> pure (env, [])
             ((id_, rhs):binders') ->
-              allocateNode $ \node -> do
-                -- This block is where we tie the knot through
-                -- 'MonadDependency'!
-                let deref = dependOn p node
-                let env' = extendVarEnv env id_ deref
+              datafixEq $ \self -> do
+                let env' = extendVarEnv env id_ self
                 (env'', transferredBind) <- impl env' binders'
                 transferRHS <- buildExpr env' rhs
                 -- we return `deref`, which is like `transferRHS` but
                 -- with caching.
                 pure ((env'', (id_, deref):transferredBind), transferRHS)
-    {-# INLINE registerBindingGroup #-}
-{-# INLINE datafixTransferAlgebra #-}
+    {-# INLINE datafixBindingGroup #-}
+{-# INLINE buildProblem #-}

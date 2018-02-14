@@ -21,16 +21,14 @@ import           Control.Monad                    (forM_)
 import           Control.Monad.Primitive          (PrimState)
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
-import           Data.IORef
 import           Data.Maybe                       (fromMaybe)
+import           Data.Primitive.Array
 import           Datafix.Description              (ChangeDetector, Domain,
                                                    LiftFunc)
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMap, MonoMapKey)
 import qualified Datafix.MonoMap                  as MonoMap
-import           Datafix.Utils.GrowableVector     (GrowableVector)
-import qualified Datafix.Utils.GrowableVector     as GrowableVector
 import           Datafix.Utils.TypeLevel
 
 -- | The data associated with each point in the transfer function of a data-flow
@@ -73,57 +71,29 @@ computeDiff a b =
 type PointMap domain
   = MonoMap (Products (ParamTypes domain)) (PointInfo domain)
 
-data NodeInfo m
-  = NodeInfo
-  { changeDetector   :: !(ChangeDetector (Domain m))
-  , transferFunction :: !(LiftFunc (Domain m) m)
-  , points           :: !(PointMap (Domain m))
-  }
-
-newNodeInfo
-  :: MonoMapKey (Products (ParamTypes (Domain m)))
-  => ChangeDetector (Domain m)
-  -> LiftFunc (Domain m) m
-  -> NodeInfo m
-newNodeInfo cd tf = NodeInfo cd tf MonoMap.empty
-
 -- | A dense data-flow graph representation.
-newtype Graph m
-  = Graph (IORef (GrowableVector (PrimState IO) (NodeInfo m)))
+newtype Graph domain
+  = Graph (MutableArray (PrimState IO) (PointMap domain))
 
 -- | Allocates a new dense graph 'Graph'.
-new :: MonoMapKey (Products (ParamTypes (Domain m))) => IO (Graph m)
-new = Graph <$> (GrowableVector.new 1024 >>= newIORef)
+new :: MonoMapKey (Products (ParamTypes domain)) => Int -> IO (Graph domain)
+new n = Graph <$> newArray n MonoMap.empty
 
-allocateNode
-  :: MonoMapKey (Products (ParamTypes (Domain m)))
-  => ChangeDetector (Domain m)
-  -> (Int -> LiftFunc (Domain m) m)
-  -> ReaderT (Graph m) IO Int
-allocateNode cd tieKnot = ReaderT $ \(Graph ref) -> do
-  vec <- readIORef ref
-  let node = GrowableVector.length vec
-  vec' <- GrowableVector.pushBack vec (newNodeInfo cd (tieKnot node))
-  writeIORef ref vec'
-  return node
-{-# INLINE allocateNode #-}
-
-zoomPoints :: Int -> State (PointMap (Domain m)) a -> ReaderT (Graph m) IO a
-zoomPoints node s = ReaderT $ \(Graph ref) -> do
-  vec <- readIORef ref
-  ni <- GrowableVector.read vec node
-  let (ret, points') = runState s (points ni)
-  points' `seq` GrowableVector.write vec node ni { points = points' }
+zoomPoints :: Int -> State (PointMap domain) a -> ReaderT (Graph domain) IO a
+zoomPoints node s = ReaderT $ \(Graph graph) -> do
+  points <- readArray graph node
+  let (ret, points') = runState s points
+  points' `seq` writeArray graph node points'
   return ret
 {-# INLINE zoomPoints #-}
 
 updatePoint
-  :: MonoMapKey (Products (ParamTypes (Domain m)))
+  :: MonoMapKey (Products (ParamTypes domain))
   => Int
-  -> Products (ParamTypes (Domain m))
-  -> ReturnType (Domain m)
-  -> IntArgsMonoSet (Products (ParamTypes (Domain m)))
-  -> ReaderT (Graph m) IO (PointInfo (Domain m))
+  -> Products (ParamTypes domain)
+  -> ReturnType domain
+  -> IntArgsMonoSet (Products (ParamTypes domain))
+  -> ReaderT (Graph domain) IO (PointInfo domain)
 updatePoint node args val refs = do
   -- if we are lucky (e.g. no refs changed), we get away with one map access
   -- first update `node`s PointInfo
@@ -154,18 +124,10 @@ updatePoint node args val refs = do
   return oldInfo
 {-# INLINE updatePoint #-}
 
-lookupNode :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> ReaderT (Graph m) IO (NodeInfo m)
-lookupNode node = ReaderT $ \(Graph ref) -> do
-  graph <- readIORef ref
-  GrowableVector.read graph node
-{-# INLINE lookupNode #-}
-
-lookup :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> Products (ParamTypes (Domain m)) -> ReaderT (Graph m) IO (Maybe (PointInfo (Domain m)))
-lookup node args = MonoMap.lookup args . points <$> lookupNode node
+lookup :: MonoMapKey (Products (ParamTypes domain)) => Int -> Products (ParamTypes domain) -> ReaderT (Graph domain) IO (Maybe (PointInfo domain))
+lookup node args = ReaderT $ \(Graph graph) -> MonoMap.lookup args <$> readArray graph node
 {-# INLINE lookup #-}
 
-lookupLT :: MonoMapKey (Products (ParamTypes (Domain m))) => Int -> Products (ParamTypes (Domain m)) -> ReaderT (Graph m) IO [(Products (ParamTypes (Domain m)), PointInfo (Domain m))]
-lookupLT node args = ReaderT $ \(Graph ref) -> do
-  graph <- readIORef ref
-  MonoMap.lookupLT args . points <$> GrowableVector.read graph node
+lookupLT :: MonoMapKey (Products (ParamTypes domain)) => Int -> Products (ParamTypes domain) -> ReaderT (Graph domain) IO [(Products (ParamTypes domain), PointInfo domain)]
+lookupLT node args = ReaderT $ \(Graph graph) -> MonoMap.lookupLT args <$> readArray graph node
 {-# INLINE lookupLT #-}

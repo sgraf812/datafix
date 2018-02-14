@@ -99,7 +99,7 @@ type LiftFunc domain m
 -- a 'ChangeDetector'.
 newtype DataFlowProblem m
   = DFP
-  { dfpTransfer     :: LiftFunc (Domain m) m
+  { unDFP :: m (LiftFunc (Domain m) m)
   -- ^ A transfer function per each 'Node' of the modeled data-flow problem.
   }
 
@@ -174,8 +174,8 @@ class Monad m => MonadDependency m where
   -- into 'Node's.
   datafix
     :: ChangeDetector (Domain m)
-    -> (LiftFunc (Domain m) m -> LiftFunc (Domain m) m)
-    -> LiftFunc (Domain m) m
+    -> (LiftFunc (Domain m) m -> m (LiftFunc (Domain m) m))
+    -> m (LiftFunc (Domain m) m)
   -- ^ Expresses a dependency on a node of the data-flow graph, thus
   -- introducing a way of trackable recursion. That's similar
   -- to how you would use 'Data.Function.fix' to abstract over recursion.
@@ -185,8 +185,8 @@ datafixEq
    . MonadDependency m
   => Eq (ReturnType (Domain m))
   => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => (LiftFunc (Domain m) m -> LiftFunc (Domain m) m)
-  -> LiftFunc (Domain m) m
+  => (LiftFunc (Domain m) m -> m (LiftFunc (Domain m) m))
+  -> m (LiftFunc (Domain m) m)
 datafixEq = datafix @m (eqChangeDetector @(Domain m))
 
 -- | A 'ChangeDetector' that delegates to the 'Eq' instance of the

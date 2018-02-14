@@ -1,13 +1,14 @@
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE TypeApplications#-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE RankNTypes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE RecursiveDo                #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
@@ -32,12 +33,13 @@ import           Control.Monad.Trans.State.Strict
 import           Data.IORef
 import           Data.Maybe                       (fromMaybe, listToMaybe,
                                                    mapMaybe)
+import           Data.Primitive.Array
 import           Data.Proxy                       (Proxy (..))
-import           Datafix.Description              hiding (datafix)
-import qualified Datafix.Description
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
+import           Datafix.NodeAllocator            (NodeAllocator)
+import qualified Datafix.NodeAllocator            as NodeAllocator
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph           (Graph, PointInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
@@ -49,7 +51,7 @@ import           System.IO.Unsafe                 (unsafePerformIO)
 -- 'DataFlowProblem' as mutable state while 'fixProblem' makes sure we will eventually
 -- halt with a conservative approximation.
 newtype DependencyM domain a
-  = DM (ReaderT (Env domain) IO a)
+  = DM { runDM :: ReaderT (Env domain) IO a }
   -- ^ Why does this use 'IO'? Actually, we only need 'ST' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
@@ -72,13 +74,16 @@ newtype DependencyM domain a
 -- | The iteration state of 'DependencyM'/'fixProblem'.
 data Env domain
   = Env
-  { iterationBound   :: !(IterationBound domain)
+  { specification             :: !(Array (ChangeDetector domain, LiftFunc domain (DependencyM domain)))
+  -- ^ Constant.
+  -- The specification of the data-flow problem we ought to solve.
+  , iterationBound   :: !(IterationBound domain)
   -- ^ Constant.
   -- Whether to abort after a number of iterations or not.
   , callStack        :: !(IntArgsMonoSet (Products (ParamTypes domain)))
   -- ^ Contextual state.
   -- The set of points in the 'domain' of 'Node's currently in the call stack.
-  , graph            :: !(Graph (DependencyM domain))
+  , graph            :: !(Graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
@@ -91,14 +96,15 @@ data Env domain
   }
 
 initialEnv
-  :: Datafixable (DependencyM domain)
-  => Graph (DependencyM domain)
+  :: Datafixable domain
+  => Array (ChangeDetector domain, LiftFunc domain (DependencyM domain))
   -> IntArgsMonoSet (Products (ParamTypes domain))
   -> IterationBound domain
   -> IO (Env domain)
-initialEnv g unstable_ ib =
-  Env ib IntArgsMonoSet.empty g
-    <$> newIORef IntArgsMonoSet.empty
+initialEnv spec unstable_ ib =
+  Env spec ib IntArgsMonoSet.empty
+    <$> Graph.new (sizeofArray spec)
+    <*> newIORef IntArgsMonoSet.empty
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
@@ -110,10 +116,10 @@ initialEnv g unstable_ ib =
 -- @Datafixable@ is a specialized version of this:
 --
 -- @
--- type Datafixable m =
---   ( forall r. Currying (ParamTypes (Domain m)) r
---   , MonoMapKey (Products (ParamTypes (Domain m)))
---   , BoundedJoinSemiLattice (ReturnType (Domain m))
+-- type Datafixable domain =
+--   ( forall r. Currying (ParamTypes domain) r
+--   , MonoMapKey (Products (ParamTypes domain))
+--   , BoundedJoinSemiLattice (ReturnType domain)
 --   )
 -- @
 --
@@ -132,7 +138,7 @@ initialEnv g unstable_ ib =
 --      support for quantified class constraints)
 --
 --  2.  We want to use a [monotone](https://en.wikipedia.org/wiki/Monotonic_function)
---      map of @(String, Bool)@ to @Int@ (the @ReturnType (Domain m)@). This is
+--      map of @(String, Bool)@ to @Int@ (the @ReturnType domain@). This is
 --      ensured by the @'MonoMapKey' (String, Bool)@ constraint.
 --
 --      This constraint has to be discharged manually, but should amount to a
@@ -146,22 +152,138 @@ initialEnv g unstable_ ib =
 --      That type-class allows us to start iteration from a most-optimistic 'bottom'
 --      value and successively iterate towards a conservative approximation using
 --      the '(\/)' operator.
-type Datafixable m =
-  ( Currying (ParamTypes (Domain m)) (ReturnType (Domain m))
-  , Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m)))
-  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m))
-  , MonoMapKey (Products (ParamTypes (Domain m)))
-  , BoundedJoinSemiLattice (ReturnType (Domain m))
+type Datafixable domain =
+  ( Currying (ParamTypes domain) (ReturnType domain)
+  , Currying (ParamTypes domain) (DependencyM domain (ReturnType domain))
+  , Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  , Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain)
+  , MonoMapKey (Products (ParamTypes domain))
+  , BoundedJoinSemiLattice (ReturnType domain)
   )
 
--- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
--- with 'fixProblem'.
--- The 'Domain' is extracted from a type parameter.
-instance Datafixable (DependencyM domain) => MonadDependency (DependencyM domain) where
-  type Domain (DependencyM domain) = domain
-  datafix = datafix @domain
-  {-# INLINE datafix #-}
+-- $setup
+-- >>> :set -XTypeFamilies
+-- >>> :set -XScopedTypeVariables
+-- >>> import Data.Proxy
+--
+
+-- | A function that checks points of some function with type 'domain' for changes.
+-- If this returns 'True', the point of the function is assumed to have changed.
+--
+-- An example is worth a thousand words, especially because of the type-level hackery:
+--
+-- >>> cd = (\a b -> even a /= even b) :: ChangeDetector Int
+--
+-- This checks the parity for changes in the abstract domain of integers.
+-- Integers of the same parity are considered unchanged.
+--
+-- >>> cd 4 5
+-- True
+-- >>> cd 7 13
+-- False
+--
+-- Now a (quite bogus) pointwise example:
+--
+-- >>> cd = (\x fx gx -> x + abs fx /= x + abs gx) :: ChangeDetector (Int -> Int)
+-- >>> cd 1 (-1) 1
+-- False
+-- >>> cd 15 1 2
+-- True
+-- >>> cd 13 35 (-35)
+-- False
+--
+-- This would consider functions @id@ and @negate@ unchanged, so the sequence
+-- @iterate negate :: Int -> Int@ would be regarded immediately as convergent:
+--
+-- >>> f x = iterate negate x !! 0
+-- >>> let g x = iterate negate x !! 1
+-- >>> cd 123 (f 123) (g 123)
+-- False
+type ChangeDetector domain
+  = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+
+-- | Data-flow problems denote 'Node's in the data-flow graph
+-- by monotone transfer functions.
+--
+-- This type alias alone carries no semantic meaning.
+-- However, it is instructive to see some examples of how
+-- this alias reduces to a normal form:
+--
+-- @
+--   LiftFunc m Int ~ m Int
+--   LiftFunc m (Bool -> Int) ~ Bool -> m Int
+--   LiftFunc m (a -> b -> Int) ~ a -> b -> m Int
+--   LiftFunc m (a -> b -> c -> Int) ~ a -> b -> c -> m Int
+-- @
+--
+-- @m@ will generally be an instance of 'MonadDependency' and the type alias
+-- effectively wraps @m@ around @domain@'s return type.
+-- The result is a function that produces its return value while
+-- potentially triggering side-effects in @m@, which amounts to
+-- depending on 'LiftFunc's of other 'Node's for the
+-- 'MonadDependency' case.
+type LiftFunc domain m
+  = Arrows (ParamTypes domain) (m (ReturnType domain))
+
+-- | Models a data-flow problem, where each 'Node' is mapped to
+-- its denoting 'LiftFunc' and a means to detect when
+-- the iterated transfer function reached a fixed-point through
+-- a 'ChangeDetector'.
+data DataFlowProblem domain
+  = DFP
+  { dfpRoot  :: !Int
+  , dfpSpecification :: !(Array (ChangeDetector domain, LiftFunc domain (DependencyM domain)))
+  }
+
+newtype Builder domain a
+  = Builder
+  { runBuilder :: NodeAllocator (ChangeDetector domain, LiftFunc domain (DependencyM domain)) a
+  } deriving (Functor, Applicative, Monad)
+
+compile
+  :: forall domain
+   . Datafixable domain
+  => Builder domain (LiftFunc domain (DependencyM domain))
+  -> DataFlowProblem domain
+compile (Builder builder) = DFP root array
+  where
+    (root, array) =
+      NodeAllocator.runAllocator . NodeAllocator.allocateNode $ \root -> do
+        transfer <- builder
+        pure (root, (alwaysChangeDetector @domain, transfer))
+
+datafixEq
+  :: forall domain
+   . Eq (ReturnType domain)
+  => Datafixable domain
+  => (LiftFunc domain (DependencyM domain) -> Builder domain (LiftFunc domain (DependencyM domain)))
+  -> Builder domain (LiftFunc domain (DependencyM domain))
+datafixEq = datafix @domain (eqChangeDetector @domain)
+
+-- | A 'ChangeDetector' that delegates to the 'Eq' instance of the
+-- node values.
+eqChangeDetector
+  :: forall domain
+   . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  => Eq (ReturnType domain)
+  => ChangeDetector domain
+eqChangeDetector =
+  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
+    const (/=)
+{-# INLINE eqChangeDetector #-}
+
+-- | A 'ChangeDetector' that always returns 'True'.
+--
+-- Use this when recomputing a node is cheaper than actually testing for the change.
+-- Beware of cycles in the resulting dependency graph, though!
+alwaysChangeDetector
+  :: forall domain
+   . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  => ChangeDetector domain
+alwaysChangeDetector =
+  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
+    \_ _ _ -> True
+{-# INLINE alwaysChangeDetector #-}
 
 -- | A function that computes a sufficiently conservative approximation
 -- of a point in the abstract domain for when the solution algorithm
@@ -267,7 +389,7 @@ highestPriorityUnstableNode = zoomUnstable $
 {-# INLINE highestPriorityUnstableNode #-}
 
 withCall
-  :: Datafixable (DependencyM domain)
+  :: Datafixable domain
   => Int
   -> Products (ParamTypes domain)
   -> ReaderT (Env domain) IO a
@@ -297,16 +419,17 @@ recompute
   :: forall domain dom cod
    . dom ~ ParamTypes domain
   => cod ~ ReturnType domain
-  => Datafixable (DependencyM domain)
+  => Datafixable domain
   => Int -> Products dom -> ReaderT (Env domain) IO cod
 recompute node args = withCall node args $ do
   let dom = Proxy :: Proxy dom
   let depm = Proxy :: Proxy (DependencyM domain cod)
   let eq = Proxy :: Proxy (cod -> cod -> Bool)
   let cod2cod = Proxy :: Proxy (cod -> cod)
-  nodeInfo <- withReaderT graph (Graph.lookupNode node)
-  let DM iterate' = uncurrys dom depm (Graph.transferFunction nodeInfo) args
-  let detectChange' = uncurrys dom eq (Graph.changeDetector nodeInfo) args
+  spec <- asks specification
+  let (changeDetector, transferFunction) = indexArray spec node
+  let DM iterate' = uncurrys dom depm transferFunction args
+  let detectChange' = uncurrys dom eq changeDetector args
   -- We need to access the graph at three different points in time:
   -- TODO
   --
@@ -351,50 +474,49 @@ recompute node args = withCall node args $ do
 
 datafix
   :: forall domain
-   . Datafixable (DependencyM domain)
+   . Datafixable domain
   => ChangeDetector domain
-  -> (LiftFunc domain (DependencyM domain) -> LiftFunc domain (DependencyM domain))
-  -> LiftFunc domain (DependencyM domain)
-datafix cd f = currys dom cod impl
-  where
-    dom = Proxy :: Proxy (ParamTypes domain)
-    cod = Proxy :: Proxy (DependencyM domain (ReturnType domain))
-    impl args = do
-      node <- DM (withReaderT graph (Graph.allocateNode cd (\node -> f (currys dom cod (dependOn node)))))
-      dependOn node args
-{-# INLINE datafix #-}
+  -> (LiftFunc domain (DependencyM domain) -> Builder domain (LiftFunc domain (DependencyM domain)))
+  -> Builder domain (LiftFunc domain (DependencyM domain))
+datafix cd iter = Builder $ NodeAllocator.allocateNode $ \node -> do
+  let deref = dependOn @domain node
+  transfer <- runBuilder (iter deref)
+  return (deref, (cd, transfer))
 
 dependOn
   :: forall domain
-   . Datafixable (DependencyM domain)
+   . Datafixable domain
   => Int
-  -> Products (ParamTypes domain)
-  -> DependencyM domain (ReturnType domain)
-dependOn node args = DM $ do
-  cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
-  isStable <- zoomUnstable $
-    not . IntArgsMonoSet.member node args <$> get
-  maybePointInfo <- withReaderT graph (Graph.lookup node args)
-  zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
-  case maybePointInfo >>= value of
-    -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
-    -- Otherwise, the node wasn't part of the call stack and thus will either
-    -- have a 'value' assigned or will not have been discovered at all.
-    Nothing | cycleDetected ->
-      -- Somewhere in an outer activation record we already compute this one.
-      -- We don't recurse again and just return an optimistic approximation,
-      -- such as 'bottom'.
-      -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
-      -- any calls to 'datafix' for a cycle to even be possible.
-      optimisticApproximation node args
-    Just val | isStable || cycleDetected ->
-      -- No brainer
-      return val
-    maybeVal ->
-      -- No cycle && (unstable || undiscovered). Apply one of the schemes
-      -- outlined in
-      -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-      scheme2 maybeVal node args
+  -> LiftFunc domain (DependencyM domain)
+dependOn node = currys dom cod impl
+  where
+    dom = Proxy :: Proxy (ParamTypes domain)
+    cod = Proxy :: Proxy (DependencyM domain (ReturnType domain))
+    impl args = DM $ do
+      cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
+      isStable <- zoomUnstable $
+        not . IntArgsMonoSet.member node args <$> get
+      maybePointInfo <- withReaderT graph (Graph.lookup node args)
+      zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
+      case maybePointInfo >>= value of
+        -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
+        -- Otherwise, the node wasn't part of the call stack and thus will either
+        -- have a 'value' assigned or will not have been discovered at all.
+        Nothing | cycleDetected ->
+          -- Somewhere in an outer activation record we already compute this one.
+          -- We don't recurse again and just return an optimistic approximation,
+          -- such as 'bottom'.
+          -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
+          -- any calls to 'datafix' for a cycle to even be possible.
+          optimisticApproximation node args
+        Just val | isStable || cycleDetected ->
+          -- No brainer
+          return val
+        maybeVal ->
+          -- No cycle && (unstable || undiscovered). Apply one of the schemes
+          -- outlined in
+          -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+          scheme2 maybeVal node args
 {-# INLINE dependOn #-}
 
 -- | Compute an optimistic approximation for a point of a given node that is
@@ -405,7 +527,7 @@ dependOn node args = DM $ do
 -- we can be more precise since we possibly have computed points for the node
 -- that are lower bounds to the current point.
 optimisticApproximation
-  :: Datafixable (DependencyM domain)
+  :: Datafixable domain
   => Int -> Products (ParamTypes domain) -> ReaderT (Env domain) IO (ReturnType domain)
 optimisticApproximation node args = do
   points <- withReaderT graph (Graph.lookupLT node args)
@@ -415,7 +537,7 @@ optimisticApproximation node args = do
   return (joins (mapMaybe (value . snd) points))
 
 scheme1, scheme2
-  :: Datafixable (DependencyM domain)
+  :: Datafixable domain
   => Maybe (ReturnType domain)
   -> Int
   -> Products (ParamTypes domain)
@@ -454,7 +576,7 @@ scheme2 maybeVal node args =
 -- mode of dependency tracking.
 -- See https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
 
--- |As long as the supplied "Maybe" expression returns "Just _", the loop
+-- | As long as the supplied "Maybe" expression returns "Just _", the loop
 -- body will be called and passed the value contained in the 'Just'.  Results
 -- are discarded.
 --
@@ -473,7 +595,7 @@ whileJust_ cond action = go
 -- one of its 'unstable' points, until the worklist is empty, indicating that a
 -- fixed-point has been reached.
 work
-  :: Datafixable (DependencyM domain)
+  :: Datafixable domain
   => ReaderT (Env domain) IO ()
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
@@ -492,14 +614,14 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 -- function you are interested in.
 fixProblem
   :: forall domain
-   . Datafixable (DependencyM domain)
-  => DataFlowProblem (DependencyM domain)
+   . Datafixable domain
+  => DataFlowProblem domain
   -- ^ The description of the @DataFlowProblem@ to solve.
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
   -> Arrows (ParamTypes domain) (ReturnType domain)
-fixProblem (DFP transfer) ib = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
+fixProblem (DFP root spec) ib = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")
@@ -508,8 +630,6 @@ fixProblem (DFP transfer) ib = currys (Proxy :: Proxy (ParamTypes domain)) (Prox
     runProblem args = unsafePerformIO $ do
       -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
       -- of 'DependencyM' for why we 'unsafePerformIO'.
-      g <- Graph.new
-      node <- runReaderT (Graph.allocateNode (alwaysChangeDetector @domain) (const transfer)) g
-      env <- initialEnv g (IntArgsMonoSet.singleton node args) ib
-      runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
+      env <- initialEnv spec (IntArgsMonoSet.singleton root args) ib
+      runReaderT (work >> withReaderT graph (Graph.lookup root args)) env
 {-# INLINE fixProblem #-}
