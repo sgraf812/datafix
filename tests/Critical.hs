@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -8,7 +9,7 @@ import           Algebra.Lattice
 import           Data.Proxy
 import           Datafix
 import           Datafix.Worklist       (Density (..), IterationBound (..),
-                                         fixProblem)
+                                         solveProblem)
 import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural
 import           Test.Tasty
@@ -23,8 +24,8 @@ instance BoundedJoinSemiLattice Natural where
 
 fixLoop, fixDoubleDependency
   :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixLoop density n = fixProblem loopProblem (density (Node 0)) NeverAbort (Node n)
-fixDoubleDependency density n = fixProblem doubleDependencyProblem (density (Node 1)) NeverAbort (Node n)
+fixLoop density n = solveProblem loopProblem (density (Node 0)) NeverAbort (Node n)
+fixDoubleDependency density n = solveProblem doubleDependencyProblem (density (Node 1)) NeverAbort (Node n)
 
 tests :: [TestTree]
 tests =
@@ -44,13 +45,13 @@ tests =
           [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
           ]
       , testGroup "Abortion"
-          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ fixProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (Node 0) >= 4)
+          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ solveProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (Node 0) >= 4)
           ]
       ]
   ]
 
-mkDFP :: forall m . (Domain m ~ Natural) => (Node -> TransferFunction m Natural) -> DataFlowProblem m
-mkDFP transfer = DFP transfer (const (eqChangeDetector (Proxy :: Proxy m)))
+mkDFP :: forall m . (Domain m ~ Natural) => (Node -> LiftedFunc Natural m) -> DataFlowProblem m
+mkDFP transfer = DFP transfer (const (eqChangeDetector @(Domain m)))
 
 -- | One node graph with loop that stabilizes after 10 iterations.
 loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m

@@ -7,7 +7,7 @@ module Trivial (tests) where
 import           Algebra.Lattice
 import           Datafix
 import           Datafix.Worklist       (Density (..), IterationBound (..),
-                                         fixProblem)
+                                         solveProblem)
 import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural
 import           Test.Tasty
@@ -25,9 +25,9 @@ instance BoundedJoinSemiLattice Natural where
 
 fixFib, fixFac, fixMutualRecursive
   :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixFib density n = fixProblem fibProblem (density (Node n)) NeverAbort (Node n)
-fixFac density n = fixProblem facProblem (density (Node n)) NeverAbort (Node n)
-fixMutualRecursive density n = fixProblem mutualRecursiveProblem (density (Node 1)) NeverAbort (Node n)
+fixFib density n = solveProblem fibProblem (density (Node n)) NeverAbort (Node n)
+fixFac density n = solveProblem facProblem (density (Node n)) NeverAbort (Node n)
+fixMutualRecursive density n = solveProblem mutualRecursiveProblem (density (Node 1)) NeverAbort (Node n)
 
 tests :: [TestTree]
 tests =
@@ -51,7 +51,7 @@ tests =
           , testCase "second node is stable" (fixMutualRecursive Dense 1 @?= 10)
           ]
       , testGroup "Abortion"
-          [ testCase "aborts after 5 updates with value 42" (fixProblem mutualRecursiveProblem Sparse (AbortAfter 5 (const 42)) (Node 1) @?= 42)
+          [ testCase "aborts after 5 updates with value 42" (solveProblem mutualRecursiveProblem Sparse (AbortAfter 5 (const 42)) (Node 1) @?= 42)
           ]
       ]
   ]

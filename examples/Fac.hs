@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 module Fac where
@@ -8,11 +9,11 @@ import           Datafix
 import           Numeric.Natural
 
 facProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-facProblem = DFP transfer (const (eqChangeDetector p))
+facProblem = DFP transfer (const (eqChangeDetector @(Domain m)))
   where
     p :: Proxy m
     p = Proxy
-    transfer :: Node -> TransferFunction m Natural
+    transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = return 1
     transfer (Node 1) = return 1
     transfer (Node n) = do

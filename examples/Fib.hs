@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 module Fib where
@@ -8,11 +9,11 @@ import           Datafix
 import           Numeric.Natural
 
 fibProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-fibProblem = DFP transfer (const (eqChangeDetector p))
+fibProblem = DFP transfer (const (eqChangeDetector @(Domain m)))
   where
     p :: Proxy m
     p = Proxy
-    transfer :: Node -> TransferFunction m Natural
+    transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = return 0
     transfer (Node 1) = return 1
     transfer (Node n) = do

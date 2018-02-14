@@ -12,7 +12,7 @@
 
 -- |
 -- Module      :  Datafix.Worklist.Internal
--- Copyright   :  (c) Sebastian Graf 2017
+-- Copyright   :  (c) Sebastian Graf 2018
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
@@ -37,6 +37,7 @@ import qualified Datafix.Description
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
+import           Datafix.ProblemBuilder
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph           (GraphRef, PointInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
@@ -47,14 +48,14 @@ import           System.IO.Unsafe                 (unsafePerformIO)
 -- | The concrete 'MonadDependency' for this worklist-based solver.
 --
 -- This essentially tracks the current approximation of the solution to the
--- 'DataFlowProblem' as mutable state while 'fixProblem' makes sure we will eventually
+-- 'DataFlowProblem' as mutable state while 'solveProblem' makes sure we will eventually
 -- halt with a conservative approximation.
 newtype DependencyM graph domain a
   = DM (ReaderT (Env graph domain) IO a)
   -- ^ Why does this use 'IO'? Actually, we only need 'ST' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
-  -- This ultimately leaks badly into the exported interface in 'fixProblem':
+  -- This ultimately leaks badly into the exported interface in 'solveProblem':
   -- Since we can't have universally quantified instance contexts (yet!), we can' write
   -- @(forall s. Datafixable (DependencyM s graph domain)) => (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
   -- and have to instead have the isomorphic
@@ -70,7 +71,7 @@ newtype DependencyM graph domain a
   -- must never be an instance of 'MonadIO' for this.
   deriving (Functor, Applicative, Monad)
 
--- | The iteration state of 'DependencyM'/'fixProblem'.
+-- | The iteration state of 'DependencyM'/'solveProblem'.
 data Env graph domain
   = Env
   { problem          :: !(DataFlowProblem (DependencyM graph domain))
@@ -161,7 +162,7 @@ type Datafixable m =
   )
 
 -- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
--- with 'fixProblem'.
+-- with 'solveProblem'.
 -- The 'Domain' is extracted from a type parameter.
 instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
@@ -169,7 +170,7 @@ instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDepend
   {-# INLINE dependOn #-}
 
 -- | Specifies the /density/ of the problem, e.g. whether the domain of
--- 'Node's can be confined to a finite range, in which case 'fixProblem'
+-- 'Node's can be confined to a finite range, in which case 'solveProblem'
 -- tries to use a "Data.Vector" based graph representation rather than
 -- one based on "Data.IntMap".
 data Density graph where
@@ -183,7 +184,7 @@ data Density graph where
 -- When 'domain' is a 'BoundedMeetSemilattice'/'BoundedLattice', the
 -- simplest abortion function would be to constantly return 'top'.
 --
--- As is the case for 'TransferFunction' and 'ChangeDetector', this
+-- As is the case for 'LiftedFunc' and 'ChangeDetector', this
 -- carries little semantic meaning if viewed in isolation, so here
 -- are a few examples for how the synonym expands:
 --
@@ -297,14 +298,14 @@ withCall node args r = ReaderT $ \env -> do
 
 -- | The first of the two major functions of this module.
 --
--- 'recompute node args' iterates the value of the passed 'node'
--- at the point 'args' by invoking its 'TransferFunction'.
+-- @recompute node args@ iterates the value of the passed @node@
+-- at the point @args@ by invoking its transfer function.
 -- It does so in a way that respects the 'IterationBound'.
 --
 -- This function is not exported, and is only called by 'work'
 -- and 'dependOn', for when the iteration strategy decides that
--- the 'node' needs to be (and can be) re-iterated.
--- It performs tracking of which 'Node's the 'TransferFunction'
+-- the @node@ needs to be (and can be) re-iterated.
+-- It performs tracking of which 'Node's the transfer function
 -- depended on, do that the worklist algorithm can do its magic.
 recompute
   :: forall domain graph dom cod
@@ -366,7 +367,7 @@ dependOn
   :: forall domain graph
    . Datafixable (DependencyM graph domain)
   => GraphRef graph
-  => Proxy (DependencyM graph domain) -> Node -> TransferFunction (DependencyM graph domain) domain
+  => Proxy (DependencyM graph domain) -> Node -> LiftedFunc domain (DependencyM graph domain)
 dependOn _ (Node node) = currys dom cod impl
   where
     dom = Proxy :: Proxy (ParamTypes domain)
@@ -483,18 +484,23 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
 -- | Computes a solution to the described 'DataFlowProblem' by iterating
--- 'TransferFunction's until a fixed-point is reached.
+-- transfer functions until a fixed-point is reached.
 --
 -- It does do by employing a worklist algorithm, iterating unstable 'Node's
 -- only.
--- 'Node's become unstable when the point of another 'Node' their 'TransferFunction'
+-- 'Node's become unstable when the point of another 'Node' their transfer function
 -- 'dependOn'ed changed.
 --
 -- The sole initially unstable 'Node' is the last parameter, and if your
 -- 'domain' is function-valued (so the returned 'Arrows' expands to a function),
 -- then any further parameters specify the exact point in the 'Node's transfer
 -- function you are interested in.
-fixProblem
+--
+-- If your problem only has finitely many different 'Node's , consider using
+-- the 'ProblemBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level API
+-- that let's you forget about 'Node's and instead let's you focus on building
+-- more complex data-flow frameworks.
+solveProblem
   :: forall domain graph
    . GraphRef graph
   => Datafixable (DependencyM graph domain)
@@ -513,7 +519,9 @@ fixProblem
   -- @Node@ denoting the root expression of your data-flow analysis
   -- you specified via the @DataFlowProblem@.
   -> Arrows (ParamTypes domain) (ReturnType domain)
-fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
+  -- ^ This is actually just @domain@, but GHC isn't smart enough to spot the
+  -- bijection until @domain@ is instantiated to something concrete.
+solveProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
   where
     impl
       = fromMaybe (error "Broken invariant: The root node has no value")
@@ -527,4 +535,28 @@ fixProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes doma
             Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
       env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
       runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
-{-# INLINE fixProblem #-}
+{-# INLINE solveProblem #-}
+
+-- | @evalDenotation denot ib@ returns a value in @domain@ that is described by
+-- the denotation @denot@.
+--
+-- It does so by building up the 'DataFlowProblem' corresponding to @denot@
+-- and solving the resulting problem with 'solveProblem', the documentation of
+-- which describes in detail how to arrive at a stable denotation and what
+-- the 'IterationBound' @ib@ is for.
+evalDenotation
+  :: forall domain
+   . Datafixable (DependencyM DenseGraph.Ref domain)
+  => ProblemBuilder (DependencyM DenseGraph.Ref domain) (LiftedFunc domain (DependencyM DenseGraph.Ref domain))
+  -- ^ A build plan for computing the denotation, possibly involving
+  -- fixed-point iteration factored through calls to 'datafix'.
+  -> IterationBound domain
+  -- ^ Whether the solution algorithm should respect a maximum bound on the
+  -- number of iterations per point. Pass 'NeverAbort' if you don't care.
+  -> Arrows (ParamTypes domain) (ReturnType domain)
+  -- ^ This is actually just @domain@, but GHC isn't smart enough to spot the
+  -- bijection until @domain@ is instantiated to something concrete.
+evalDenotation denot ib = solveProblem prob (Dense max_) ib root
+  where
+    (root, max_, prob) = buildProblem denot
+{-# INLINE evalDenotation #-}

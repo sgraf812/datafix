@@ -21,10 +21,9 @@
 
 module Analyses.Templates.LetDn
   ( TransferAlgebra
-  , buildProblem
+  , buildDenotation
   ) where
 
-import           Data.Primitive.Array     (indexArray, sizeofArray)
 import           Data.Proxy               (Proxy (..))
 
 import           Analyses.Syntax.CoreSynF
@@ -34,24 +33,29 @@ import           CoreSyn
 import           VarEnv
 
 -- | A 'TransferAlgebra' for a given @lattice@ interprets a single layer of
--- 'CoreExprF' in terms of a 'TransferFunction m lattice', for any possible
--- @'Monad' m@. It has access to a 'VarEnv' of 'TransferFunction's for every
+-- 'CoreExprF' in terms of a 'LiftedFunc lattice m', for any possible
+-- @'Monad' m@. It has access to a 'VarEnv' of transfer functions for every
 -- free variable in the expression in order to do so.
 --
 -- The suffix @Algebra@ is inspired by recursion schemes. 'TransferAlgebra's
 -- are <F-algebras https://en.wikipedia.org/wiki/F-algebra>, where the
--- /base functor/ is 'CoreExprF' and the /carrier/ is
--- @TransferFunction m lattice@.
+-- /base functor/ is 'CoreExprF' and the /carrier/ is a transfer function of
+-- type 'LiftedFunc lattice m'.
 --
--- By the same analogy, 'buildProblem' is the associated recursion scheme.
+-- By the same analogy, 'buildDenotation' is the associated recursion scheme.
+--
+-- To recover general recursion, it's still possible to implement a paramorphic
+-- variant of 'buildDenotation' that feeds what would be a R-'TransferAlgebra'.
 type TransferAlgebra lattice
   = forall m
    . Monad m
   => Proxy m
   -> Proxy lattice
-  -> VarEnv (TransferFunction m lattice)
-  -> CoreExprF (TransferFunction m lattice)
-  -> TransferFunction m lattice
+  -> VarEnv (LiftedFunc lattice m)
+  -> CoreExprF (LiftedFunc lattice m)
+  -> LiftedFunc lattice m
+
+type TF m = LiftedFunc (Domain m) m
 
 -- | Given a 'TransferAlgebra', this function takes care of building a
 -- 'DataFlowProblem' for 'CoreExpr's.
@@ -61,8 +65,8 @@ type TransferAlgebra lattice
 -- agnostic of node allocation and 'MonadDependency' this way.
 --
 -- It returns the root 'Node', denoting the passed expression, and the maximum
--- allocated 'Node', which allows to configure 'fixProblem' with a dense
--- 'GraphRep'. The final return value is the 'DataFlowProblem' reflecting
+-- allocated 'Node', which allows to configure 'solveProblem' with a dense
+-- 'GraphRef'. The final return value is the 'DataFlowProblem' reflecting
 -- the analysis specified by the 'TransferAlgebra' applied to the given
 -- 'CoreExpr'.
 --
@@ -71,40 +75,21 @@ type TransferAlgebra lattice
 -- yields a catamorphism. It is special in that recursive let-bindings
 -- lead to non-structural recursion, so termination isn't obvious and
 -- demands some confidence in domain theory by the programmer.
-buildProblem
+buildDenotation
   :: forall m
    . MonadDependency m
-  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
   => Eq (ReturnType (Domain m))
+  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
   => TransferAlgebra (Domain m)
   -> CoreExpr
-  -> (Node, Node, DataFlowProblem m)
-buildProblem alg e = (root, Node (sizeofArray arr - 1), DFP transfer changeDetector)
+  -> ProblemBuilder m (TF m)
+buildDenotation alg' = buildExpr emptyVarEnv
   where
-    p = Proxy :: Proxy m
-    changeDetector _ = eqChangeDetector p
-    transfer (Node node) = indexArray arr node
-    (root, arr) = runAllocator $ allocateNode $ \root_ -> do
-      transferRoot <- buildRoot p alg e
-      pure (root_, transferRoot)
-{-# INLINE buildProblem #-}
-
-type TF m = TransferFunction m (Domain m)
-
-buildRoot
-  :: forall m
-   . MonadDependency m
-  => Proxy m
-  -> TransferAlgebra (Domain m)
-  -> CoreExpr
-  -> NodeAllocator (TF m) (TF m)
-buildRoot p alg' = buildExpr emptyVarEnv
-  where
-    alg = alg' p (Proxy :: Proxy (Domain m))
+    alg = alg' (Proxy :: Proxy m) (Proxy :: Proxy (Domain m))
     buildExpr
       :: VarEnv (TF m)
       -> CoreExpr
-      -> NodeAllocator (TF m) (TF m)
+      -> ProblemBuilder m (TF m)
     buildExpr env expr =
       case expr of
         Lit lit -> pure (alg env (LitF lit))
@@ -129,7 +114,7 @@ buildRoot p alg' = buildExpr emptyVarEnv
           transferAlts <- mapM (buildAlt env) alts
           pure (alg env (CaseF transferScrut bndr ty transferAlts))
         Let bind body -> do
-          (env', transferredBind) <- registerBindingGroup env bind
+          (env', transferredBind) <- datafixBindingGroup env bind
           transferBody <- buildExpr env' body
           -- Note that we pass the old env to 'alg'.
           -- 'alg' should use 'transferredBind' for
@@ -154,21 +139,16 @@ buildRoot p alg' = buildExpr emptyVarEnv
     {-# INLINE mapBinders #-}
 
 
-    registerBindingGroup = mapBinders impl
+    datafixBindingGroup = mapBinders impl
       where
         impl env binders =
           case binders of
             [] -> pure (env, [])
             ((id_, rhs):binders') ->
-              allocateNode $ \node -> do
-                -- This block is where we tie the knot through
-                -- 'MonadDependency'!
-                let deref = dependOn p node
-                let env' = extendVarEnv env id_ deref
+              datafixEq $ \self -> do
+                let env' = extendVarEnv env id_ self
                 (env'', transferredBind) <- impl env' binders'
                 transferRHS <- buildExpr env' rhs
-                -- we return `deref`, which is like `transferRHS` but
-                -- with caching.
-                pure ((env'', (id_, deref):transferredBind), transferRHS)
-    {-# INLINE registerBindingGroup #-}
-{-# INLINE buildRoot #-}
+                pure ((env'', (id_, self):transferredBind), transferRHS)
+    {-# INLINE datafixBindingGroup #-}
+{-# INLINE buildDenotation #-}

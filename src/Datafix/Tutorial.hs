@@ -2,7 +2,7 @@
 
 -- |
 -- Module      :  Datafix.Tutorial
--- Copyright   :  (c) Sebastian Graf 2017
+-- Copyright   :  (c) Sebastian Graf 2018
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
@@ -26,7 +26,7 @@
 -- acyclic.
 --
 -- Data-flow problems are declared with the primitives in
--- @"Datafix.Description"@ and solved by @Datafix.Worklist.'fixProblem'@.
+-- @"Datafix.Description"@ and solved by @Datafix.Worklist.'solveProblem'@.
 --
 -- With that out of the way, let's set in place the GHCi environment of our
 -- examples:
@@ -81,7 +81,7 @@
 -- through laziness.
 --
 -- As promised in the previous section, we can do the same using @datafix@.
--- First, we need to declare a 'TransferFunction' that makes the data
+-- First, we need to declare a /transfer function/ that makes the data
 -- dependencies for the recursive case explicit, as if we were using
 -- 'Data.Function.fix' to eliminate the recursion:
 --
@@ -90,7 +90,7 @@
 --     :: (MonadDependency m, Domain m ~ Natural)
 --     => Proxy m
 --     -> Node
---     -> m Natural
+--     -> LiftedFunc Natural m
 --   transferFib _ (Node 0) = return 0
 --   transferFib _ (Node 1) = return 1
 --   transferFib p (Node n) = do
@@ -99,12 +99,12 @@
 --     return (a + b)
 -- :}
 --
--- 'MonadDependency' contains a single impure primitive 'dependOn' for that purpose.
+-- 'MonadDependency' contains a single primitive 'dependOn' for that purpose.
 --
 -- Every point of the fibonacci series is modeled as a seperate 'Node' of the
 -- data-flow graph.
--- By looking at the definition of 'TransferFunction', we can see that
--- @TransferFunction m Natural ~ m Natural@, so for our simple
+-- By looking at the definition of 'LiftedFunc', we can see that
+-- @LiftedFunc Natural m ~ m Natural@, so for our simple
 -- 'Natural' 'Domain', the transfer function is specified directly in
 -- 'MonadDependency'.
 --
@@ -124,9 +124,9 @@
 -- sure we detect when a fixed-point has been reached.
 --
 -- That's it for describing the data-flow problem of fibonacci numbers.
--- We can ask @Datafix.Worklist.'fixProblem'@ for a solution in a minute.
+-- We can ask @Datafix.Worklist.'solveProblem'@ for a solution in a minute.
 --
--- The 'fixProblem' solver demands an instance of 'BoundedJoinSemiLattice'
+-- The 'solveProblem' solver demands an instance of 'BoundedJoinSemiLattice'
 -- on the 'Domain' for when the data-flow graph is cyclic. We conveniently
 -- delegate to the total @Ord@ instance for 'Numeric.Natural.Natural', knowing
 -- that its semantic interpretation is irrelevant to us:
@@ -136,7 +136,7 @@
 --
 -- And now the final incantation of the solver:
 --
--- >>> fixProblem fibDfp Sparse NeverAbort (Node 10)
+-- >>> solveProblem fibDfp Sparse NeverAbort (Node 10)
 -- 55
 --
 -- This will also execute in \(\mathcal{O}(n)\) space and time, all without
@@ -188,7 +188,7 @@
 --     :: (MonadDependency m, Domain m ~ Int)
 --     => Proxy m
 --     -> Node
---     -> TransferFunction m Int
+--     -> LiftedFunc m Int
 --   transferF p (Node n)
 --     | even n = (* 2) <$> dependOn p (Node (n `div` 2))
 --     | odd n  = (subtract 1) <$> dependOn p (Node (n + 1))
@@ -208,15 +208,15 @@
 -- >>> instance JoinSemiLattice Int where (\/) = max
 -- >>> instance BoundedJoinSemiLattice Int where bottom = minBound
 --
--- Now it's just a matter of calling 'fixProblem' with the right parameters:
+-- Now it's just a matter of calling 'solveProblem' with the right parameters:
 --
--- >>> fixProblem fDfp Sparse NeverAbort (Node 0)
+-- >>> solveProblem fDfp Sparse NeverAbort (Node 0)
 -- 0
--- >>> fixProblem fDfp Sparse NeverAbort (Node 5)
+-- >>> solveProblem fDfp Sparse NeverAbort (Node 5)
 -- 5
--- >>> fixProblem fDfp Sparse NeverAbort (Node 42)
+-- >>> solveProblem fDfp Sparse NeverAbort (Node 42)
 -- 42
--- >>> fixProblem fDfp Sparse NeverAbort (Node (-10))
+-- >>> solveProblem fDfp Sparse NeverAbort (Node (-10))
 -- -10
 --
 -- Note how the /specification/ of the data-flow problem was as unexciting as

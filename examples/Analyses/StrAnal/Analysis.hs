@@ -6,8 +6,8 @@
 -- | This module defines a strictness analysis in the style of GHC's
 -- projection-based backwards analysis by defining a 'transferFunctionAlg'
 -- that is passed on to @Analyses.Templates.LetDn.'buildProblem'@,
--- yielding a 'DataFlowProblem' to be solved by @Datafix.'fixProblem'@.
-module Analyses.StrAnal.Analysis (analyse, analyseDense) where
+-- yielding a 'DataFlowProblem' to be solved by @Datafix.'solveProblem'@.
+module Analyses.StrAnal.Analysis (analyse) where
 
 import           Algebra.Lattice
 import           Analyses.StrAnal.Arity
@@ -15,8 +15,8 @@ import           Analyses.StrAnal.Strictness
 import           Analyses.Syntax.CoreSynF
 import           Analyses.Templates.LetDn
 import           Control.Monad               (foldM)
-import           Datafix.Worklist            (Density (..), IterationBound (..),
-                                              fixProblem)
+import           Datafix.Worklist            (IterationBound (..),
+                                              evalDenotation)
 
 import           CoreSyn
 import           Id
@@ -24,14 +24,7 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = fixProblem problem Sparse NeverAbort root 0
-  where
-    (root, _, problem) = buildProblem transferFunctionAlg expr
-
-analyseDense :: CoreExpr -> StrLattice
-analyseDense expr = fixProblem problem (Dense maxNode) NeverAbort root 0
-  where
-    (root, maxNode, problem) = buildProblem transferFunctionAlg expr
+analyse expr = evalDenotation (buildDenotation transferFunctionAlg expr) NeverAbort 0
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
@@ -42,7 +35,7 @@ applyWhen False _ = id
 -- @Analyses.Tempaltes.LetDn.'buildProblem'@, so that this function definition
 -- is completely compositional: It is only concerned with peeling off a single
 -- layer of the 'CoreExprF' and interpret that in terms of the
--- 'TransferFunction' over the @Arity -> StrLattice@ 'Domain'.
+-- transfer function over the @Arity -> StrLattice@ 'Domain'.
 --
 -- Because there is no explicit fixpointing going on, the resulting analysis
 -- logic is clear and to the point.

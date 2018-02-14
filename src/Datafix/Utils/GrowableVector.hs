@@ -1,6 +1,6 @@
 -- |
 -- Module      :  Datafix.GrowableVector
--- Copyright   :  (c) Sebastian Graf 2017
+-- Copyright   :  (c) Sebastian Graf 2018
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable

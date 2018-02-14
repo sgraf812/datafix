@@ -5,7 +5,7 @@
 
 -- |
 -- Module      :  Datafix
--- Copyright   :  (c) Sebastian Graf 2017
+-- Copyright   :  (c) Sebastian Graf 2018
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
@@ -17,6 +17,7 @@
 module Datafix
   ( module Datafix.Description
   , module Datafix.NodeAllocator
+  , module Datafix.ProblemBuilder
   , Datafix.MonoMap.MonoMap
   , module Datafix.Utils.TypeLevel
   , module Datafix.Worklist
@@ -25,5 +26,6 @@ module Datafix
 import           Datafix.Description
 import           Datafix.MonoMap
 import           Datafix.NodeAllocator
+import           Datafix.ProblemBuilder
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist

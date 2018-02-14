@@ -2,7 +2,7 @@
 
 -- |
 -- Module      :  Datafix.NodeAllocator
--- Copyright   :  (c) Sebastian Graf 2017
+-- Copyright   :  (c) Sebastian Graf 2018
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
@@ -28,7 +28,7 @@ import qualified Datafix.Utils.GrowableVector     as GV
 import           System.IO.Unsafe                 (unsafePerformIO)
 
 -- | A state monad wrapping a mapping from 'Node' to some 'v'
--- which we will instantiate to appropriate 'TransferFunction's.
+-- which we will instantiate to appropriate 'LiftedFunc's.
 newtype NodeAllocator v a
   = NodeAllocator { unwrapNodeAllocator :: StateT (GrowableVector (PrimState IO) v) IO a }
   deriving (Functor, Applicative, Monad)
@@ -56,5 +56,5 @@ runAllocator (NodeAllocator alloc) = unsafePerformIO $ do
   vec <- GV.new 8
   (a, vec') <- runStateT alloc vec
   vec'' <- GV.freeze vec'
-  pure (a, vec'')
+  return (a, vec'')
 {-# INLINE runAllocator #-}

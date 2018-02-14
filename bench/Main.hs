@@ -8,7 +8,7 @@ import           Criterion.Main
 import           Datafix
 import           Datafix.Worklist               (Density (..),
                                                  IterationBound (..),
-                                                 fixProblem)
+                                                 solveProblem)
 import           Datafix.Worklist.Graph         (GraphRef)
 import           Numeric.Natural
 
@@ -36,7 +36,7 @@ instance NFData CoreExpr where
   rnf = seqExpr
 
 fixSum :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixSum density n = fixProblem sumProblem (density (Node n)) NeverAbort (Node n)
+fixSum density n = solveProblem sumProblem (density (Node n)) NeverAbort (Node n)
 
 main :: IO ()
 main = defaultMain
@@ -60,15 +60,13 @@ main = defaultMain
       strAnalGroup descr e =
         bgroup descr
           [ bench "baseline" (whnf (seqStrLattice . AdHocStrAnal.analyse) e)
-          , bench "sparse"   (whnf (seqStrLattice . StrAnal.analyse) e)
-          , bench "dense"    (whnf (seqStrLattice . StrAnal.analyseDense) e)
+          , bench "datafix"   (whnf (seqStrLattice . StrAnal.analyse) e)
           ]
       strAnalFileGroup file =
         env (compileCoreExpr file) $ \e ->
           bgroup file
             [ bench "baseline" (whnf (seqStrLattice . AdHocStrAnal.analyse) e)
-            , bench "sparse"   (whnf (seqStrLattice . StrAnal.analyse) e)
-            , bench "dense"    (whnf (seqStrLattice . StrAnal.analyseDense) e)
+            , bench "datafix"   (whnf (seqStrLattice . StrAnal.analyse) e)
             ]
 
 

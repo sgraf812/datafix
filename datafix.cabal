@@ -49,6 +49,7 @@ library
                      Datafix.Description
                      Datafix.MonoMap
                      Datafix.NodeAllocator
+                     Datafix.ProblemBuilder
                      Datafix.Utils.TypeLevel
                      Datafix.Worklist
                      Datafix.Worklist.Graph

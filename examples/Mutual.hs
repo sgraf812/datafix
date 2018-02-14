@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 {-# LANGUAGE TypeFamilies        #-}
 
 module Mutual where
@@ -17,11 +18,11 @@ import           Numeric.Natural
 -- After a few bounces, this will reach a stable state where the first node
 -- has value 11 and the other has value 10.
 mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-mutualRecursiveProblem = DFP transfer (const (eqChangeDetector p))
+mutualRecursiveProblem = DFP transfer (const (eqChangeDetector @(Domain m)))
   where
     p :: Proxy m
     p = Proxy
-    transfer :: Node -> TransferFunction m Natural
+    transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = do
       b <- dependOn p (Node 1)
       return (b + 1)
