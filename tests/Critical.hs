@@ -6,7 +6,6 @@
 module Critical (tests) where
 
 import           Algebra.Lattice
-import           Data.Proxy
 import           Datafix
 import           Datafix.Worklist       (Density (..), IterationBound (..),
                                          solveProblem)
@@ -58,7 +57,7 @@ loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowPro
 loopProblem = mkDFP transfer
   where
     transfer (Node 0) = do -- stabilizes at 10
-      n <- dependOn (Proxy :: Proxy m) (Node 0)
+      n <- dependOn @m (Node 0)
       return (min (n + 1) 10)
     transfer (Node _) = error "Invalid node"
 
@@ -72,13 +71,11 @@ loopProblem = mkDFP transfer
 doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
 doubleDependencyProblem = mkDFP transfer
   where
-    p :: Proxy m
-    p = Proxy
     transfer (Node 0) = do -- stabilizes at 4
-      n <- dependOn p (Node 1)
-      m <- dependOn p (Node 1)
+      n <- dependOn @m (Node 1)
+      m <- dependOn @m (Node 1)
       return (n + m)
     transfer (Node 1) = do -- stabilizes at 2
-      n <- dependOn p (Node 1)
+      n <- dependOn @m (Node 1)
       return (min (n + 1) 2)
     transfer (Node _) = error "Invalid node"

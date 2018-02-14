@@ -7,6 +7,7 @@
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
@@ -31,7 +32,7 @@ import           Control.Monad.Trans.State.Strict
 import           Data.IORef
 import           Data.Maybe                       (fromMaybe, listToMaybe,
                                                    mapMaybe)
-import           Data.Proxy                       (Proxy (..))
+import           Data.Type.Equality
 import           Datafix.Description              hiding (dependOn)
 import qualified Datafix.Description
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
@@ -166,7 +167,7 @@ type Datafixable m =
 -- The 'Domain' is extracted from a type parameter.
 instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
-  dependOn = dependOn
+  dependOn = dependOn @domain @graph
   {-# INLINE dependOn #-}
 
 -- | Specifies the /density/ of the problem, e.g. whether the domain of
@@ -208,7 +209,7 @@ abortWithTop
   => BoundedMeetSemiLattice (ReturnType domain)
   => AbortionFunction domain
 abortWithTop =
-  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain)) $
+  currys @(ParamTypes domain) @(ReturnType domain -> ReturnType domain) $
     const top
 {-# INLINE abortWithTop #-}
 
@@ -308,21 +309,18 @@ withCall node args r = ReaderT $ \env -> do
 -- It performs tracking of which 'Node's the transfer function
 -- depended on, do that the worklist algorithm can do its magic.
 recompute
-  :: forall domain graph dom cod
+  :: forall domain graph dom cod depm
    . dom ~ ParamTypes domain
   => cod ~ ReturnType domain
+  => depm ~ DependencyM graph domain
   => GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  => Datafixable depm
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
 recompute node args = withCall node args $ do
   prob <- asks problem
-  let dom = Proxy :: Proxy dom
-  let depm = Proxy :: Proxy (DependencyM graph domain cod)
-  let eq = Proxy :: Proxy (cod -> cod -> Bool)
-  let cod2cod = Proxy :: Proxy (cod -> cod)
   let node' = Node node
-  let DM iterate' = uncurrys dom depm (dfpTransfer prob node') args
-  let detectChange' = uncurrys dom eq (dfpDetectChange prob node') args
+  let DM iterate' = uncurrys @dom @(depm cod) (dfpTransfer prob node') args
+  let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dfpDetectChange prob node') args
   -- We need to access the graph at three different points in time:
   --
   --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
@@ -338,7 +336,7 @@ recompute node args = withCall node args $ do
     Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
     guard (iterations preInfo >= n)
     Just oldVal <- return (value preInfo)
-    return (uncurrys dom cod2cod abort args oldVal)
+    return (uncurrys @dom @(cod -> cod) abort args oldVal)
   -- For the 'Nothing' case, we proceed by iterating the transfer function.
   newVal <- maybe iterate' return maybeAbortedVal
   -- When abortion is required, 'iterate'' is not called and
@@ -367,11 +365,9 @@ dependOn
   :: forall domain graph
    . Datafixable (DependencyM graph domain)
   => GraphRef graph
-  => Proxy (DependencyM graph domain) -> Node -> LiftedFunc domain (DependencyM graph domain)
-dependOn _ (Node node) = currys dom cod impl
+  => Node -> LiftedFunc domain (DependencyM graph domain)
+dependOn (Node node) = currys @(ParamTypes domain) @(DependencyM graph domain (ReturnType domain)) impl
   where
-    dom = Proxy :: Proxy (ParamTypes domain)
-    cod = Proxy :: Proxy (DependencyM graph domain (ReturnType domain))
     impl args = DM $ do
       cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
       isStable <- zoomUnstable $
@@ -518,23 +514,22 @@ solveProblem
   -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
   -- @Node@ denoting the root expression of your data-flow analysis
   -- you specified via the @DataFlowProblem@.
-  -> Arrows (ParamTypes domain) (ReturnType domain)
-  -- ^ This is actually just @domain@, but GHC isn't smart enough to spot the
-  -- bijection until @domain@ is instantiated to something concrete.
-solveProblem prob density ib (Node node) = currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain)) impl
-  where
-    impl
-      = fromMaybe (error "Broken invariant: The root node has no value")
-      . (>>= value)
-      . runProblem
-    runProblem args = unsafePerformIO $ do
-      -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
-      -- of 'DependencyM' for why we 'unsafePerformIO'.
-      let newGraphRef = case density of
-            Sparse               -> SparseGraph.newRef
-            Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
-      env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
-      runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
+  -> domain
+solveProblem prob density ib (Node node) =
+  castWith arrowsAxiom (currys @(ParamTypes domain) @(ReturnType domain) impl)
+    where
+      impl
+        = fromMaybe (error "Broken invariant: The root node has no value")
+        . (>>= value)
+        . runProblem
+      runProblem args = unsafePerformIO $ do
+        -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
+        -- of 'DependencyM' for why we 'unsafePerformIO'.
+        let newGraphRef = case density of
+              Sparse               -> SparseGraph.newRef
+              Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
+        env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
+        runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE solveProblem #-}
 
 -- | @evalDenotation denot ib@ returns a value in @domain@ that is described by
@@ -553,9 +548,7 @@ evalDenotation
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
-  -> Arrows (ParamTypes domain) (ReturnType domain)
-  -- ^ This is actually just @domain@, but GHC isn't smart enough to spot the
-  -- bijection until @domain@ is instantiated to something concrete.
+  -> domain
 evalDenotation denot ib = solveProblem prob (Dense max_) ib root
   where
     (root, max_, prob) = buildProblem denot

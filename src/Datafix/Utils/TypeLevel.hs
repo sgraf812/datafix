@@ -3,6 +3,7 @@
 -- with some default-extensions added.
 -- Let's just hope that they don't sue ;)
 
+{-# LANGUAGE AllowAmbiguousTypes   #-}
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -12,6 +13,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 -- We need undecidable instances for the definition of @Foldr@,
@@ -28,8 +30,9 @@
 -- Some type-level helpers for 'curry'/'uncurry'ing arbitrary function types.
 module Datafix.Utils.TypeLevel where
 
-import           Data.Proxy
-import           GHC.Exts   (Constraint)
+import           Data.Type.Equality
+import           GHC.Exts           (Constraint)
+import           Unsafe.Coerce      (unsafeCoerce)
 
 ------------------------------------------------------------------
 -- CONSTRAINTS
@@ -85,6 +88,9 @@ type family Constant (b :: l) (as :: [k]) :: [l] where
 -- | @Arrows [a1,..,an] r@ corresponds to @a1 -> .. -> an -> r@
 type Arrows   (as :: [*]) (r :: *) = Foldr (->) r as
 
+arrowsAxiom :: Arrows (ParamTypes func) (ReturnType func) :~: func
+arrowsAxiom = unsafeCoerce Refl
+
 -- | @Products []@ corresponds to @()@,
 -- @Products [a]@ corresponds to @a@,
 -- @Products [a1,..,an]@ corresponds to @(a1, (..,( an)..))@.
@@ -126,20 +132,20 @@ type family ReturnType' (t :: *) :: * where
 --   conversions are inlined at compile time for concrete arguments.
 
 class Currying as b where
-  uncurrys :: Proxy as -> Proxy b -> Arrows as b -> Products as -> b
-  currys   :: Proxy as -> Proxy b -> (Products as -> b) -> Arrows as b
+  uncurrys :: Arrows as b -> Products as -> b
+  currys   :: (Products as -> b) -> Arrows as b
 
 instance Currying '[] b where
-  uncurrys _ _ f () = f
-  currys   _ _ f = f ()
+  uncurrys f () = f
+  currys   f = f ()
 
 instance Currying (a ': '[]) b where
-  uncurrys _ _ f = f
-  currys _ _ f = f
+  uncurrys f = f
+  currys f = f
 
 instance Currying (a2 ': as) b => Currying (a1 ': a2 ': as) b where
-  uncurrys _ p f = uncurry $ uncurrys (Proxy :: Proxy (a2 ': as)) p . f
-  currys   _ p f = currys (Proxy :: Proxy (a2 ': as)) p . curry f
+  uncurrys f = uncurry $ uncurrys @(a2 ': as) . f
+  currys   f = currys @(a2 ': as) . curry f
 
 ------------------------------------------------------------------
 -- DEFUNCTIONALISATION

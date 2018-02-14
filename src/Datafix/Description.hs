@@ -29,7 +29,6 @@ module Datafix.Description
   , alwaysChangeDetector
   ) where
 
-import           Data.Proxy              (Proxy (..))
 import           Datafix.Utils.TypeLevel
 
 -- $setup
@@ -187,7 +186,7 @@ class Monad m => MonadDependency m where
   --
   -- If you can't guarantee monotonicity, try to pull non-monotone arguments
   -- into 'Node's.
-  dependOn :: Proxy m -> Node -> LiftedFunc (Domain m) m
+  dependOn :: Node -> LiftedFunc (Domain m) m
   -- ^ Expresses a dependency on a node of the data-flow graph, thus
   -- introducing a way of trackable recursion. That's similar
   -- to how you would use 'Data.Function.fix' to abstract over recursion.
@@ -231,7 +230,7 @@ eqChangeDetector
   => Eq (ReturnType domain)
   => ChangeDetector domain
 eqChangeDetector =
-  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
+  currys @(ParamTypes domain) @(ReturnType domain -> ReturnType domain -> Bool) $
     const (/=)
 {-# INLINE eqChangeDetector #-}
 
@@ -244,6 +243,6 @@ alwaysChangeDetector
    . Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
   => ChangeDetector domain
 alwaysChangeDetector =
-  currys (Proxy :: Proxy (ParamTypes domain)) (Proxy :: Proxy (ReturnType domain -> ReturnType domain -> Bool)) $
+  currys @(ParamTypes domain) @(ReturnType domain -> ReturnType domain -> Bool) $
     \_ _ _ -> True
 {-# INLINE alwaysChangeDetector #-}

@@ -21,7 +21,6 @@ module Datafix.ProblemBuilder
   ) where
 
 import           Data.Primitive.Array
-import           Data.Proxy
 import           Datafix.Description
 import           Datafix.NodeAllocator
 import           Datafix.Utils.TypeLevel
@@ -34,7 +33,7 @@ newtype ProblemBuilder m a
 
 instance MonadDependency m => MonadDatafix m (ProblemBuilder m) where
   datafix cd func = ProblemBuilder $ allocateNode $ \node -> do
-    let deref = dependOn (Proxy :: Proxy m) node
+    let deref = dependOn @m node
     (ret, transfer) <- unwrapProblemBuilder (func deref)
     return (ret, (cd, transfer))
 

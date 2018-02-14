@@ -4,7 +4,6 @@
 
 module Mutual where
 
-import           Data.Proxy
 import           Datafix
 import           Numeric.Natural
 
@@ -20,13 +19,11 @@ import           Numeric.Natural
 mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
 mutualRecursiveProblem = DFP transfer (const (eqChangeDetector @(Domain m)))
   where
-    p :: Proxy m
-    p = Proxy
     transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = do
-      b <- dependOn p (Node 1)
+      b <- dependOn @m (Node 1)
       return (b + 1)
     transfer (Node 1) = do
-      a <- dependOn p (Node 0)
+      a <- dependOn @m (Node 0)
       return (min 10 a) -- So the overall fixpoint of this is 10
     transfer (Node _) = error "Invalid node"
