@@ -103,6 +103,7 @@ data ConsMap1 :: (Function k l -> *) -> k -> Function [l] [l] -> *
 -- | <tt>Arrows [a1,..,an] r</tt> corresponds to <tt>a1 -&gt; .. -&gt; an
 --   -&gt; r</tt>
 type Arrows (as :: [*]) (r :: *) = Foldr (->) r as
+arrowsAxiom :: Arrows (ParamTypes func) (ReturnType func) :~: func
 
 -- | <tt>Products []</tt> corresponds to <tt>()</tt>, <tt>Products [a]</tt>
 --   corresponds to <tt>a</tt>, <tt>Products [a1,..,an]</tt> corresponds to
@@ -124,8 +125,8 @@ type Arrows (as :: [*]) (r :: *) = Foldr (->) r as
 --   rather than by recursion on a singleton for <tt>as</tt> so all of that
 --   these conversions are inlined at compile time for concrete arguments.
 class Currying as b
-uncurrys :: Currying as b => Proxy as -> Proxy b -> Arrows as b -> Products as -> b
-currys :: Currying as b => Proxy as -> Proxy b -> (Products as -> b) -> Arrows as b
+uncurrys :: Currying as b => Arrows as b -> Products as -> b
+currys :: Currying as b => (Products as -> b) -> Arrows as b
 data Function :: * -> * -> *
 data Constant0 :: Function a (Function b a -> *) -> *
 data Constant1 :: * -> Function b a -> *
@@ -149,6 +150,7 @@ module Datafix.Description
 --   an appropriate allocation mechanism as in <tt>NodeAllocator</tt>.
 newtype Node
 Node :: Int -> Node
+[unwrapNode] :: Node -> Int
 
 -- | Data-flow problems denote <a>Node</a>s in the data-flow graph by
 --   monotone transfer functions.
@@ -158,19 +160,19 @@ Node :: Int -> Node
 --   form:
 --   
 --   <pre>
---   TransferFunction m Int ~ m Int
---   TransferFunction m (Bool -&gt; Int) ~ Bool -&gt; m Int
---   TransferFunction m (a -&gt; b -&gt; Int) ~ a -&gt; b -&gt; m Int
---   TransferFunction m (a -&gt; b -&gt; c -&gt; Int) ~ a -&gt; b -&gt; c -&gt; m Int
+--   LiftedFunc Int m ~ m Int
+--   LiftedFunc (Bool -&gt; Int) m ~ Bool -&gt; m Int
+--   LiftedFunc (a -&gt; b -&gt; Int) m ~ a -&gt; b -&gt; m Int
+--   LiftedFunc (a -&gt; b -&gt; c -&gt; Int) m ~ a -&gt; b -&gt; c -&gt; m Int
 --   </pre>
 --   
 --   <tt>m</tt> will generally be an instance of <a>MonadDependency</a> and
 --   the type alias effectively wraps <tt>m</tt> around <tt>domain</tt>'s
 --   return type. The result is a function that produces its return value
 --   while potentially triggering side-effects in <tt>m</tt>, which amounts
---   to depending on <a>TransferFunction</a>s of other <a>Node</a>s for the
+--   to depending on <a>LiftedFunc</a>s of other <a>Node</a>s for the
 --   <a>MonadDependency</a> case.
-type TransferFunction m domain = Arrows (ParamTypes domain) (m (ReturnType domain))
+type LiftedFunc domain m = Arrows (ParamTypes domain) (m (ReturnType domain))
 
 -- | A function that checks points of some function with type
 --   <tt>domain</tt> for changes. If this returns <a>True</a>, the point of
@@ -224,15 +226,15 @@ type TransferFunction m domain = Arrows (ParamTypes domain) (m (ReturnType domai
 type ChangeDetector domain = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
 
 -- | Models a data-flow problem, where each <a>Node</a> is mapped to its
---   denoting <a>TransferFunction</a> and a means to detect when the
---   iterated transfer function reached a fixed-point through a
+--   denoting <a>LiftedFunc</a> and a means to detect when the iterated
+--   transfer function reached a fixed-point through a
 --   <a>ChangeDetector</a>.
 data DataFlowProblem m
-DFP :: !(Node -> TransferFunction m (Domain m)) -> !(Node -> ChangeDetector (Domain m)) -> DataFlowProblem m
+DFP :: !(Node -> LiftedFunc (Domain m) m) -> !(Node -> ChangeDetector (Domain m)) -> DataFlowProblem m
 
 -- | A transfer function per each <a>Node</a> of the modeled data-flow
 --   problem.
-[dfpTransfer] :: DataFlowProblem m -> !(Node -> TransferFunction m (Domain m))
+[dfpTransfer] :: DataFlowProblem m -> !(Node -> LiftedFunc (Domain m) m)
 
 -- | A <a>ChangeDetector</a> for each <a>Node</a> of the modeled data-flow
 --   problem. In the simplest case, this just delegates to an <a>Eq</a>
@@ -250,10 +252,10 @@ DFP :: !(Node -> TransferFunction m (Domain m)) -> !(Node -> ChangeDetector (Dom
 --   
 --   <pre>
 --   &gt;&gt;&gt; :{
---     transferFib :: (MonadDependency m, Domain m ~ Int) =&gt; Proxy m -&gt; Node -&gt; TransferFunction m Int
---     transferFib _ (Node 0) = return 0
---     transferFib _ (Node 1) = return 1
---     transferFib p (Node n) = (+) &lt;$&gt; dependOn p (Node (n-1)) &lt;*&gt; dependOn p (Node (n-2))
+--     transferFib :: forall m . (MonadDependency m, Domain m ~ Int) =&gt; Node -&gt; LiftedFunc Int m
+--     transferFib (Node 0) = return 0
+--     transferFib (Node 1) = return 1
+--     transferFib (Node n) = (+) &lt;$&gt; dependOn @m (Node (n-1)) &lt;*&gt; dependOn @m (Node (n-2))
 --     -- sparing the negative n error case
 --   :}
 --   </pre>
@@ -264,7 +266,7 @@ DFP :: !(Node -> TransferFunction m (Domain m)) -> !(Node -> ChangeDetector (Dom
 --   <pre>
 --   &gt;&gt;&gt; :{
 --     dataFlowProblem :: forall m . (MonadDependency m, Domain m ~ Int) =&gt; DataFlowProblem m
---     dataFlowProblem = DFP (transferFib (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--     dataFlowProblem = DFP transferFib (const (eqChangeDetector @(Domain m)))
 --   :}
 --   </pre>
 --   
@@ -317,18 +319,43 @@ class Monad m => MonadDependency m where {
 -- | Expresses a dependency on a node of the data-flow graph, thus
 --   introducing a way of trackable recursion. That's similar to how you
 --   would use <a>fix</a> to abstract over recursion.
-dependOn :: MonadDependency m => Proxy m -> Node -> TransferFunction m (Domain m)
+dependOn :: MonadDependency m => Node -> LiftedFunc (Domain m) m
+
+-- | Builds on <a>MonadDependency</a> by providing a way to track
+--   dependencies without explicit <a>Node</a> management. Essentially,
+--   this allows to specify a build plan for a <a>DataFlowProblem</a>
+--   through calls to <a>datafix</a> in analogy to <tt>fix</tt> or
+--   <tt>mfix</tt>.
+class (MonadDependency mdep, Monad mdat) => MonadDatafix mdep mdat | mdat -> mdep
+
+-- | This is the closest we can get to an actual fixed-point combinator.
+--   
+--   We need to provide a <a>ChangeDetector</a> for detecting the
+--   fixed-point as well as a function to be iterated. In addition to
+--   returning a better approximation of itself in terms of itself, it can
+--   return an arbitrary value of type <tt>a</tt>. Because the iterated
+--   function might want to <a>datafix</a> additional times (think of
+--   nested let bindings), the return values are wrapped in <tt>mdat</tt>.
+--   
+--   Finally, the arbitrary <tt>a</tt> value is returned, in analogy to
+--   <tt>a</tt> in <tt>mfix :: MonadFix m =&gt; (a -&gt; m a) -&gt; m
+--   a</tt>.
+datafix :: MonadDatafix mdep mdat => ChangeDetector (Domain mdep) -> (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep)) -> mdat a
+
+-- | Shorthand that partially applies <a>datafix</a> to an
+--   <a>eqChangeDetector</a>.
+datafixEq :: forall mdep mdat a. MonadDatafix mdep mdat => Currying (ParamTypes (Domain mdep)) (ReturnType (Domain mdep) -> ReturnType (Domain mdep) -> Bool) => Eq (ReturnType (Domain mdep)) => (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep)) -> mdat a
 
 -- | A <a>ChangeDetector</a> that delegates to the <a>Eq</a> instance of
 --   the node values.
-eqChangeDetector :: forall m. Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool) => Eq (ReturnType (Domain m)) => Proxy m -> ChangeDetector (Domain m)
+eqChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => Eq (ReturnType domain) => ChangeDetector domain
 
 -- | A <a>ChangeDetector</a> that always returns <a>True</a>.
 --   
 --   Use this when recomputing a node is cheaper than actually testing for
 --   the change. Beware of cycles in the resulting dependency graph,
 --   though!
-alwaysChangeDetector :: forall m. Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool) => Proxy m -> ChangeDetector (Domain m)
+alwaysChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => ChangeDetector domain
 instance GHC.Show.Show Datafix.Description.Node
 instance GHC.Classes.Ord Datafix.Description.Node
 instance GHC.Classes.Eq Datafix.Description.Node
@@ -341,7 +368,7 @@ instance GHC.Classes.Eq Datafix.Description.Node
 module Datafix.NodeAllocator
 
 -- | A state monad wrapping a mapping from <a>Node</a> to some <tt>v</tt>
---   which we will instantiate to appropriate <a>TransferFunction</a>s.
+--   which we will instantiate to appropriate <a>LiftedFunc</a>s.
 data NodeAllocator v a
 
 -- | Allocates the next <a>Node</a>, which is greater than any nodes
@@ -358,6 +385,28 @@ runAllocator :: NodeAllocator v a -> (a, Array v)
 instance GHC.Base.Monad (Datafix.NodeAllocator.NodeAllocator v)
 instance GHC.Base.Applicative (Datafix.NodeAllocator.NodeAllocator v)
 instance GHC.Base.Functor (Datafix.NodeAllocator.NodeAllocator v)
+
+
+-- | Offers an instance for <a>MonadDatafix</a> based on
+--   <a>NodeAllocator</a>.
+module Datafix.ProblemBuilder
+
+-- | Constructs a build plan for a <a>DataFlowProblem</a> by tracking
+--   allocation of <a>Node</a>s mapping to <a>ChangeDetector</a>s and
+--   transfer functions.
+data ProblemBuilder m a
+
+-- | <tt>(root, max, dfp) = buildProblem builder</tt> executes the build
+--   plan specified by <tt>builder</tt> and returns the resulting
+--   <a>DataFlowProblem</a> <tt>dfp</tt>, as well as the <tt>root</tt>
+--   <a>Node</a> denoting the transfer function returned by the
+--   <a>ProblemBuilder</a> action and the <tt>max</tt>imum node of the
+--   problem as a proof for its denseness.
+buildProblem :: forall m. MonadDependency m => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool) => ProblemBuilder m (LiftedFunc (Domain m) m) -> (Node, Node, DataFlowProblem m)
+instance GHC.Base.Monad (Datafix.ProblemBuilder.ProblemBuilder m)
+instance GHC.Base.Applicative (Datafix.ProblemBuilder.ProblemBuilder m)
+instance GHC.Base.Functor (Datafix.ProblemBuilder.ProblemBuilder m)
+instance Datafix.Description.MonadDependency m => Datafix.Description.MonadDatafix m (Datafix.ProblemBuilder.ProblemBuilder m)
 
 
 -- | Abstracts over the representation of the data-flow graph.
@@ -439,7 +488,7 @@ module Datafix.Worklist.Internal
 -- | The concrete <a>MonadDependency</a> for this worklist-based solver.
 --   
 --   This essentially tracks the current approximation of the solution to
---   the <a>DataFlowProblem</a> as mutable state while <a>fixProblem</a>
+--   the <a>DataFlowProblem</a> as mutable state while <a>solveProblem</a>
 --   makes sure we will eventually halt with a conservative approximation.
 newtype DependencyM graph domain a
 
@@ -448,14 +497,14 @@ newtype DependencyM graph domain a
 --   signatures.
 --   
 --   This ultimately leaks badly into the exported interface in
---   <a>fixProblem</a>: Since we can't have universally quantified instance
---   contexts (yet!), we can' write <tt>(forall s. Datafixable (DependencyM
---   s graph domain)) =&gt; (forall s. DataFlowProblem (DependencyM s graph
---   domain)) -&gt; ...</tt> and have to instead have the isomorphic
---   <tt>(forall s r. (Datafixable (DependencyM s graph domain) =&gt; r)
---   -&gt; r) -&gt; (forall s. DataFlowProblem (DependencyM s graph
---   domain)) -&gt; ...</tt> and urge all call sites to pass a meaningless
---   <a>id</a> parameter.
+--   <a>solveProblem</a>: Since we can't have universally quantified
+--   instance contexts (yet!), we can' write <tt>(forall s. Datafixable
+--   (DependencyM s graph domain)) =&gt; (forall s. DataFlowProblem
+--   (DependencyM s graph domain)) -&gt; ...</tt> and have to instead have
+--   the isomorphic <tt>(forall s r. (Datafixable (DependencyM s graph
+--   domain) =&gt; r) -&gt; r) -&gt; (forall s. DataFlowProblem
+--   (DependencyM s graph domain)) -&gt; ...</tt> and urge all call sites
+--   to pass a meaningless <a>id</a> parameter.
 --   
 --   Also, this means more explicit type signatures as we have to make
 --   clear to the type-checker that <tt>s</tt> is universally quantified in
@@ -468,7 +517,7 @@ newtype DependencyM graph domain a
 --   for this.
 DM :: (ReaderT (Env graph domain) IO a) -> DependencyM graph domain a
 
--- | The iteration state of 'DependencyM'/'fixProblem'.
+-- | The iteration state of 'DependencyM'/'solveProblem'.
 data Env graph domain
 Env :: !(DataFlowProblem (DependencyM graph domain)) -> !(IterationBound domain) -> !(IntArgsMonoSet (Products (ParamTypes domain))) -> !(graph domain) -> !(IORef (IntArgsMonoSet (Products (ParamTypes domain)))) -> !(IORef (IntArgsMonoSet (Products (ParamTypes domain)))) -> Env graph domain
 
@@ -547,12 +596,12 @@ initialEnv :: IntArgsMonoSet (Products (ParamTypes domain)) -> DataFlowProblem (
 type Datafixable m = (Currying (ParamTypes (Domain m)) (ReturnType (Domain m)), Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m))), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m)), MonoMapKey (Products (ParamTypes (Domain m))), BoundedJoinSemiLattice (ReturnType (Domain m)))
 
 -- | This allows us to solve <tt>MonadDependency m =&gt; DataFlowProblem
---   m</tt> descriptions with <a>fixProblem</a>. The <a>Domain</a> is
+--   m</tt> descriptions with <a>solveProblem</a>. The <a>Domain</a> is
 --   extracted from a type parameter.
 
 -- | Specifies the <i>density</i> of the problem, e.g. whether the domain
 --   of <a>Node</a>s can be confined to a finite range, in which case
---   <a>fixProblem</a> tries to use a <a>Data.Vector</a> based graph
+--   <a>solveProblem</a> tries to use a <a>Data.Vector</a> based graph
 --   representation rather than one based on <a>Data.IntMap</a>.
 data Density graph
 [Sparse] :: Density Ref
@@ -566,9 +615,9 @@ data Density graph
 --   the simplest abortion function would be to constantly return
 --   <a>top</a>.
 --   
---   As is the case for <a>TransferFunction</a> and <a>ChangeDetector</a>,
---   this carries little semantic meaning if viewed in isolation, so here
---   are a few examples for how the synonym expands:
+--   As is the case for <a>LiftedFunc</a> and <a>ChangeDetector</a>, this
+--   carries little semantic meaning if viewed in isolation, so here are a
+--   few examples for how the synonym expands:
 --   
 --   <pre>
 --   AbortionFunction Int ~ Int -&gt; Int
@@ -622,17 +671,17 @@ withCall :: Datafixable (DependencyM graph domain) => Int -> Products (ParamType
 
 -- | The first of the two major functions of this module.
 --   
---   'recompute node args' iterates the value of the passed <tt>node</tt>
---   at the point <tt>args</tt> by invoking its <a>TransferFunction</a>. It
---   does so in a way that respects the <a>IterationBound</a>.
+--   <tt>recompute node args</tt> iterates the value of the passed
+--   <tt>node</tt> at the point <tt>args</tt> by invoking its transfer
+--   function. It does so in a way that respects the <a>IterationBound</a>.
 --   
 --   This function is not exported, and is only called by <a>work</a> and
 --   <a>dependOn</a>, for when the iteration strategy decides that the
 --   <tt>node</tt> needs to be (and can be) re-iterated. It performs
---   tracking of which <a>Node</a>s the <a>TransferFunction</a> depended
---   on, do that the worklist algorithm can do its magic.
-recompute :: forall domain graph dom cod. dom ~ ParamTypes domain => cod ~ ReturnType domain => GraphRef graph => Datafixable (DependencyM graph domain) => Int -> Products dom -> ReaderT (Env graph domain) IO cod
-dependOn :: forall domain graph. Datafixable (DependencyM graph domain) => GraphRef graph => Proxy (DependencyM graph domain) -> Node -> TransferFunction (DependencyM graph domain) domain
+--   tracking of which <a>Node</a>s the transfer function depended on, do
+--   that the worklist algorithm can do its magic.
+recompute :: forall domain graph dom cod depm. dom ~ ParamTypes domain => cod ~ ReturnType domain => depm ~ DependencyM graph domain => GraphRef graph => Datafixable depm => Int -> Products dom -> ReaderT (Env graph domain) IO cod
+dependOn :: forall domain graph. Datafixable (DependencyM graph domain) => GraphRef graph => Node -> LiftedFunc domain (DependencyM graph domain)
 
 -- | Compute an optimistic approximation for a point of a given node that
 --   is as precise as possible, given the other points of that node we
@@ -674,33 +723,48 @@ whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 work :: GraphRef graph => Datafixable (DependencyM graph domain) => ReaderT (Env graph domain) IO ()
 
 -- | Computes a solution to the described <a>DataFlowProblem</a> by
---   iterating <a>TransferFunction</a>s until a fixed-point is reached.
+--   iterating transfer functions until a fixed-point is reached.
 --   
 --   It does do by employing a worklist algorithm, iterating unstable
 --   <a>Node</a>s only. <a>Node</a>s become unstable when the point of
---   another <a>Node</a> their <a>TransferFunction</a> <a>dependOn</a>ed
---   changed.
+--   another <a>Node</a> their transfer function <a>dependOn</a>ed changed.
 --   
 --   The sole initially unstable <a>Node</a> is the last parameter, and if
 --   your <tt>domain</tt> is function-valued (so the returned <a>Arrows</a>
 --   expands to a function), then any further parameters specify the exact
 --   point in the <a>Node</a>s transfer function you are interested in.
-fixProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> Arrows (ParamTypes domain) (ReturnType domain)
+--   
+--   If your problem only has finitely many different <a>Node</a>s ,
+--   consider using the <a>ProblemBuilder</a> API (e.g. <a>datafix</a> +
+--   <a>evalDenotation</a>) for a higher-level API that let's you forget
+--   about <a>Node</a>s and instead let's you focus on building more
+--   complex data-flow frameworks.
+solveProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
+
+-- | <tt>evalDenotation denot ib</tt> returns a value in <tt>domain</tt>
+--   that is described by the denotation <tt>denot</tt>.
+--   
+--   It does so by building up the <a>DataFlowProblem</a> corresponding to
+--   <tt>denot</tt> and solving the resulting problem with
+--   <a>solveProblem</a>, the documentation of which describes in detail
+--   how to arrive at a stable denotation and what the
+--   <a>IterationBound</a> <tt>ib</tt> is for.
+evalDenotation :: forall domain. Datafixable (DependencyM Ref domain) => ProblemBuilder (DependencyM Ref domain) (LiftedFunc domain (DependencyM Ref domain)) -> IterationBound domain -> domain
 instance GHC.Base.Monad (Datafix.Worklist.Internal.DependencyM graph domain)
 instance GHC.Base.Applicative (Datafix.Worklist.Internal.DependencyM graph domain)
 instance GHC.Base.Functor (Datafix.Worklist.Internal.DependencyM graph domain)
 instance (Datafix.Worklist.Internal.Datafixable (Datafix.Worklist.Internal.DependencyM graph domain), Datafix.Worklist.Graph.GraphRef graph) => Datafix.Description.MonadDependency (Datafix.Worklist.Internal.DependencyM graph domain)
 
 
--- | This module provides the <a>fixProblem</a> function, which solves the
---   description of a <a>DataFlowProblem</a> by employing a worklist
+-- | This module provides the <a>solveProblem</a> function, which solves
+--   the description of a <a>DataFlowProblem</a> by employing a worklist
 --   algorithm.
 module Datafix.Worklist
 
 -- | The concrete <a>MonadDependency</a> for this worklist-based solver.
 --   
 --   This essentially tracks the current approximation of the solution to
---   the <a>DataFlowProblem</a> as mutable state while <a>fixProblem</a>
+--   the <a>DataFlowProblem</a> as mutable state while <a>solveProblem</a>
 --   makes sure we will eventually halt with a conservative approximation.
 data DependencyM graph domain a
 
@@ -755,7 +819,7 @@ type Datafixable m = (Currying (ParamTypes (Domain m)) (ReturnType (Domain m)), 
 
 -- | Specifies the <i>density</i> of the problem, e.g. whether the domain
 --   of <a>Node</a>s can be confined to a finite range, in which case
---   <a>fixProblem</a> tries to use a <a>Data.Vector</a> based graph
+--   <a>solveProblem</a> tries to use a <a>Data.Vector</a> based graph
 --   representation rather than one based on <a>Data.IntMap</a>.
 data Density graph
 [Sparse] :: Density Ref
@@ -789,18 +853,33 @@ NeverAbort :: IterationBound domain
 AbortAfter :: Int -> (AbortionFunction domain) -> IterationBound domain
 
 -- | Computes a solution to the described <a>DataFlowProblem</a> by
---   iterating <a>TransferFunction</a>s until a fixed-point is reached.
+--   iterating transfer functions until a fixed-point is reached.
 --   
 --   It does do by employing a worklist algorithm, iterating unstable
 --   <a>Node</a>s only. <a>Node</a>s become unstable when the point of
---   another <a>Node</a> their <a>TransferFunction</a> <a>dependOn</a>ed
---   changed.
+--   another <a>Node</a> their transfer function <a>dependOn</a>ed changed.
 --   
 --   The sole initially unstable <a>Node</a> is the last parameter, and if
 --   your <tt>domain</tt> is function-valued (so the returned <a>Arrows</a>
 --   expands to a function), then any further parameters specify the exact
 --   point in the <a>Node</a>s transfer function you are interested in.
-fixProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> Arrows (ParamTypes domain) (ReturnType domain)
+--   
+--   If your problem only has finitely many different <a>Node</a>s ,
+--   consider using the <a>ProblemBuilder</a> API (e.g. <a>datafix</a> +
+--   <a>evalDenotation</a>) for a higher-level API that let's you forget
+--   about <a>Node</a>s and instead let's you focus on building more
+--   complex data-flow frameworks.
+solveProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
+
+-- | <tt>evalDenotation denot ib</tt> returns a value in <tt>domain</tt>
+--   that is described by the denotation <tt>denot</tt>.
+--   
+--   It does so by building up the <a>DataFlowProblem</a> corresponding to
+--   <tt>denot</tt> and solving the resulting problem with
+--   <a>solveProblem</a>, the documentation of which describes in detail
+--   how to arrive at a stable denotation and what the
+--   <a>IterationBound</a> <tt>ib</tt> is for.
+evalDenotation :: forall domain. Datafixable (DependencyM Ref domain) => ProblemBuilder (DependencyM Ref domain) (LiftedFunc domain (DependencyM Ref domain)) -> IterationBound domain -> domain
 
 
 -- | This is the top-level, import-all, kitchen sink module.
@@ -826,13 +905,15 @@ module Datafix
 --   
 --   Data-flow problems are declared with the primitives in
 --   <tt><a>Datafix.Description</a></tt> and solved by
---   <tt>Datafix.Worklist.<a>fixProblem</a></tt>.
+--   <tt>Datafix.Worklist.<a>solveProblem</a></tt>.
 --   
 --   With that out of the way, let's set in place the GHCi environment of
 --   our examples:
 --   
 --   <pre>
 --   &gt;&gt;&gt; :set -XScopedTypeVariables
+--   
+--   &gt;&gt;&gt; :set -XTypeApplications
 --   
 --   &gt;&gt;&gt; :set -XTypeFamilies
 --   
@@ -900,35 +981,34 @@ module Datafix
 --   lists through laziness.
 --   
 --   As promised in the previous section, we can do the same using
---   <tt>datafix</tt>. First, we need to declare a <a>TransferFunction</a>
+--   <tt>datafix</tt>. First, we need to declare a <i>transfer function</i>
 --   that makes the data dependencies for the recursive case explicit, as
 --   if we were using <a>fix</a> to eliminate the recursion:
 --   
 --   <pre>
 --   &gt;&gt;&gt; :{
 --     transferFib
---       :: (MonadDependency m, Domain m ~ Natural)
---       =&gt; Proxy m
---       -&gt; Node
---       -&gt; m Natural
---     transferFib _ (Node 0) = return 0
---     transferFib _ (Node 1) = return 1
---     transferFib p (Node n) = do
---       a &lt;- dependOn p (Node (n-1))
---       b &lt;- dependOn p (Node (n-2))
+--       :: forall m
+--        . (MonadDependency m, Domain m ~ Natural)
+--       =&gt; Node
+--       -&gt; LiftedFunc Natural m
+--     transferFib (Node 0) = return 0
+--     transferFib (Node 1) = return 1
+--     transferFib (Node n) = do
+--       a &lt;- dependOn @m (Node (n-1))
+--       b &lt;- dependOn @m (Node (n-2))
 --       return (a + b)
 --   :}
 --   </pre>
 --   
---   <a>MonadDependency</a> contains a single impure primitive
---   <a>dependOn</a> for that purpose.
+--   <a>MonadDependency</a> contains a single primitive <a>dependOn</a> for
+--   that purpose.
 --   
 --   Every point of the fibonacci series is modeled as a seperate
 --   <a>Node</a> of the data-flow graph. By looking at the definition of
---   <a>TransferFunction</a>, we can see that <tt>TransferFunction m
---   Natural ~ m Natural</tt>, so for our simple <tt>Natural</tt>
---   <a>Domain</a>, the transfer function is specified directly in
---   <a>MonadDependency</a>.
+--   <a>LiftedFunc</a>, we can see that <tt>LiftedFunc Natural m ~ m
+--   Natural</tt>, so for our simple <tt>Natural</tt> <a>Domain</a>, the
+--   transfer function is specified directly in <a>MonadDependency</a>.
 --   
 --   Note that indeed we eliminated explicit recursion in
 --   <tt>transferFib</tt>. This allows the solution algorithm to track and
@@ -941,7 +1021,7 @@ module Datafix
 --   <pre>
 --   &gt;&gt;&gt; :{
 --     fibDfp :: forall m . (MonadDependency m, Domain m ~ Natural) =&gt; DataFlowProblem m
---     fibDfp = DFP (transferFib (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--     fibDfp = DFP transferFib (const (eqChangeDetector @(Domain m)))
 --   :}
 --   </pre>
 --   
@@ -949,10 +1029,10 @@ module Datafix
 --   and makes sure we detect when a fixed-point has been reached.
 --   
 --   That's it for describing the data-flow problem of fibonacci numbers.
---   We can ask <tt>Datafix.Worklist.<a>fixProblem</a></tt> for a solution
---   in a minute.
+--   We can ask <tt>Datafix.Worklist.<a>solveProblem</a></tt> for a
+--   solution in a minute.
 --   
---   The <a>fixProblem</a> solver demands an instance of
+--   The <a>solveProblem</a> solver demands an instance of
 --   <tt>BoundedJoinSemiLattice</tt> on the <a>Domain</a> for when the
 --   data-flow graph is cyclic. We conveniently delegate to the total
 --   <tt>Ord</tt> instance for <a>Natural</a>, knowing that its semantic
@@ -967,7 +1047,7 @@ module Datafix
 --   And now the final incantation of the solver:
 --   
 --   <pre>
---   &gt;&gt;&gt; fixProblem fibDfp Sparse NeverAbort (Node 10)
+--   &gt;&gt;&gt; solveProblem fibDfp Sparse NeverAbort (Node 10)
 --   55
 --   </pre>
 --   
@@ -1015,20 +1095,20 @@ module Datafix
 --   <pre>
 --   &gt;&gt;&gt; :{
 --     transferF
---       :: (MonadDependency m, Domain m ~ Int)
---       =&gt; Proxy m
---       -&gt; Node
---       -&gt; TransferFunction m Int
---     transferF p (Node n)
---       | even n = (* 2) &lt;$&gt; dependOn p (Node (n `div` 2))
---       | odd n  = (subtract 1) &lt;$&gt; dependOn p (Node (n + 1))
+--       :: forall m
+--        . (MonadDependency m, Domain m ~ Int)
+--       =&gt; Node
+--       -&gt; LiftedFunc Int m
+--     transferF (Node n)
+--       | even n = (* 2) &lt;$&gt; dependOn @m (Node (n `div` 2))
+--       | odd n  = (subtract 1) &lt;$&gt; dependOn @m (Node (n + 1))
 --   :}
 --   </pre>
 --   
 --   <pre>
 --   &gt;&gt;&gt; :{
 --     fDfp :: forall m . (MonadDependency m, Domain m ~ Int) =&gt; DataFlowProblem m
---     fDfp = DFP (transferF (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--     fDfp = DFP transferF (const (eqChangeDetector @(Domain m)))
 --   :}
 --   </pre>
 --   
@@ -1044,20 +1124,20 @@ module Datafix
 --   &gt;&gt;&gt; instance BoundedJoinSemiLattice Int where bottom = minBound
 --   </pre>
 --   
---   Now it's just a matter of calling <a>fixProblem</a> with the right
+--   Now it's just a matter of calling <a>solveProblem</a> with the right
 --   parameters:
 --   
 --   <pre>
---   &gt;&gt;&gt; fixProblem fDfp Sparse NeverAbort (Node 0)
+--   &gt;&gt;&gt; solveProblem fDfp Sparse NeverAbort (Node 0)
 --   0
 --   
---   &gt;&gt;&gt; fixProblem fDfp Sparse NeverAbort (Node 5)
+--   &gt;&gt;&gt; solveProblem fDfp Sparse NeverAbort (Node 5)
 --   5
 --   
---   &gt;&gt;&gt; fixProblem fDfp Sparse NeverAbort (Node 42)
+--   &gt;&gt;&gt; solveProblem fDfp Sparse NeverAbort (Node 42)
 --   42
 --   
---   &gt;&gt;&gt; fixProblem fDfp Sparse NeverAbort (Node (-10))
+--   &gt;&gt;&gt; solveProblem fDfp Sparse NeverAbort (Node (-10))
 --   -10
 --   </pre>
 --   
