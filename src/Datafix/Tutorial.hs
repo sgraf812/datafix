@@ -32,6 +32,7 @@
 -- examples:
 --
 -- >>> :set -XScopedTypeVariables
+-- >>> :set -XTypeApplications
 -- >>> :set -XTypeFamilies
 -- >>> import Datafix
 -- >>> import Data.Proxy (Proxy (..))
@@ -87,15 +88,15 @@
 --
 -- >>> :{
 --   transferFib
---     :: (MonadDependency m, Domain m ~ Natural)
---     => Proxy m
---     -> Node
+--     :: forall m
+--      . (MonadDependency m, Domain m ~ Natural)
+--     => Node
 --     -> LiftedFunc Natural m
---   transferFib _ (Node 0) = return 0
---   transferFib _ (Node 1) = return 1
---   transferFib p (Node n) = do
---     a <- dependOn p (Node (n-1))
---     b <- dependOn p (Node (n-2))
+--   transferFib (Node 0) = return 0
+--   transferFib (Node 1) = return 1
+--   transferFib (Node n) = do
+--     a <- dependOn @m (Node (n-1))
+--     b <- dependOn @m (Node (n-2))
 --     return (a + b)
 -- :}
 --
@@ -117,7 +118,7 @@
 --
 -- >>> :{
 --   fibDfp :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
---   fibDfp = DFP (transferFib (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--   fibDfp = DFP transferFib (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- The 'eqChangeDetector' is important for cyclic dependency graphs and makes
@@ -185,18 +186,18 @@
 --
 -- >>> :{
 --   transferF
---     :: (MonadDependency m, Domain m ~ Int)
---     => Proxy m
---     -> Node
---     -> LiftedFunc m Int
---   transferF p (Node n)
---     | even n = (* 2) <$> dependOn p (Node (n `div` 2))
---     | odd n  = (subtract 1) <$> dependOn p (Node (n + 1))
+--     :: forall m
+--      . (MonadDependency m, Domain m ~ Int)
+--     => Node
+--     -> LiftedFunc Int m
+--   transferF (Node n)
+--     | even n = (* 2) <$> dependOn @m (Node (n `div` 2))
+--     | odd n  = (subtract 1) <$> dependOn @m (Node (n + 1))
 -- :}
 --
 -- >>> :{
 --   fDfp :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowProblem m
---   fDfp = DFP (transferF (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--   fDfp = DFP transferF (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- Specification of the data-flow problem works the same as for the 'fib'

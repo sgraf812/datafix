@@ -127,10 +127,10 @@ data DataFlowProblem m
 -- You can represent dynamic programs with this quite easily:
 --
 -- >>> :{
---   transferFib :: (MonadDependency m, Domain m ~ Int) => Proxy m -> Node -> LiftedFunc m Int
---   transferFib _ (Node 0) = return 0
---   transferFib _ (Node 1) = return 1
---   transferFib p (Node n) = (+) <$> dependOn p (Node (n-1)) <*> dependOn p (Node (n-2))
+--   transferFib :: forall m . (MonadDependency m, Domain m ~ Int) => Node -> LiftedFunc Int m
+--   transferFib (Node 0) = return 0
+--   transferFib (Node 1) = return 1
+--   transferFib (Node n) = (+) <$> dependOn @m (Node (n-1)) <*> dependOn @m (Node (n-2))
 --   -- sparing the negative n error case
 -- :}
 --
@@ -138,7 +138,7 @@ data DataFlowProblem m
 --
 -- >>> :{
 --   dataFlowProblem :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowProblem m
---   dataFlowProblem = DFP (transferFib (Proxy :: Proxy m)) (const (eqChangeDetector (Proxy :: Proxy m)))
+--   dataFlowProblem = DFP transferFib (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- We regard the ordinary @fib@ function a solution to the recurrence modeled by @transferFib@:
