@@ -239,7 +239,7 @@
 --
 -- For every invocation of the compiler, for every module, for every analysis
 -- within the compiler, a recurrence relation representing program semantics
--- is to be solved. Naturally, we can't task a human with solving a buch of
+-- is to be solved. Naturally, we can't task a human with solving a bunch of
 -- complicated recurrences everytime we hit compile.
 --
 -- In the imperative world, it's common-place to have some kind of fixed-point
