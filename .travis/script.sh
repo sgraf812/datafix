@@ -25,9 +25,9 @@ case "$BUILD" in
       cd dist
       tar zxfv "$SRC_TGZ"
       cd "$PKGVER"
-      cabal configure --enable-tests
-      cabal build
-      cabal test
+      cabal configure --enable-tests --ghc-options=-O0
+      cabal build --ghc-options=-O0
+      cabal test --ghc-options=-O0
       cd $ORIGDIR
     done
     ;;
