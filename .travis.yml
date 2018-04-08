@@ -105,6 +105,7 @@ before_install:
 # We want to always allow newer versions of packages when building on GHC HEAD
 - CABALARGS=""
 - if [ "x$GHCVER" = "xhead" ]; then CABALARGS=--allow-newer; fi
+- export CABALARGS
 
 # Download and unpack the stack executable
 - export PATH=/opt/ghc/$GHCVER/bin:/opt/cabal/$CABALVER/bin:$HOME/.local/bin:/opt/alex/$ALEXVER/bin:/opt/happy/$HAPPYVER/bin:$HOME/.cabal/bin:$PATH
@@ -126,6 +127,10 @@ before_install:
   then
     echo 'jobs: $ncpus' >> $HOME/.cabal/config
   fi
+
+# Get the list of packages from the stack.yaml file
+# But ignore packages in .stack-work (such as extra-deps)
+- export PACKAGES=$(stack --install-ghc query locals | grep '^ *path' | sed 's@^ *path:@@' | xargs -d "\n" -I{} bash -c "! [[ '{}' =~ \\.stack-work ]] && echo '{}'" | tr -d '[:space:]')
 
 install: .travis/install.sh
 script: .travis/script.sh

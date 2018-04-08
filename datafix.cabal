@@ -38,7 +38,7 @@ custom-setup
       base
     , Cabal
     -- let cabal-toolkit choose the right Cabal and base versions
-    , cabal-toolkit == 0.0.4
+    , cabal-toolkit >= 0.0.4
 
 library
   default-language:  Haskell2010
