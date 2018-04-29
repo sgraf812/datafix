@@ -450,6 +450,27 @@ scheme2 maybeVal node args =
       -- rely on the ordering in the worklist.
       return val
 
+data ExponentialBackoff = EB
+  { ebCounter :: !Int
+  , ebNext :: !Int
+  }
+
+initExponentialBackoff :: Int -> ExponentialBackoff
+initExponentialBackoff next = EB 0 next
+
+tick :: State ExponentialBackoff Bool
+tick = do
+  EB c n <- get
+  let fire = c >= n
+      c' = c + 1
+      n' = if fire then n*2 else n
+      !eb' = EB c' n'
+  put eb'
+  pure fire
+
+topologicallySort :: ReaderT (Env graph domain) IO ()
+topologicallySort = undefined
+
 -- There used to be a third scheme that is no longer possible with the current
 -- mode of dependency tracking.
 -- See https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
@@ -476,7 +497,12 @@ work
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
   => ReaderT (Env graph domain) IO ()
-work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
+work = do
+  sortCounter <- lift (newIORef (initExponentialBackoff 10))
+  whileJust_ highestPriorityUnstableNode $ \(node, args) -> do
+    needsSort <- lift (runReaderT (zoomIORef tick) sortCounter)
+    when needsSort topologicallySort
+    recompute node args
 {-# INLINE work #-}
 
 -- | Computes a solution to the described 'DataFlowProblem' by iterating
