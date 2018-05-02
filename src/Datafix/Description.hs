@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE RankNTypes             #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeApplications       #-}
 {-# LANGUAGE TypeFamilies           #-}
@@ -178,14 +179,6 @@ data DataFlowProblem m
 -- Thus, this library mostly aims at making the life of compiler writers
 -- easier.
 class Monad m => MonadDependency m where
-  type Domain m :: *
-  -- ^ The abstract domain in which 'Node's of the data-flow graph are denoted.
-  -- When this is a synonym for a function, then all functions of this domain
-  -- are assumed to be monotone wrt. the (at least) partial order of all occuring
-  -- types!
-  --
-  -- If you can't guarantee monotonicity, try to pull non-monotone arguments
-  -- into 'Node's.
   dependOn :: Node -> LiftedFunc (Domain m) m
   -- ^ Expresses a dependency on a node of the data-flow graph, thus
   -- introducing a way of trackable recursion. That's similar
@@ -195,7 +188,17 @@ class Monad m => MonadDependency m where
 -- without explicit 'Node' management. Essentially, this allows to specify
 -- a build plan for a 'DataFlowProblem' through calls to 'datafix' in
 -- analogy to 'fix' or 'mfix'.
-class (MonadDependency mdep, Monad mdat) => MonadDatafix mdep mdat | mdat -> mdep where
+class Monad m => MonadDatafix m where
+  -- | The abstract domain in which nodes of the data-flow graph are denoted.
+  -- When this is a synonym for a function, then all functions of this domain
+  -- are assumed to be monotone wrt. the (at least) partial order of all occuring
+  -- types!
+  --
+  -- If you can't guarantee monotonicity, try to pull non-monotone arguments
+  -- into 'Node's.
+  type Domain m :: *
+  -- | An associated monad that tracks dependencies.
+  type DepM m :: * -> *
   -- | This is the closest we can get to an actual fixed-point combinator.
   --
   -- We need to provide a 'ChangeDetector' for detecting the fixed-point as
@@ -203,24 +206,26 @@ class (MonadDependency mdep, Monad mdat) => MonadDatafix mdep mdat | mdat -> mde
   -- approximation of itself in terms of itself, it can return an arbitrary
   -- value of type @a@. Because the iterated function might want to 'datafix'
   -- additional times (think of nested let bindings), the return values are
-  -- wrapped in @mdat@.
+  -- wrapped in @m@.
   --
   -- Finally, the arbitrary @a@ value is returned, in analogy to @a@ in
-  -- @mfix :: MonadFix m => (a -> m a) -> m a@.
+  -- @'Control.Monad.Fix.mfix' :: MonadFix m => (a -> m a) -> m a@.
   datafix
-    :: ChangeDetector (Domain mdep)
-    -> (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep))
-    -> mdat a
+    :: Monad (DepM m)
+    => ChangeDetector (Domain m)
+    -> (LiftedFunc (Domain m) (DepM m) -> m (a, LiftedFunc (Domain m) (DepM m)))
+    -> m a
 
 -- | Shorthand that partially applies 'datafix' to an 'eqChangeDetector'.
 datafixEq
-  :: forall mdep mdat a
-   . MonadDatafix mdep mdat
-  => Currying (ParamTypes (Domain mdep)) (ReturnType (Domain mdep) -> ReturnType (Domain mdep) -> Bool)
-  => Eq (ReturnType (Domain mdep))
-  => (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep))
-  -> mdat a
-datafixEq = datafix @mdep @mdat (eqChangeDetector @(Domain mdep))
+  :: forall m a
+   . MonadDatafix m
+  => Monad (DepM m)
+  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
+  => Eq (ReturnType (Domain m))
+  => (LiftedFunc (Domain m) (DepM m) -> m (a, LiftedFunc (Domain m) (DepM m)))
+  -> m a
+datafixEq = datafix @m (eqChangeDetector @(Domain m))
 
 -- | A 'ChangeDetector' that delegates to the 'Eq' instance of the
 -- node values.
