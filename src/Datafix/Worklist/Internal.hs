@@ -89,7 +89,7 @@ data Env graph domain
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
   , referencedPoints :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
-  -- ^ Constant (but the the wrapped queue is stateful).
+  -- ^ Constant (but the the wrapped set is stateful).
   -- The set of points the currently 'recompute'd node references so far.
   , unstable         :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
@@ -450,27 +450,6 @@ scheme2 maybeVal node args =
       -- rely on the ordering in the worklist.
       return val
 
-data ExponentialBackoff = EB
-  { ebCounter :: !Int
-  , ebNext :: !Int
-  }
-
-initExponentialBackoff :: Int -> ExponentialBackoff
-initExponentialBackoff next = EB 0 next
-
-tick :: State ExponentialBackoff Bool
-tick = do
-  EB c n <- get
-  let fire = c >= n
-      c' = c + 1
-      n' = if fire then n*2 else n
-      !eb' = EB c' n'
-  put eb'
-  pure fire
-
-topologicallySort :: ReaderT (Env graph domain) IO ()
-topologicallySort = undefined
-
 -- There used to be a third scheme that is no longer possible with the current
 -- mode of dependency tracking.
 -- See https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
@@ -497,12 +476,7 @@ work
   :: GraphRef graph
   => Datafixable (DependencyM graph domain)
   => ReaderT (Env graph domain) IO ()
-work = do
-  sortCounter <- lift (newIORef (initExponentialBackoff 10))
-  whileJust_ highestPriorityUnstableNode $ \(node, args) -> do
-    needsSort <- lift (runReaderT (zoomIORef tick) sortCounter)
-    when needsSort topologicallySort
-    recompute node args
+work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
 -- | Computes a solution to the described 'DataFlowProblem' by iterating
