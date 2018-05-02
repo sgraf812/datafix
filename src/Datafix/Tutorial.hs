@@ -264,10 +264,6 @@
 -- analyses into their compiler to properly specify the data-flow problems
 -- in terms of @datafix@ and leave the intricacies of finding a good iteration
 -- order to this library :)
---
--- For a principled approach of how to do that, read this blog post on the
--- matter TODO, where I discuss how to do a simple strictness analysis on GHC
--- Core.
 
 module Datafix.Tutorial () where
 
