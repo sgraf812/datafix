@@ -537,8 +537,8 @@ Env :: !(DataFlowProblem (DependencyM graph domain)) -> !(IterationBound domain)
 --   in the <tt>domain</tt> of each <a>Node</a>.
 [graph] :: Env graph domain -> !(graph domain)
 
--- | Constant (but the the wrapped queue is stateful). The set of points
---   the currently <a>recompute</a>d node references so far.
+-- | Constant (but the the wrapped set is stateful). The set of points the
+--   currently <a>recompute</a>d node references so far.
 [referencedPoints] :: Env graph domain -> !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
 
 -- | Constant (but the the wrapped queue is stateful). Unstable nodes that
