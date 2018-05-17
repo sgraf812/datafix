@@ -18,5 +18,5 @@ module Datafix.Worklist
   , Denotational.evalDenotation
   ) where
 
-import qualified Datafix.Worklist.Internal as Impl
 import qualified Datafix.Worklist.Denotational as Denotational
+import qualified Datafix.Worklist.Internal     as Impl

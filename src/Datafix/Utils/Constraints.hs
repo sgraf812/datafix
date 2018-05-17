@@ -1,4 +1,6 @@
 {-# LANGUAGE ConstraintKinds         #-}
+{-# LANGUAGE DataKinds               #-}
+{-# LANGUAGE FlexibleContexts        #-}
 {-# LANGUAGE FlexibleInstances       #-}
 {-# LANGUAGE GADTs                   #-}
 {-# LANGUAGE PolyKinds               #-}
@@ -27,7 +29,7 @@ module Datafix.Utils.Constraints
   ) where
 
 import           Data.Kind
-import           Unsafe.Coerce ( unsafeCoerce )
+import           Unsafe.Coerce (unsafeCoerce)
 
 data Dict :: Constraint -> Type where
   Dict :: c => Dict c

@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes     #-}
 {-# LANGUAGE ConstraintKinds         #-}
 {-# LANGUAGE FlexibleContexts        #-}
+{-# LANGUAGE MultiParamTypeClasses   #-}
 {-# LANGUAGE RankNTypes              #-}
 {-# LANGUAGE ScopedTypeVariables     #-}
 {-# LANGUAGE TypeApplications        #-}
