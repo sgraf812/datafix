@@ -1,13 +1,19 @@
 name:                datafix
-version:             0.0.0.1
+version:             0.0.0.2
 synopsis:            Fixing data-flow problems
-description:         Fixing data-flow problems in expression trees
+description:         Fixing data-flow problems in expression trees.
+                     This should be useful if you want to write optimizations
+                     for your favorite programming language.
+
+                     See the Tutorial module for an introduction. After that,
+                     you might want to take a look at the `examples/` folder
+                     in the [repository](https://github.com/sgraf812/datafix/tree/master/examples).
 
 license:             ISC
 license-file:        LICENSE
 author:              Sebastian Graf
 maintainer:          sgraf1337@gmail.com
-copyright:           © 2017 Sebastian Graf
+copyright:           © 2018 Sebastian Graf
 homepage:            https://github.com/sgraf812/datafix
 bug-reports:         https://github.com/sgraf812/datafix/issues
 
