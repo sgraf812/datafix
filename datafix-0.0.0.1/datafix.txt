@@ -83,6 +83,24 @@ instance Datafix.MonoMap.MonoMapKey ()
 instance Datafix.MonoMap.MonoMapKey GHC.Types.Int
 
 
+-- | Universally quantified constraints, until we have
+--   -XQuantifiedConstraints.
+module Datafix.Utils.Constraints
+data Dict :: Constraint -> Type
+[Dict] :: c => Dict c
+newtype a (:-) b
+Sub :: (a => Dict b) -> (:-) a b
+
+-- | Given that <tt>a :- b</tt>, derive something that needs a context
+--   <tt>b</tt>, using the context <tt>a</tt>
+(\\) :: a => (b => r) -> (a :- b) -> r
+infixl 1 \\
+
+-- | A representation of the quantified constraint <tt>forall a. p a</tt>.
+inst :: forall p a. Forall p :- p a
+instance forall k (p :: k -> GHC.Types.Constraint). p (Datafix.Utils.Constraints.Skolem p) => Datafix.Utils.Constraints.Forall_ p
+
+
 -- | Some type-level helpers for 'curry'/'uncurry'ing arbitrary function
 --   types.
 module Datafix.Utils.TypeLevel
@@ -135,24 +153,11 @@ instance Datafix.Utils.TypeLevel.Currying '[a] b
 instance Datafix.Utils.TypeLevel.Currying (a2 : as) b => Datafix.Utils.TypeLevel.Currying (a1 : a2 : as) b
 
 
--- | Primitives for describing a <a>data-flow problem</a> in a declarative
---   manner.
---   
---   Import this module transitively through <a>Datafix</a> and get access
---   to <a>Datafix.Worklist</a> for functions that compute solutions to
---   your <a>DataFlowProblem</a>s.
-module Datafix.Description
+-- | Common definitions for defining data-flow problems, defining
+--   infrastructure around the notion of <a>Domain</a>.
+module Datafix.Common
 
--- | This is the type we use to index nodes in the data-flow graph.
---   
---   The connection between syntactic things (e.g. <tt>Id</tt>s) and
---   <a>Node</a>s is made implicitly in code in analysis templates through
---   an appropriate allocation mechanism as in <tt>NodeAllocator</tt>.
-newtype Node
-Node :: Int -> Node
-[unwrapNode] :: Node -> Int
-
--- | Data-flow problems denote <a>Node</a>s in the data-flow graph by
+-- | Data-flow problems denote <tt>Node</tt>s in the data-flow graph by
 --   monotone transfer functions.
 --   
 --   This type alias alone carries no semantic meaning. However, it is
@@ -166,12 +171,12 @@ Node :: Int -> Node
 --   LiftedFunc (a -&gt; b -&gt; c -&gt; Int) m ~ a -&gt; b -&gt; c -&gt; m Int
 --   </pre>
 --   
---   <tt>m</tt> will generally be an instance of <a>MonadDependency</a> and
---   the type alias effectively wraps <tt>m</tt> around <tt>domain</tt>'s
---   return type. The result is a function that produces its return value
---   while potentially triggering side-effects in <tt>m</tt>, which amounts
---   to depending on <a>LiftedFunc</a>s of other <a>Node</a>s for the
---   <a>MonadDependency</a> case.
+--   <tt>m</tt> will generally be an instance of <tt>MonadDependency</tt>
+--   and the type alias effectively wraps <tt>m</tt> around
+--   <tt>domain</tt>'s return type. The result is a function that produces
+--   its return value while potentially triggering side-effects in
+--   <tt>m</tt>, which amounts to depending on <a>LiftedFunc</a>s of other
+--   <tt>Node</tt>s for the <tt>MonadDependency</tt> case.
 type LiftedFunc domain m = Arrows (ParamTypes domain) (m (ReturnType domain))
 
 -- | A function that checks points of some function with type
@@ -224,6 +229,97 @@ type LiftedFunc domain m = Arrows (ParamTypes domain) (m (ReturnType domain))
 --   False
 --   </pre>
 type ChangeDetector domain = Arrows (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+
+-- | A <a>ChangeDetector</a> that delegates to the <a>Eq</a> instance of
+--   the node values.
+eqChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => Eq (ReturnType domain) => ChangeDetector domain
+
+-- | A <a>ChangeDetector</a> that always returns <a>True</a>.
+--   
+--   Use this when recomputing a node is cheaper than actually testing for
+--   the change. Beware of cycles in the resulting dependency graph,
+--   though!
+alwaysChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => ChangeDetector domain
+
+-- | A monad with an associated <a>Domain</a>. This class exists mostly to
+--   share the associated type-class between <tt>MonadDependency</tt> and
+--   <tt>MonadDatafix</tt>.
+--   
+--   Also it implies that <tt>m</tt> satisfies <a>Datafixable</a>, which is
+--   common enough
+class (Monad m, Datafixable (Domain m)) => MonadDomain m where {
+    type family Domain m :: *;
+}
+
+-- | A constraint synonym for constraints the <tt>domain</tt> has to
+--   suffice.
+--   
+--   This is actually a lot less scary than you might think. Assuming we
+--   got <a>quantified class constraints</a> instead of hackery from the
+--   <a>@constraints@ package</a>, <tt>Datafixable</tt> is a specialized
+--   version of this:
+--   
+--   <pre>
+--   type Datafixable domain =
+--     ( forall r. Currying (ParamTypes domain) r
+--     , MonoMapKey (Products (ParamTypes domain))
+--     , BoundedJoinSemiLattice (ReturnType domain)
+--     )
+--   </pre>
+--   
+--   Now, let's assume a concrete <tt>domain ~ String -&gt; Bool -&gt;
+--   Int</tt>, so that <tt><a>ParamTypes</a> (String -&gt; Bool -&gt;
+--   Int)</tt> expands to the type-level list <tt>'[String, Bool]</tt> and
+--   <tt><a>Products</a> '[String, Bool]</tt> reduces to <tt>(String,
+--   Bool)</tt>.
+--   
+--   Then this constraint makes sure we are able to
+--   
+--   <ol>
+--   <li>Curry the domain of <tt>String -&gt; Bool -&gt; r</tt> for all
+--   <tt>r</tt> to e.g. <tt>(String, Bool) -&gt; r</tt>. See
+--   <a>Currying</a>. This constraint should always be discharged
+--   automatically by the type-checker as soon as <a>ParamTypes</a> and
+--   <tt>ReturnTypes</tt> reduce for the <a>Domain</a> argument, which
+--   happens when the concrete <tt><tt>MonadDependency</tt> m</tt> is
+--   known.</li>
+--   <li>We want to use a <a>monotone</a> map of <tt>(String, Bool)</tt> to
+--   <tt>Int</tt> (the <tt>ReturnType domain</tt>). This is ensured by the
+--   <tt><a>MonoMapKey</a> (String, Bool)</tt> constraint.This constraint
+--   has to be discharged manually, but should amount to a single line of
+--   boiler-plate in most cases, see <a>MonoMapKey</a>.Note that the
+--   monotonicity requirement means we have to pull non-monotone arguments
+--   in <tt>Domain m</tt> into the <tt>Node</tt> portion of the
+--   <tt>DataFlowProblem</tt>.</li>
+--   <li>For fixed-point iteration to work at all, the values which we
+--   iterate naturally have to be instances of
+--   <a>BoundedJoinSemiLattice</a>. That type-class allows us to start
+--   iteration from a most-optimistic <a>bottom</a> value and successively
+--   iterate towards a conservative approximation using the '(/)'
+--   operator.</li>
+--   </ol>
+type Datafixable domain = (Forall (Currying (ParamTypes domain)), MonoMapKey (Products (ParamTypes domain)), BoundedJoinSemiLattice (ReturnType domain))
+
+
+-- | Primitives for describing a <a>data-flow problem</a> in a declarative
+--   manner. This module requires you to manage assignment of <a>Node</a>s
+--   in the data-flow graph to denotations by hand. If you're looking for a
+--   safer approach suited for static analysis, have a look at
+--   <a>Datafix.Denotational</a>.
+--   
+--   Import this module transitively through <a>Datafix</a> and get access
+--   to <a>Datafix.Worklist</a> for functions that compute solutions to
+--   your <a>DataFlowProblem</a>s.
+module Datafix.Explicit
+
+-- | This is the type we use to index nodes in the data-flow graph.
+--   
+--   The connection between syntactic things (e.g. <tt>Id</tt>s) and
+--   <a>Node</a>s is made implicitly in code in analysis templates through
+--   an appropriate allocation mechanism as in <tt>NodeAllocator</tt>.
+newtype Node
+Node :: Int -> Node
+[unwrapNode] :: Node -> Int
 
 -- | Models a data-flow problem, where each <a>Node</a> is mapped to its
 --   denoting <a>LiftedFunc</a> and a means to detect when the iterated
@@ -312,53 +408,15 @@ DFP :: !(Node -> LiftedFunc (Domain m) m) -> !(Node -> ChangeDetector (Domain m)
 --   programming languages, introduced through loops or recursive
 --   functions. Thus, this library mostly aims at making the life of
 --   compiler writers easier.
-class Monad m => MonadDependency m where {
-    type family Domain m :: *;
-}
+class MonadDomain m => MonadDependency m
 
 -- | Expresses a dependency on a node of the data-flow graph, thus
 --   introducing a way of trackable recursion. That's similar to how you
 --   would use <a>fix</a> to abstract over recursion.
 dependOn :: MonadDependency m => Node -> LiftedFunc (Domain m) m
-
--- | Builds on <a>MonadDependency</a> by providing a way to track
---   dependencies without explicit <a>Node</a> management. Essentially,
---   this allows to specify a build plan for a <a>DataFlowProblem</a>
---   through calls to <a>datafix</a> in analogy to <tt>fix</tt> or
---   <tt>mfix</tt>.
-class (MonadDependency mdep, Monad mdat) => MonadDatafix mdep mdat | mdat -> mdep
-
--- | This is the closest we can get to an actual fixed-point combinator.
---   
---   We need to provide a <a>ChangeDetector</a> for detecting the
---   fixed-point as well as a function to be iterated. In addition to
---   returning a better approximation of itself in terms of itself, it can
---   return an arbitrary value of type <tt>a</tt>. Because the iterated
---   function might want to <a>datafix</a> additional times (think of
---   nested let bindings), the return values are wrapped in <tt>mdat</tt>.
---   
---   Finally, the arbitrary <tt>a</tt> value is returned, in analogy to
---   <tt>a</tt> in <tt>mfix :: MonadFix m =&gt; (a -&gt; m a) -&gt; m
---   a</tt>.
-datafix :: MonadDatafix mdep mdat => ChangeDetector (Domain mdep) -> (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep)) -> mdat a
-
--- | Shorthand that partially applies <a>datafix</a> to an
---   <a>eqChangeDetector</a>.
-datafixEq :: forall mdep mdat a. MonadDatafix mdep mdat => Currying (ParamTypes (Domain mdep)) (ReturnType (Domain mdep) -> ReturnType (Domain mdep) -> Bool) => Eq (ReturnType (Domain mdep)) => (LiftedFunc (Domain mdep) mdep -> mdat (a, LiftedFunc (Domain mdep) mdep)) -> mdat a
-
--- | A <a>ChangeDetector</a> that delegates to the <a>Eq</a> instance of
---   the node values.
-eqChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => Eq (ReturnType domain) => ChangeDetector domain
-
--- | A <a>ChangeDetector</a> that always returns <a>True</a>.
---   
---   Use this when recomputing a node is cheaper than actually testing for
---   the change. Beware of cycles in the resulting dependency graph,
---   though!
-alwaysChangeDetector :: forall domain. Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool) => ChangeDetector domain
-instance GHC.Show.Show Datafix.Description.Node
-instance GHC.Classes.Ord Datafix.Description.Node
-instance GHC.Classes.Eq Datafix.Description.Node
+instance GHC.Show.Show Datafix.Explicit.Node
+instance GHC.Classes.Ord Datafix.Explicit.Node
+instance GHC.Classes.Eq Datafix.Explicit.Node
 
 
 -- | Helpers for allocating <a>Node</a>s in an ergonomic manner, e.g.
@@ -368,7 +426,7 @@ instance GHC.Classes.Eq Datafix.Description.Node
 module Datafix.NodeAllocator
 
 -- | A state monad wrapping a mapping from <a>Node</a> to some <tt>v</tt>
---   which we will instantiate to appropriate <a>LiftedFunc</a>s.
+--   which we will instantiate to appropriate <tt>LiftedFunc</tt>s.
 data NodeAllocator v a
 
 -- | Allocates the next <a>Node</a>, which is greater than any nodes
@@ -387,8 +445,51 @@ instance GHC.Base.Applicative (Datafix.NodeAllocator.NodeAllocator v)
 instance GHC.Base.Functor (Datafix.NodeAllocator.NodeAllocator v)
 
 
--- | Offers an instance for <a>MonadDatafix</a> based on
---   <a>NodeAllocator</a>.
+-- | Provides an alternative method (to
+--   <tt>MonadDependency</tt>/<a>Datafix.Explicit</a>) of formulating
+--   data-flow problems as a <a>Denotation</a> built in the context of
+--   <a>MonadDatafix</a>. This offers better usability for defining static
+--   analyses, as the problem of allocating nodes in the data-flow graph is
+--   abstracted from the user.
+module Datafix.Denotational
+
+-- | Builds on an associated <a>DepM</a> that is a <a>MonadDomain</a> (like
+--   any <tt>MonadDependency</tt>) by providing a way to track dependencies
+--   without explicit <tt>Node</tt> management. Essentially, this allows to
+--   specify a build plan for a <tt>DataFlowProblem</tt> through calls to
+--   <a>datafix</a> in analogy to <tt>fix</tt> or <tt>mfix</tt>.
+class (Monad m, MonadDomain (DepM m)) => MonadDatafix m where {
+    type family DepM m :: * -> *;
+}
+
+-- | This is the closest we can get to an actual fixed-point combinator.
+--   
+--   We need to provide a <a>ChangeDetector</a> for detecting the
+--   fixed-point as well as a function to be iterated. In addition to
+--   returning a better approximation of itself in terms of itself, it can
+--   return an arbitrary value of type <tt>a</tt>. Because the iterated
+--   function might want to <a>datafix</a> additional times (think of
+--   nested let bindings), the return values are wrapped in <tt>m</tt>.
+--   
+--   Finally, the arbitrary <tt>a</tt> value is returned, in analogy to
+--   <tt>a</tt> in <tt><a>mfix</a> :: MonadFix m =&gt; (a -&gt; m a) -&gt;
+--   m a</tt>.
+datafix :: (MonadDatafix m, dom ~ Domain (DepM m)) => ChangeDetector dom -> (LiftedFunc dom (DepM m) -> m (a, LiftedFunc dom (DepM m))) -> m a
+
+-- | Shorthand that partially applies <a>datafix</a> to an
+--   <a>eqChangeDetector</a>.
+datafixEq :: forall m dom a. MonadDatafix m => dom ~ Domain (DepM m) => Eq (ReturnType dom) => (LiftedFunc dom (DepM m) -> m (a, LiftedFunc dom (DepM m))) -> m a
+
+-- | A denotation of some syntactic entity in a semantic <tt>domain</tt>,
+--   built in a some <a>MonadDatafix</a> context.
+type Denotation dom = forall m. (MonadDatafix m, dom ~ Domain (DepM m)) => m (LiftedFunc dom (DepM m))
+
+
+-- | Builds a <a>DataFlowProblem</a> for a <a>Denotation</a>al formulation
+--   in terms of <a>MonadDatafix</a>. Effectively reduces descriptions from
+--   <a>Datafix.Denotational</a> to ones from <a>Datafix.Explicit</a>, so
+--   that solvers such as <a>Datafix.Worklist</a> only have to provide an
+--   interpreter for <a>MonadDependency</a>.
 module Datafix.ProblemBuilder
 
 -- | Constructs a build plan for a <a>DataFlowProblem</a> by tracking
@@ -402,11 +503,11 @@ data ProblemBuilder m a
 --   <a>Node</a> denoting the transfer function returned by the
 --   <a>ProblemBuilder</a> action and the <tt>max</tt>imum node of the
 --   problem as a proof for its denseness.
-buildProblem :: forall m. MonadDependency m => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool) => ProblemBuilder m (LiftedFunc (Domain m) m) -> (Node, Node, DataFlowProblem m)
+buildProblem :: forall m. MonadDependency m => Denotation (Domain m) -> (Node, Node, DataFlowProblem m)
 instance GHC.Base.Monad (Datafix.ProblemBuilder.ProblemBuilder m)
 instance GHC.Base.Applicative (Datafix.ProblemBuilder.ProblemBuilder m)
 instance GHC.Base.Functor (Datafix.ProblemBuilder.ProblemBuilder m)
-instance Datafix.Description.MonadDependency m => Datafix.Description.MonadDatafix m (Datafix.ProblemBuilder.ProblemBuilder m)
+instance Datafix.Explicit.MonadDependency m => Datafix.Denotational.MonadDatafix (Datafix.ProblemBuilder.ProblemBuilder m)
 
 
 -- | Abstracts over the representation of the data-flow graph.
@@ -499,12 +600,11 @@ newtype DependencyM graph domain a
 --   This ultimately leaks badly into the exported interface in
 --   <a>solveProblem</a>: Since we can't have universally quantified
 --   instance contexts (yet!), we can' write <tt>(forall s. Datafixable
---   (DependencyM s graph domain)) =&gt; (forall s. DataFlowProblem
---   (DependencyM s graph domain)) -&gt; ...</tt> and have to instead have
---   the isomorphic <tt>(forall s r. (Datafixable (DependencyM s graph
---   domain) =&gt; r) -&gt; r) -&gt; (forall s. DataFlowProblem
---   (DependencyM s graph domain)) -&gt; ...</tt> and urge all call sites
---   to pass a meaningless <a>id</a> parameter.
+--   domain =&gt; (forall s. DataFlowProblem (DependencyM s graph domain))
+--   -&gt; ...</tt> and have to instead have the isomorphic <tt>(forall s
+--   r. (Datafixable domain =&gt; r) -&gt; r) -&gt; (forall s.
+--   DataFlowProblem (DependencyM s graph domain)) -&gt; ...</tt> and urge
+--   all call sites to pass a meaningless <a>id</a> parameter.
 --   
 --   Also, this means more explicit type signatures as we have to make
 --   clear to the type-checker that <tt>s</tt> is universally quantified in
@@ -546,58 +646,10 @@ Env :: !(DataFlowProblem (DependencyM graph domain)) -> !(IterationBound domain)
 [unstable] :: Env graph domain -> !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
 initialEnv :: IntArgsMonoSet (Products (ParamTypes domain)) -> DataFlowProblem (DependencyM graph domain) -> IterationBound domain -> IO (graph domain) -> IO (Env graph domain)
 
--- | A constraint synonym for the constraints <tt>m</tt> and its associated
---   <a>Domain</a> have to suffice.
---   
---   This is actually a lot less scary than you might think. Assuming we
---   got <a>quantified class constraints</a>, <tt>Datafixable</tt> is a
---   specialized version of this:
---   
---   <pre>
---   type Datafixable m =
---     ( forall r. Currying (ParamTypes (Domain m)) r
---     , MonoMapKey (Products (ParamTypes (Domain m)))
---     , BoundedJoinSemiLattice (ReturnType (Domain m))
---     )
---   </pre>
---   
---   Now, let's assume a concrete <tt>Domain m ~ String -&gt; Bool -&gt;
---   Int</tt>, so that <tt><a>ParamTypes</a> (String -&gt; Bool -&gt;
---   Int)</tt> expands to the type-level list <tt>'[String, Bool]</tt> and
---   <tt><a>Products</a> '[String, Bool]</tt> reduces to <tt>(String,
---   Bool)</tt>.
---   
---   Then this constraint makes sure we are able to
---   
---   <ol>
---   <li>Curry the domain of <tt>String -&gt; Bool -&gt; r</tt> for all
---   <tt>r</tt> to e.g. <tt>(String, Bool) -&gt; r</tt>. See
---   <a>Currying</a>. This constraint should always be discharged
---   automatically by the type-checker as soon as <a>ParamTypes</a> and
---   <tt>ReturnTypes</tt> reduce for the <a>Domain</a> argument, which
---   happens when the concrete <tt><a>MonadDependency</a> m</tt> is
---   known.(Actually, we do this for multiple concrete <tt>r</tt> because
---   of the missing support for quantified class constraints)</li>
---   <li>We want to use a <a>monotone</a> map of <tt>(String, Bool)</tt> to
---   <tt>Int</tt> (the <tt>ReturnType (Domain m)</tt>). This is ensured by
---   the <tt><a>MonoMapKey</a> (String, Bool)</tt> constraint.This
---   constraint has to be discharged manually, but should amount to a
---   single line of boiler-plate in most cases, see <a>MonoMapKey</a>.Note
---   that the monotonicity requirement means we have to pull non-monotone
---   arguments in <tt>Domain m</tt> into the <a>Node</a> portion of the
---   <a>DataFlowProblem</a>.</li>
---   <li>For fixed-point iteration to work at all, the values which we
---   iterate naturally have to be instances of
---   <a>BoundedJoinSemiLattice</a>. That type-class allows us to start
---   iteration from a most-optimistic <a>bottom</a> value and successively
---   iterate towards a conservative approximation using the '(/)'
---   operator.</li>
---   </ol>
-type Datafixable m = (Currying (ParamTypes (Domain m)) (ReturnType (Domain m)), Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m))), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m)), MonoMapKey (Products (ParamTypes (Domain m))), BoundedJoinSemiLattice (ReturnType (Domain m)))
+-- | The <a>Domain</a> is extracted from a type parameter.
 
 -- | This allows us to solve <tt>MonadDependency m =&gt; DataFlowProblem
---   m</tt> descriptions with <a>solveProblem</a>. The <a>Domain</a> is
---   extracted from a type parameter.
+--   m</tt> descriptions with <a>solveProblem</a>.
 
 -- | Specifies the <i>density</i> of the problem, e.g. whether the domain
 --   of <a>Node</a>s can be confined to a finite range, in which case
@@ -667,7 +719,7 @@ zoomUnstable :: State (IntArgsMonoSet (Products (ParamTypes domain))) a -> Reade
 enqueueUnstable :: k ~ Products (ParamTypes domain) => MonoMapKey k => Int -> k -> ReaderT (Env graph domain) IO ()
 deleteUnstable :: k ~ Products (ParamTypes domain) => MonoMapKey k => Int -> k -> ReaderT (Env graph domain) IO ()
 highestPriorityUnstableNode :: k ~ Products (ParamTypes domain) => MonoMapKey k => ReaderT (Env graph domain) IO (Maybe (Int, k))
-withCall :: Datafixable (DependencyM graph domain) => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO a -> ReaderT (Env graph domain) IO a
+withCall :: Datafixable domain => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO a -> ReaderT (Env graph domain) IO a
 
 -- | The first of the two major functions of this module.
 --   
@@ -680,8 +732,8 @@ withCall :: Datafixable (DependencyM graph domain) => Int -> Products (ParamType
 --   <tt>node</tt> needs to be (and can be) re-iterated. It performs
 --   tracking of which <a>Node</a>s the transfer function depended on, do
 --   that the worklist algorithm can do its magic.
-recompute :: forall domain graph dom cod depm. dom ~ ParamTypes domain => cod ~ ReturnType domain => depm ~ DependencyM graph domain => GraphRef graph => Datafixable depm => Int -> Products dom -> ReaderT (Env graph domain) IO cod
-dependOn :: forall domain graph. Datafixable (DependencyM graph domain) => GraphRef graph => Node -> LiftedFunc domain (DependencyM graph domain)
+recompute :: forall domain graph dom cod depm. dom ~ ParamTypes domain => cod ~ ReturnType domain => depm ~ DependencyM graph domain => GraphRef graph => Datafixable domain => Int -> Products dom -> ReaderT (Env graph domain) IO cod
+dependOn :: forall domain graph depm. depm ~ DependencyM graph domain => Datafixable domain => GraphRef graph => Node -> LiftedFunc domain depm
 
 -- | Compute an optimistic approximation for a point of a given node that
 --   is as precise as possible, given the other points of that node we
@@ -690,13 +742,13 @@ dependOn :: forall domain graph. Datafixable (DependencyM graph domain) => Graph
 --   E.g., it is always valid to return <a>bottom</a> from this, but in
 --   many cases we can be more precise since we possibly have computed
 --   points for the node that are lower bounds to the current point.
-optimisticApproximation :: GraphRef graph => Datafixable (DependencyM graph domain) => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
+optimisticApproximation :: GraphRef graph => Datafixable domain => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
 
 -- | scheme 1 (see
 --   <a>https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like)</a>.
 --   
 --   Let the worklist algorithm figure things out.
-scheme1 :: GraphRef graph => Datafixable (DependencyM graph domain) => Maybe (ReturnType domain) -> Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
+scheme1 :: GraphRef graph => Datafixable domain => Maybe (ReturnType domain) -> Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
 
 -- | scheme 2 (see
 --   <a>https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like)</a>.
@@ -704,7 +756,7 @@ scheme1 :: GraphRef graph => Datafixable (DependencyM graph domain) => Maybe (Re
 --   Descend into &lt;math&gt; nodes when there is no cycle to discover the
 --   set of reachable nodes as quick as possible. Do *not* descend into
 --   unstable, non-(bot) nodes.
-scheme2 :: GraphRef graph => Datafixable (DependencyM graph domain) => Maybe (ReturnType domain) -> Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
+scheme2 :: GraphRef graph => Datafixable domain => Maybe (ReturnType domain) -> Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
 
 -- | As long as the supplied <a>Maybe</a> expression returns "Just _", the
 --   loop body will be called and passed the value contained in the
@@ -720,7 +772,7 @@ whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
 --   <a>recompute</a>s the value of one of its <a>unstable</a> points,
 --   until the worklist is empty, indicating that a fixed-point has been
 --   reached.
-work :: GraphRef graph => Datafixable (DependencyM graph domain) => ReaderT (Env graph domain) IO ()
+work :: GraphRef graph => Datafixable domain => ReaderT (Env graph domain) IO ()
 
 -- | Computes a solution to the described <a>DataFlowProblem</a> by
 --   iterating transfer functions until a fixed-point is reached.
@@ -735,30 +787,39 @@ work :: GraphRef graph => Datafixable (DependencyM graph domain) => ReaderT (Env
 --   point in the <a>Node</a>s transfer function you are interested in.
 --   
 --   If your problem only has finitely many different <a>Node</a>s ,
---   consider using the <a>ProblemBuilder</a> API (e.g. <a>datafix</a> +
---   <a>evalDenotation</a>) for a higher-level API that let's you forget
---   about <a>Node</a>s and instead let's you focus on building more
+--   consider using the <tt>ProblemBuilder</tt> API (e.g. <tt>datafix</tt>
+--   + <tt>evalDenotation</tt>) for a higher-level API that let's you
+--   forget about <a>Node</a>s and instead let's you focus on building more
 --   complex data-flow frameworks.
-solveProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
+solveProblem :: forall domain graph. GraphRef graph => Datafixable domain => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
+instance GHC.Base.Monad (Datafix.Worklist.Internal.DependencyM graph domain)
+instance GHC.Base.Applicative (Datafix.Worklist.Internal.DependencyM graph domain)
+instance GHC.Base.Functor (Datafix.Worklist.Internal.DependencyM graph domain)
+instance Datafix.Common.Datafixable domain => Datafix.Common.MonadDomain (Datafix.Worklist.Internal.DependencyM graph domain)
+instance (Datafix.Common.Datafixable domain, Datafix.Worklist.Graph.GraphRef graph) => Datafix.Explicit.MonadDependency (Datafix.Worklist.Internal.DependencyM graph domain)
+
+
+-- | Bridges the <a>Datafix.Worklist</a> solver for
+--   <tt>DataFlowProblem</tt>s (<a>solveProblem</a>) with the
+--   <a>Datafix.Denotational</a> approach, using <a>MonadDatafix</a> to
+--   describe a <a>Denotation</a>.
+module Datafix.Worklist.Denotational
 
 -- | <tt>evalDenotation denot ib</tt> returns a value in <tt>domain</tt>
 --   that is described by the denotation <tt>denot</tt>.
 --   
---   It does so by building up the <a>DataFlowProblem</a> corresponding to
---   <tt>denot</tt> and solving the resulting problem with
+--   It does so by building up the <tt>DataFlowProblem</tt> corresponding
+--   to <tt>denot</tt> and solving the resulting problem with
 --   <a>solveProblem</a>, the documentation of which describes in detail
 --   how to arrive at a stable denotation and what the
 --   <a>IterationBound</a> <tt>ib</tt> is for.
-evalDenotation :: forall domain. Datafixable (DependencyM Ref domain) => ProblemBuilder (DependencyM Ref domain) (LiftedFunc domain (DependencyM Ref domain)) -> IterationBound domain -> domain
-instance GHC.Base.Monad (Datafix.Worklist.Internal.DependencyM graph domain)
-instance GHC.Base.Applicative (Datafix.Worklist.Internal.DependencyM graph domain)
-instance GHC.Base.Functor (Datafix.Worklist.Internal.DependencyM graph domain)
-instance (Datafix.Worklist.Internal.Datafixable (Datafix.Worklist.Internal.DependencyM graph domain), Datafix.Worklist.Graph.GraphRef graph) => Datafix.Description.MonadDependency (Datafix.Worklist.Internal.DependencyM graph domain)
+evalDenotation :: Datafixable domain => Denotation domain -> IterationBound domain -> domain
 
 
 -- | This module provides the <a>solveProblem</a> function, which solves
 --   the description of a <a>DataFlowProblem</a> by employing a worklist
---   algorithm.
+--   algorithm. There's also an interpreter for <tt>Denotation</tt>al
+--   problems in the form of <a>evalDenotation</a>.
 module Datafix.Worklist
 
 -- | The concrete <a>MonadDependency</a> for this worklist-based solver.
@@ -767,55 +828,6 @@ module Datafix.Worklist
 --   the <a>DataFlowProblem</a> as mutable state while <a>solveProblem</a>
 --   makes sure we will eventually halt with a conservative approximation.
 data DependencyM graph domain a
-
--- | A constraint synonym for the constraints <tt>m</tt> and its associated
---   <a>Domain</a> have to suffice.
---   
---   This is actually a lot less scary than you might think. Assuming we
---   got <a>quantified class constraints</a>, <tt>Datafixable</tt> is a
---   specialized version of this:
---   
---   <pre>
---   type Datafixable m =
---     ( forall r. Currying (ParamTypes (Domain m)) r
---     , MonoMapKey (Products (ParamTypes (Domain m)))
---     , BoundedJoinSemiLattice (ReturnType (Domain m))
---     )
---   </pre>
---   
---   Now, let's assume a concrete <tt>Domain m ~ String -&gt; Bool -&gt;
---   Int</tt>, so that <tt><a>ParamTypes</a> (String -&gt; Bool -&gt;
---   Int)</tt> expands to the type-level list <tt>'[String, Bool]</tt> and
---   <tt><a>Products</a> '[String, Bool]</tt> reduces to <tt>(String,
---   Bool)</tt>.
---   
---   Then this constraint makes sure we are able to
---   
---   <ol>
---   <li>Curry the domain of <tt>String -&gt; Bool -&gt; r</tt> for all
---   <tt>r</tt> to e.g. <tt>(String, Bool) -&gt; r</tt>. See
---   <a>Currying</a>. This constraint should always be discharged
---   automatically by the type-checker as soon as <a>ParamTypes</a> and
---   <tt>ReturnTypes</tt> reduce for the <a>Domain</a> argument, which
---   happens when the concrete <tt><a>MonadDependency</a> m</tt> is
---   known.(Actually, we do this for multiple concrete <tt>r</tt> because
---   of the missing support for quantified class constraints)</li>
---   <li>We want to use a <a>monotone</a> map of <tt>(String, Bool)</tt> to
---   <tt>Int</tt> (the <tt>ReturnType (Domain m)</tt>). This is ensured by
---   the <tt><a>MonoMapKey</a> (String, Bool)</tt> constraint.This
---   constraint has to be discharged manually, but should amount to a
---   single line of boiler-plate in most cases, see <a>MonoMapKey</a>.Note
---   that the monotonicity requirement means we have to pull non-monotone
---   arguments in <tt>Domain m</tt> into the <a>Node</a> portion of the
---   <a>DataFlowProblem</a>.</li>
---   <li>For fixed-point iteration to work at all, the values which we
---   iterate naturally have to be instances of
---   <a>BoundedJoinSemiLattice</a>. That type-class allows us to start
---   iteration from a most-optimistic <a>bottom</a> value and successively
---   iterate towards a conservative approximation using the '(/)'
---   operator.</li>
---   </ol>
-type Datafixable m = (Currying (ParamTypes (Domain m)) (ReturnType (Domain m)), Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m))), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool), Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m)), MonoMapKey (Products (ParamTypes (Domain m))), BoundedJoinSemiLattice (ReturnType (Domain m)))
 
 -- | Specifies the <i>density</i> of the problem, e.g. whether the domain
 --   of <a>Node</a>s can be confined to a finite range, in which case
@@ -865,21 +877,21 @@ AbortAfter :: Int -> (AbortionFunction domain) -> IterationBound domain
 --   point in the <a>Node</a>s transfer function you are interested in.
 --   
 --   If your problem only has finitely many different <a>Node</a>s ,
---   consider using the <a>ProblemBuilder</a> API (e.g. <a>datafix</a> +
---   <a>evalDenotation</a>) for a higher-level API that let's you forget
---   about <a>Node</a>s and instead let's you focus on building more
+--   consider using the <tt>ProblemBuilder</tt> API (e.g. <tt>datafix</tt>
+--   + <tt>evalDenotation</tt>) for a higher-level API that let's you
+--   forget about <a>Node</a>s and instead let's you focus on building more
 --   complex data-flow frameworks.
-solveProblem :: forall domain graph. GraphRef graph => Datafixable (DependencyM graph domain) => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
+solveProblem :: forall domain graph. GraphRef graph => Datafixable domain => DataFlowProblem (DependencyM graph domain) -> Density graph -> IterationBound domain -> Node -> domain
 
 -- | <tt>evalDenotation denot ib</tt> returns a value in <tt>domain</tt>
 --   that is described by the denotation <tt>denot</tt>.
 --   
---   It does so by building up the <a>DataFlowProblem</a> corresponding to
---   <tt>denot</tt> and solving the resulting problem with
+--   It does so by building up the <tt>DataFlowProblem</tt> corresponding
+--   to <tt>denot</tt> and solving the resulting problem with
 --   <a>solveProblem</a>, the documentation of which describes in detail
 --   how to arrive at a stable denotation and what the
 --   <a>IterationBound</a> <tt>ib</tt> is for.
-evalDenotation :: forall domain. Datafixable (DependencyM Ref domain) => ProblemBuilder (DependencyM Ref domain) (LiftedFunc domain (DependencyM Ref domain)) -> IterationBound domain -> domain
+evalDenotation :: Datafixable domain => Denotation domain -> IterationBound domain -> domain
 
 
 -- | This is the top-level, import-all, kitchen sink module.

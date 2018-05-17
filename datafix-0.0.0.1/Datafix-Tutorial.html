@@ -62,22 +62,22 @@ window.onload = function () {pageLoad();};
     b &lt;- dependOn @m (Node (n-2))
     return (a + b)
 :}
-</pre><p><code><a href="Datafix-Description.html#t:MonadDependency">MonadDependency</a></code> contains a single primitive <code><a href="Datafix-Description.html#v:dependOn">dependOn</a></code> for that purpose.</p><p>Every point of the fibonacci series is modeled as a seperate <code><a href="Datafix-Description.html#t:Node">Node</a></code> of the
+</pre><p><code><a href="Datafix-Explicit.html#t:MonadDependency">MonadDependency</a></code> contains a single primitive <code><a href="Datafix-Explicit.html#v:dependOn">dependOn</a></code> for that purpose.</p><p>Every point of the fibonacci series is modeled as a seperate <code><a href="Datafix-Explicit.html#t:Node">Node</a></code> of the
  data-flow graph.
- By looking at the definition of <code><a href="Datafix-Description.html#t:LiftedFunc">LiftedFunc</a></code>, we can see that
+ By looking at the definition of <code><a href="Datafix-Common.html#t:LiftedFunc">LiftedFunc</a></code>, we can see that
  <code>LiftedFunc Natural m ~ m Natural</code>, so for our simple
- <code>Natural</code> <code><a href="Datafix-Description.html#t:Domain">Domain</a></code>, the transfer function is specified directly in
- <code><a href="Datafix-Description.html#t:MonadDependency">MonadDependency</a></code>.</p><p>Note that indeed we eliminated explicit recursion in <code>transferFib</code>.
+ <code>Natural</code> <code><a href="Datafix-Common.html#t:Domain">Domain</a></code>, the transfer function is specified directly in
+ <code><a href="Datafix-Explicit.html#t:MonadDependency">MonadDependency</a></code>.</p><p>Note that indeed we eliminated explicit recursion in <code>transferFib</code>.
  This allows the solution algorithm to track and discover dependencies
  of the transfer function as it is executed!</p><p>With our transfer function (which denotes data-flow nodes in the semantics
- of <code>Natural</code>s) in place, we can construct a <code><a href="Datafix-Description.html#t:DataFlowProblem">DataFlowProblem</a></code>:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>:{
+ of <code>Natural</code>s) in place, we can construct a <code><a href="Datafix-Explicit.html#t:DataFlowProblem">DataFlowProblem</a></code>:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>:{
 </code></strong>  fibDfp :: forall m . (MonadDependency m, Domain m ~ Natural) =&gt; DataFlowProblem m
   fibDfp = DFP transferFib (const (eqChangeDetector @(Domain m)))
 :}
-</pre><p>The <code><a href="Datafix-Description.html#v:eqChangeDetector">eqChangeDetector</a></code> is important for cyclic dependency graphs and makes
+</pre><p>The <code><a href="Datafix-Common.html#v:eqChangeDetector">eqChangeDetector</a></code> is important for cyclic dependency graphs and makes
  sure we detect when a fixed-point has been reached.</p><p>That's it for describing the data-flow problem of fibonacci numbers.
  We can ask <code>Datafix.Worklist.<code><a href="Datafix-Worklist-Internal.html#v:solveProblem">solveProblem</a></code></code> for a solution in a minute.</p><p>The <code><a href="Datafix-Worklist-Internal.html#v:solveProblem">solveProblem</a></code> solver demands an instance of <code>BoundedJoinSemiLattice</code>
- on the <code><a href="Datafix-Description.html#t:Domain">Domain</a></code> for when the data-flow graph is cyclic. We conveniently
+ on the <code><a href="Datafix-Common.html#t:Domain">Domain</a></code> for when the data-flow graph is cyclic. We conveniently
  delegate to the total <code>Ord</code> instance for <code><a href="../base-4.10.1.0/Numeric-Natural.html#v:Natural">Natural</a></code>, knowing
  that its semantic interpretation is irrelevant to us:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance JoinSemiLattice Natural where (\/) = max
 </code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>instance BoundedJoinSemiLattice Natural where bottom = 0

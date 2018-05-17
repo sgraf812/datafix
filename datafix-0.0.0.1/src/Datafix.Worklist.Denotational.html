@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE AllowAmbiguousTypes   #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE FlexibleContexts      #-}</span><span>
+</span><a name="line-3"></a><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses #-}</span><span>
+</span><a name="line-4"></a><span class="hs-pragma">{-# LANGUAGE RankNTypes            #-}</span><span>
+</span><a name="line-5"></a><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables   #-}</span><span>
+</span><a name="line-6"></a><span class="hs-pragma">{-# LANGUAGE TypeFamilies          #-}</span><span>
+</span><a name="line-7"></a><span>
+</span><a name="line-8"></a><span class="hs-comment">-- |</span><span>
+</span><a name="line-9"></a><span class="hs-comment">-- Module      :  Datafix.Worklist.Denotational</span><span>
+</span><a name="line-10"></a><span class="hs-comment">-- Copyright   :  (c) Sebastian Graf 2018</span><span>
+</span><a name="line-11"></a><span class="hs-comment">-- License     :  ISC</span><span>
+</span><a name="line-12"></a><span class="hs-comment">-- Maintainer  :  sgraf1337@gmail.com</span><span>
+</span><a name="line-13"></a><span class="hs-comment">-- Portability :  portable</span><span>
+</span><a name="line-14"></a><span class="hs-comment">--</span><span>
+</span><a name="line-15"></a><span class="hs-comment">-- Bridges the &quot;Datafix.Worklist&quot; solver for 'DataFlowProblem's ('solveProblem')</span><span>
+</span><a name="line-16"></a><span class="hs-comment">-- with the &quot;Datafix.Denotational&quot; approach, using 'MonadDatafix' to describe</span><span>
+</span><a name="line-17"></a><span class="hs-comment">-- a 'Denotation'.</span><span>
+</span><a name="line-18"></a><span>
+</span><a name="line-19"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Datafix</span><span class="hs-operator">.</span><span class="hs-identifier">Worklist</span><span class="hs-operator">.</span><span class="hs-identifier">Denotational</span><span>
+</span><a name="line-20"></a><span>  </span><span class="hs-special">(</span><span> </span><a href="Datafix.Worklist.Denotational.html#evalDenotation"><span class="hs-identifier hs-var">evalDenotation</span></a><span>
+</span><a name="line-21"></a><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-22"></a><span>
+</span><a name="line-23"></a><span class="hs-keyword">import</span><span>           </span><a href="Datafix.Common.html"><span class="hs-identifier">Datafix</span><span class="hs-operator">.</span><span class="hs-identifier">Common</span></a><span>
+</span><a name="line-24"></a><span class="hs-keyword">import</span><span>           </span><a href="Datafix.Denotational.html"><span class="hs-identifier">Datafix</span><span class="hs-operator">.</span><span class="hs-identifier">Denotational</span></a><span>
+</span><a name="line-25"></a><span class="hs-keyword">import</span><span>           </span><a href="Datafix.ProblemBuilder.html"><span class="hs-identifier">Datafix</span><span class="hs-operator">.</span><span class="hs-identifier">ProblemBuilder</span></a><span>
+</span><a name="line-26"></a><span class="hs-keyword">import</span><span>           </span><a href="Datafix.Worklist.Internal.html"><span class="hs-identifier">Datafix</span><span class="hs-operator">.</span><span class="hs-identifier">Worklist</span><span class="hs-operator">.</span><span class="hs-identifier">Internal</span></a><span>
+</span><a name="line-27"></a><span>
+</span><a name="line-28"></a><span class="hs-comment">-- | @evalDenotation denot ib@ returns a value in @domain@ that is described by</span><span>
+</span><a name="line-29"></a><span class="hs-comment">-- the denotation @denot@.</span><span>
+</span><a name="line-30"></a><span class="hs-comment">--</span><span>
+</span><a name="line-31"></a><span class="hs-comment">-- It does so by building up the 'DataFlowProblem' corresponding to @denot@</span><span>
+</span><a name="line-32"></a><span class="hs-comment">-- and solving the resulting problem with 'solveProblem', the documentation of</span><span>
+</span><a name="line-33"></a><span class="hs-comment">-- which describes in detail how to arrive at a stable denotation and what</span><span>
+</span><a name="line-34"></a><span class="hs-comment">-- the 'IterationBound' @ib@ is for.</span><span>
+</span><a name="line-35"></a><span class="hs-identifier">evalDenotation</span><span>
+</span><a name="line-36"></a><span>  </span><span class="hs-glyph">::</span><span> </span><a href="Datafix.Common.html#Datafixable"><span class="hs-identifier hs-type">Datafixable</span></a><span> </span><a href="#local-6989586621679071951"><span class="hs-identifier hs-type">domain</span></a><span>
+</span><a name="line-37"></a><span>  </span><span class="hs-glyph">=&gt;</span><span> </span><a href="Datafix.Denotational.html#Denotation"><span class="hs-identifier hs-type">Denotation</span></a><span> </span><a href="#local-6989586621679071951"><span class="hs-identifier hs-type">domain</span></a><span>
+</span><a name="line-38"></a><span>  </span><span class="hs-comment">-- ^ A build plan for computing the denotation, possibly involving</span><span>
+</span><a name="line-39"></a><span>  </span><span class="hs-comment">-- fixed-point iteration factored through calls to 'datafix'.</span><span>
+</span><a name="line-40"></a><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Datafix.Worklist.Internal.html#IterationBound"><span class="hs-identifier hs-type">IterationBound</span></a><span> </span><a href="#local-6989586621679071951"><span class="hs-identifier hs-type">domain</span></a><span>
+</span><a name="line-41"></a><span>  </span><span class="hs-comment">-- ^ Whether the solution algorithm should respect a maximum bound on the</span><span>
+</span><a name="line-42"></a><span>  </span><span class="hs-comment">-- number of iterations per point. Pass 'NeverAbort' if you don't care.</span><span>
+</span><a name="line-43"></a><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679071951"><span class="hs-identifier hs-type">domain</span></a><span>
+</span><a name="line-44"></a><a name="evalDenotation"><a href="Datafix.Worklist.Denotational.html#evalDenotation"><span class="hs-identifier">evalDenotation</span></a></a><span> </span><a name="local-6989586621679071952"><a href="#local-6989586621679071952"><span class="hs-identifier">denot</span></a></a><span> </span><a name="local-6989586621679071953"><a href="#local-6989586621679071953"><span class="hs-identifier">ib</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="Datafix.Worklist.Internal.html#solveProblem"><span class="hs-identifier hs-var">solveProblem</span></a><span> </span><a href="#local-6989586621679071956"><span class="hs-identifier hs-var">prob</span></a><span> </span><span class="hs-special">(</span><a href="Datafix.Worklist.Internal.html#Dense"><span class="hs-identifier hs-var">Dense</span></a><span> </span><a href="#local-6989586621679071955"><span class="hs-identifier hs-var">max_</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621679071953"><span class="hs-identifier hs-var">ib</span></a><span> </span><a href="#local-6989586621679071954"><span class="hs-identifier hs-var">root</span></a><span>
+</span><a name="line-45"></a><span>  </span><span class="hs-keyword">where</span><span>
+</span><a name="line-46"></a><span>    </span><span class="hs-special">(</span><a name="local-6989586621679071954"><a href="#local-6989586621679071954"><span class="hs-identifier">root</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679071955"><a href="#local-6989586621679071955"><span class="hs-identifier">max_</span></a></a><span class="hs-special">,</span><span> </span><a name="local-6989586621679071956"><a href="#local-6989586621679071956"><span class="hs-identifier">prob</span></a></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="Datafix.ProblemBuilder.html#buildProblem"><span class="hs-identifier hs-var">buildProblem</span></a><span> </span><a href="#local-6989586621679071952"><span class="hs-identifier hs-var">denot</span></a><span>
+</span><a name="line-47"></a><span class="hs-pragma">{-# INLINE evalDenotation #-}</span><span>
+</span><a name="line-48"></a></pre></body></html>
