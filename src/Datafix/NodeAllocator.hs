@@ -22,7 +22,7 @@ import           Control.Monad.Primitive
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.State.Strict
 import           Data.Primitive.Array
-import           Datafix.Description
+import           Datafix.Explicit
 import           Datafix.Utils.GrowableVector     (GrowableVector)
 import qualified Datafix.Utils.GrowableVector     as GV
 import           System.IO.Unsafe                 (unsafePerformIO)

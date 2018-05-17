@@ -76,20 +76,31 @@ type TF m = LiftedFunc (Domain m) m
 -- lead to non-structural recursion, so termination isn't obvious and
 -- demands some confidence in domain theory by the programmer.
 buildDenotation
-  :: forall m
-   . MonadDependency m
-  => Eq (ReturnType (Domain m))
-  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => TransferAlgebra (Domain m)
+  :: forall domain
+   . Eq (ReturnType domain)
+  => Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
+  => TransferAlgebra domain
   -> CoreExpr
-  -> ProblemBuilder m (TF m)
-buildDenotation alg' = buildExpr emptyVarEnv
+  -> Denotation domain
+buildDenotation = buildDenotation'
+
+-- This brings in the scope the existentially quantified 'MonadDatafix'. Too
+-- bad that we have no big lambda so that this is necessary.
+buildDenotation'
+  :: forall m domain
+   . MonadDatafix m
+  => domain ~ Domain (DepM m)
+  => Eq (ReturnType domain)
+  => TransferAlgebra domain
+  -> CoreExpr
+  -> m (TF (DepM m))
+buildDenotation' alg' = buildExpr emptyVarEnv
   where
-    alg = alg' (Proxy :: Proxy m) (Proxy :: Proxy (Domain m))
+    alg = alg' (Proxy :: Proxy (DepM m)) (Proxy :: Proxy domain)
     buildExpr
-      :: VarEnv (TF m)
+      :: VarEnv (TF (DepM m))
       -> CoreExpr
-      -> ProblemBuilder m (TF m)
+      -> m (TF (DepM m))
     buildExpr env expr =
       case expr of
         Lit lit -> pure (alg env (LitF lit))

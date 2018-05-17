@@ -45,18 +45,23 @@ library
   ghc-options:       -Wall
   hs-source-dirs:    src
   exposed-modules:   Datafix
-                     Datafix.Tutorial
-                     Datafix.Description
+                     Datafix.Common
+                     Datafix.Denotational
+                     Datafix.Explicit
                      Datafix.MonoMap
                      Datafix.NodeAllocator
                      Datafix.ProblemBuilder
+                     Datafix.Tutorial
+                     Datafix.Utils.Constraints
                      Datafix.Utils.TypeLevel
                      Datafix.Worklist
+                     Datafix.Worklist.Denotational
                      Datafix.Worklist.Graph
                      Datafix.Worklist.Graph.Dense
                      Datafix.Worklist.Graph.Sparse
                      Datafix.Worklist.Internal
   other-modules:
+                     Datafix.Entailments
                      Datafix.Utils.GrowableVector
                      Datafix.IntArgsMonoMap
                      Datafix.IntArgsMonoSet

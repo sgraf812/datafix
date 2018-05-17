@@ -33,12 +33,14 @@ import           Data.IORef
 import           Data.Maybe                       (fromMaybe, listToMaybe,
                                                    mapMaybe)
 import           Data.Type.Equality
-import           Datafix.Description              hiding (dependOn)
-import qualified Datafix.Description
+import           Datafix.Common
+import           Datafix.Entailments
+import           Datafix.Explicit                 hiding (dependOn)
+import qualified Datafix.Explicit
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
-import           Datafix.ProblemBuilder
+import           Datafix.Utils.Constraints
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph           (GraphRef, PointInfo (..))
 import qualified Datafix.Worklist.Graph           as Graph
@@ -58,9 +60,9 @@ newtype DependencyM graph domain a
   --
   -- This ultimately leaks badly into the exported interface in 'solveProblem':
   -- Since we can't have universally quantified instance contexts (yet!), we can' write
-  -- @(forall s. Datafixable (DependencyM s graph domain)) => (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
+  -- @(forall s. Datafixable domain => (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
   -- and have to instead have the isomorphic
-  -- @(forall s r. (Datafixable (DependencyM s graph domain) => r) -> r) -> (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
+  -- @(forall s r. (Datafixable domain => r) -> r) -> (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
   -- and urge all call sites to pass a meaningless 'id' parameter.
   --
   -- Also, this means more explicit type signatures as we have to make clear to
@@ -109,64 +111,13 @@ initialEnv unstable_ prob ib newGraphRef =
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
 
--- | A constraint synonym for the constraints 'm' and its associated
--- 'Domain' have to suffice.
---
--- This is actually a lot less scary than you might think.
--- Assuming we got [quantified class constraints](http://i.cs.hku.hk/~bruno/papers/hs2017.pdf),
--- @Datafixable@ is a specialized version of this:
---
--- @
--- type Datafixable m =
---   ( forall r. Currying (ParamTypes (Domain m)) r
---   , MonoMapKey (Products (ParamTypes (Domain m)))
---   , BoundedJoinSemiLattice (ReturnType (Domain m))
---   )
--- @
---
--- Now, let's assume a concrete @Domain m ~ String -> Bool -> Int@, so that
--- @'ParamTypes' (String -> Bool -> Int)@ expands to the type-level list @'[String, Bool]@
--- and @'Products' '[String, Bool]@ reduces to @(String, Bool)@.
---
--- Then this constraint makes sure we are able to
---
---  1.  Curry the domain of @String -> Bool -> r@ for all @r@ to e.g. @(String, Bool) -> r@.
---      See 'Currying'. This constraint should always be discharged automatically by the
---      type-checker as soon as 'ParamTypes' and 'ReturnTypes' reduce for the 'Domain' argument,
---      which happens when the concrete @'MonadDependency' m@ is known.
---
---      (Actually, we do this for multiple concrete @r@ because of the missing
---      support for quantified class constraints)
---
---  2.  We want to use a [monotone](https://en.wikipedia.org/wiki/Monotonic_function)
---      map of @(String, Bool)@ to @Int@ (the @ReturnType (Domain m)@). This is
---      ensured by the @'MonoMapKey' (String, Bool)@ constraint.
---
---      This constraint has to be discharged manually, but should amount to a
---      single line of boiler-plate in most cases, see 'MonoMapKey'.
---
---      Note that the monotonicity requirement means we have to pull non-monotone
---      arguments in @Domain m@ into the 'Node' portion of the 'DataFlowProblem'.
---
---  3.  For fixed-point iteration to work at all, the values which we iterate
---      naturally have to be instances of 'BoundedJoinSemiLattice'.
---      That type-class allows us to start iteration from a most-optimistic 'bottom'
---      value and successively iterate towards a conservative approximation using
---      the '(\/)' operator.
-type Datafixable m =
-  ( Currying (ParamTypes (Domain m)) (ReturnType (Domain m))
-  , Currying (ParamTypes (Domain m)) (m (ReturnType (Domain m)))
-  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  , Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m))
-  , MonoMapKey (Products (ParamTypes (Domain m)))
-  , BoundedJoinSemiLattice (ReturnType (Domain m))
-  )
+-- | The 'Domain' is extracted from a type parameter.
+instance Datafixable domain => MonadDomain (DependencyM graph domain) where
+  type Domain (DependencyM graph domain) = domain
 
 -- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
 -- with 'solveProblem'.
--- The 'Domain' is extracted from a type parameter.
-instance (Datafixable (DependencyM graph domain), GraphRef graph) => MonadDependency (DependencyM graph domain) where
-  type Domain (DependencyM graph domain) = domain
+instance (Datafixable domain, GraphRef graph) => MonadDependency (DependencyM graph domain) where
   dependOn = dependOn @domain @graph
   {-# INLINE dependOn #-}
 
@@ -282,7 +233,7 @@ highestPriorityUnstableNode = zoomUnstable $
 {-# INLINE highestPriorityUnstableNode #-}
 
 withCall
-  :: Datafixable (DependencyM graph domain)
+  :: Datafixable domain
   => Int
   -> Products (ParamTypes domain)
   -> ReaderT (Env graph domain) IO a
@@ -314,13 +265,15 @@ recompute
   => cod ~ ReturnType domain
   => depm ~ DependencyM graph domain
   => GraphRef graph
-  => Datafixable depm
+  => Datafixable domain
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
 recompute node args = withCall node args $ do
   prob <- asks problem
   let node' = Node node
   let DM iterate' = uncurrys @dom @(depm cod) (dfpTransfer prob node') args
+                  \\ lfInst @domain @depm
   let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dfpDetectChange prob node') args
+                    \\ cdInst @domain
   -- We need to access the graph at three different points in time:
   --
   --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
@@ -336,7 +289,7 @@ recompute node args = withCall node args $ do
     Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
     guard (iterations preInfo >= n)
     Just oldVal <- return (value preInfo)
-    return (uncurrys @dom @(cod -> cod) abort args oldVal)
+    return (uncurrys @dom @(cod -> cod) abort args oldVal \\ afInst @domain)
   -- For the 'Nothing' case, we proceed by iterating the transfer function.
   newVal <- maybe iterate' return maybeAbortedVal
   -- When abortion is required, 'iterate'' is not called and
@@ -362,37 +315,40 @@ recompute node args = withCall node args $ do
 {-# INLINE recompute #-}
 
 dependOn
-  :: forall domain graph
-   . Datafixable (DependencyM graph domain)
+  :: forall domain graph depm
+   . depm ~ DependencyM graph domain
+  => Datafixable domain
   => GraphRef graph
-  => Node -> LiftedFunc domain (DependencyM graph domain)
-dependOn (Node node) = currys @(ParamTypes domain) @(DependencyM graph domain (ReturnType domain)) impl
-  where
-    impl args = DM $ do
-      cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
-      isStable <- zoomUnstable $
-        not . IntArgsMonoSet.member node args <$> get
-      maybePointInfo <- withReaderT graph (Graph.lookup node args)
-      zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
-      case maybePointInfo >>= value of
-        -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
-        -- Otherwise, the node wasn't part of the call stack and thus will either
-        -- have a 'value' assigned or will not have been discovered at all.
-        Nothing | cycleDetected ->
-          -- Somewhere in an outer activation record we already compute this one.
-          -- We don't recurse again and just return an optimistic approximation,
-          -- such as 'bottom'.
-          -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
-          -- any calls to 'dependOn' for a cycle to even be possible.
-          optimisticApproximation node args
-        Just val | isStable || cycleDetected ->
-          -- No brainer
-          return val
-        maybeVal ->
-          -- No cycle && (unstable || undiscovered). Apply one of the schemes
-          -- outlined in
-          -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
-          scheme2 maybeVal node args
+  => Node -> LiftedFunc domain depm
+dependOn (Node node) =
+  currys @(ParamTypes domain) @(depm (ReturnType domain)) impl
+    \\ lfInst @domain @(DependencyM graph domain)
+    where
+      impl args = DM $ do
+        cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
+        isStable <- zoomUnstable $
+          not . IntArgsMonoSet.member node args <$> get
+        maybePointInfo <- withReaderT graph (Graph.lookup node args)
+        zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
+        case maybePointInfo >>= value of
+          -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
+          -- Otherwise, the node wasn't part of the call stack and thus will either
+          -- have a 'value' assigned or will not have been discovered at all.
+          Nothing | cycleDetected ->
+            -- Somewhere in an outer activation record we already compute this one.
+            -- We don't recurse again and just return an optimistic approximation,
+            -- such as 'bottom'.
+            -- Otherwise, 'recompute' will immediately add a 'PointInfo' before
+            -- any calls to 'dependOn' for a cycle to even be possible.
+            optimisticApproximation node args
+          Just val | isStable || cycleDetected ->
+            -- No brainer
+            return val
+          maybeVal ->
+            -- No cycle && (unstable || undiscovered). Apply one of the schemes
+            -- outlined in
+            -- https://github.com/sgraf812/journal/blob/09f0521dbdf53e7e5777501fc868bb507f5ceb1a/datafix.md.html#how-an-algorithm-that-can-do-3-looks-like
+            scheme2 maybeVal node args
 {-# INLINE dependOn #-}
 
 -- | Compute an optimistic approximation for a point of a given node that is
@@ -404,7 +360,7 @@ dependOn (Node node) = currys @(ParamTypes domain) @(DependencyM graph domain (R
 -- that are lower bounds to the current point.
 optimisticApproximation
   :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  => Datafixable domain
   => Int -> Products (ParamTypes domain) -> ReaderT (Env graph domain) IO (ReturnType domain)
 optimisticApproximation node args = do
   points <- withReaderT graph (Graph.lookupLT node args)
@@ -415,7 +371,7 @@ optimisticApproximation node args = do
 
 scheme1, scheme2
   :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  => Datafixable domain
   => Maybe (ReturnType domain)
   -> Int
   -> Products (ParamTypes domain)
@@ -474,7 +430,7 @@ whileJust_ cond action = go
 -- fixed-point has been reached.
 work
   :: GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  => Datafixable domain
   => ReaderT (Env graph domain) IO ()
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
@@ -499,7 +455,7 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 solveProblem
   :: forall domain graph
    . GraphRef graph
-  => Datafixable (DependencyM graph domain)
+  => Datafixable domain
   => DataFlowProblem (DependencyM graph domain)
   -- ^ The description of the @DataFlowProblem@ to solve.
   -> Density graph
@@ -516,7 +472,7 @@ solveProblem
   -- you specified via the @DataFlowProblem@.
   -> domain
 solveProblem prob density ib (Node node) =
-  castWith arrowsAxiom (currys @(ParamTypes domain) @(ReturnType domain) impl)
+  castWith arrowsAxiom (currys @(ParamTypes domain) @(ReturnType domain) impl \\ idInst @domain)
     where
       impl
         = fromMaybe (error "Broken invariant: The root node has no value")
@@ -531,25 +487,3 @@ solveProblem prob density ib (Node node) =
         env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
         runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
 {-# INLINE solveProblem #-}
-
--- | @evalDenotation denot ib@ returns a value in @domain@ that is described by
--- the denotation @denot@.
---
--- It does so by building up the 'DataFlowProblem' corresponding to @denot@
--- and solving the resulting problem with 'solveProblem', the documentation of
--- which describes in detail how to arrive at a stable denotation and what
--- the 'IterationBound' @ib@ is for.
-evalDenotation
-  :: forall domain
-   . Datafixable (DependencyM DenseGraph.Ref domain)
-  => ProblemBuilder (DependencyM DenseGraph.Ref domain) (LiftedFunc domain (DependencyM DenseGraph.Ref domain))
-  -- ^ A build plan for computing the denotation, possibly involving
-  -- fixed-point iteration factored through calls to 'datafix'.
-  -> IterationBound domain
-  -- ^ Whether the solution algorithm should respect a maximum bound on the
-  -- number of iterations per point. Pass 'NeverAbort' if you don't care.
-  -> domain
-evalDenotation denot ib = solveProblem prob (Dense max_) ib root
-  where
-    (root, max_, prob) = buildProblem denot
-{-# INLINE evalDenotation #-}

@@ -15,7 +15,9 @@
 -- Look at "Datafix.Tutorial" for a tour guided by use cases.
 
 module Datafix
-  ( module Datafix.Description
+  ( module Datafix.Common
+  , module Datafix.Denotational
+  , module Datafix.Explicit
   , module Datafix.NodeAllocator
   , module Datafix.ProblemBuilder
   , Datafix.MonoMap.MonoMap
@@ -23,7 +25,9 @@ module Datafix
   , module Datafix.Worklist
   ) where
 
-import           Datafix.Description
+import           Datafix.Common
+import           Datafix.Denotational
+import           Datafix.Explicit
 import           Datafix.MonoMap
 import           Datafix.NodeAllocator
 import           Datafix.ProblemBuilder

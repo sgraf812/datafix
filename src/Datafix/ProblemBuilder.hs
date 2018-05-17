@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -13,7 +14,10 @@
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
 --
--- Offers an instance for 'MonadDatafix' based on 'NodeAllocator'.
+-- Builds a 'DataFlowProblem' for a 'Denotation'al formulation in terms of
+-- 'MonadDatafix'. Effectively reduces descriptions from "Datafix.Denotational"
+-- to ones from "Datafix.Explicit", so that solvers such as "Datafix.Worklist"
+-- only have to provide an interpreter for 'MonadDependency'.
 
 module Datafix.ProblemBuilder
   ( ProblemBuilder
@@ -21,9 +25,12 @@ module Datafix.ProblemBuilder
   ) where
 
 import           Data.Primitive.Array
-import           Datafix.Description
+import           Datafix.Common
+import           Datafix.Denotational
+import           Datafix.Entailments
+import           Datafix.Explicit
 import           Datafix.NodeAllocator
-import           Datafix.Utils.TypeLevel
+import           Datafix.Utils.Constraints
 
 -- | Constructs a build plan for a 'DataFlowProblem' by tracking allocation of
 -- 'Node's mapping to 'ChangeDetector's and transfer functions.
@@ -31,7 +38,8 @@ newtype ProblemBuilder m a
   = ProblemBuilder { unwrapProblemBuilder :: NodeAllocator (ChangeDetector (Domain m), LiftedFunc (Domain m) m) a }
   deriving (Functor, Applicative, Monad)
 
-instance MonadDependency m => MonadDatafix m (ProblemBuilder m) where
+instance MonadDependency m => MonadDatafix (ProblemBuilder m) where
+  type DepM (ProblemBuilder m) = m
   datafix cd func = ProblemBuilder $ allocateNode $ \node -> do
     let deref = dependOn @m node
     (ret, transfer) <- unwrapProblemBuilder (func deref)
@@ -45,12 +53,11 @@ instance MonadDependency m => MonadDatafix m (ProblemBuilder m) where
 buildProblem
   :: forall m
    . MonadDependency m
-  => Currying (ParamTypes (Domain m)) (ReturnType (Domain m) -> ReturnType (Domain m) -> Bool)
-  => ProblemBuilder m (LiftedFunc (Domain m) m)
+  => Denotation (Domain m)
   -> (Node, Node, DataFlowProblem m)
 buildProblem buildDenotation = (root, Node (sizeofArray arr - 1), prob)
   where
     prob = DFP (snd . indexArray arr . unwrapNode) (fst . indexArray arr . unwrapNode)
     (root, arr) = runAllocator $ allocateNode $ \root_ -> do
-      denotation <- unwrapProblemBuilder buildDenotation
-      return (root_, (alwaysChangeDetector @(Domain m), denotation))
+      denotation <- unwrapProblemBuilder (buildDenotation @(ProblemBuilder m))
+      return (root_, (alwaysChangeDetector @(Domain m) \\ cdInst @(Domain m), denotation))

@@ -7,14 +7,16 @@
 --
 -- This module provides the 'Impl.solveProblem' function, which solves the description of a
 -- 'Datafix.Description.DataFlowProblem' by employing a worklist algorithm.
+-- There's also an interpreter for 'Denotation'al problems in the form of
+-- 'Denotational.evalDenotation'.
 
 module Datafix.Worklist
   ( Impl.DependencyM
-  , Impl.Datafixable
   , Impl.Density (..)
   , Impl.IterationBound (..)
   , Impl.solveProblem
-  , Impl.evalDenotation
+  , Denotational.evalDenotation
   ) where
 
 import qualified Datafix.Worklist.Internal as Impl
+import qualified Datafix.Worklist.Denotational as Denotational

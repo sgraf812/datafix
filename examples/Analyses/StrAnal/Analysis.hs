@@ -24,7 +24,7 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = evalDenotation (buildDenotation transferFunctionAlg expr) NeverAbort 0
+analyse expr = evalDenotation (buildDenotation transferFunctionAlg expr) NeverAbort (0 :: Arity)
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
