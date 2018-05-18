@@ -23,6 +23,7 @@ stability:           alpha (experimental)
 cabal-version:       1.24
 
 extra-source-files:
+  CHANGELOG.md
   README.md
   stack.yaml
   exprs/const.hs
