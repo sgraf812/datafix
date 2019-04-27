@@ -392,18 +392,18 @@ instance Control.DeepSeq.NFData1 Control.Applicative.ZipList
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData1 (Data.Functor.Const.Const a)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData1 (GHC.Arr.Array a)
 instance Control.DeepSeq.NFData1 Data.Ord.Down
-instance Control.DeepSeq.NFData1 Data.Monoid.Dual
+instance Control.DeepSeq.NFData1 Data.Semigroup.Internal.Dual
 instance Control.DeepSeq.NFData1 Data.Monoid.First
 instance Control.DeepSeq.NFData1 Data.Monoid.Last
-instance Control.DeepSeq.NFData1 Data.Monoid.Sum
-instance Control.DeepSeq.NFData1 Data.Monoid.Product
+instance Control.DeepSeq.NFData1 Data.Semigroup.Internal.Sum
+instance Control.DeepSeq.NFData1 Data.Semigroup.Internal.Product
 instance Control.DeepSeq.NFData1 System.Mem.StableName.StableName
 instance Control.DeepSeq.NFData1 GHC.IORef.IORef
 instance Control.DeepSeq.NFData1 (GHC.STRef.STRef s)
 instance Control.DeepSeq.NFData1 GHC.MVar.MVar
 instance Control.DeepSeq.NFData1 GHC.Ptr.Ptr
 instance Control.DeepSeq.NFData1 GHC.Ptr.FunPtr
-instance Control.DeepSeq.NFData1 Data.List.NonEmpty.NonEmpty
+instance Control.DeepSeq.NFData1 GHC.Base.NonEmpty
 instance Control.DeepSeq.NFData1 Data.Semigroup.Min
 instance Control.DeepSeq.NFData1 Data.Semigroup.Max
 instance Control.DeepSeq.NFData1 Data.Semigroup.First
@@ -446,13 +446,13 @@ instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Control.Applicative
 instance forall k a (b :: k). Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Functor.Const.Const a b)
 instance (Control.DeepSeq.NFData a, Control.DeepSeq.NFData b) => Control.DeepSeq.NFData (GHC.Arr.Array a b)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Ord.Down a)
-instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Monoid.Dual a)
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Semigroup.Internal.Dual a)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Monoid.First a)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Monoid.Last a)
-instance Control.DeepSeq.NFData Data.Monoid.Any
-instance Control.DeepSeq.NFData Data.Monoid.All
-instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Monoid.Sum a)
-instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Monoid.Product a)
+instance Control.DeepSeq.NFData Data.Semigroup.Internal.Any
+instance Control.DeepSeq.NFData Data.Semigroup.Internal.All
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Semigroup.Internal.Sum a)
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Semigroup.Internal.Product a)
 instance Control.DeepSeq.NFData (System.Mem.StableName.StableName a)
 instance Control.DeepSeq.NFData GHC.Conc.Sync.ThreadId
 instance Control.DeepSeq.NFData Data.Unique.Unique
@@ -494,7 +494,7 @@ instance Control.DeepSeq.NFData Foreign.C.Types.CFpos
 instance Control.DeepSeq.NFData Foreign.C.Types.CJmpBuf
 instance Control.DeepSeq.NFData Foreign.C.Types.CBool
 instance Control.DeepSeq.NFData GHC.IO.Exception.ExitCode
-instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.List.NonEmpty.NonEmpty a)
+instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (GHC.Base.NonEmpty a)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Semigroup.Min a)
 instance Control.DeepSeq.NFData a => Control.DeepSeq.NFData (Data.Semigroup.Max a)
 instance (Control.DeepSeq.NFData a, Control.DeepSeq.NFData b) => Control.DeepSeq.NFData (Data.Semigroup.Arg a b)

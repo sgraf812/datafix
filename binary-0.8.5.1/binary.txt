@@ -22,7 +22,7 @@ module Data.Binary.Builder
 -- | <a>Builder</a>s denote sequences of bytes. They are <a>Monoid</a>s
 --   where <a>mempty</a> is the zero-length sequence and <a>mappend</a> is
 --   concatenation, which runs in <i>O(1)</i>.
-data Builder :: *
+data Builder
 
 -- | Execute a <a>Builder</a> and return the generated chunks as a lazy
 --   <a>ByteString</a>. The work is performed lazy, i.e., only when a chunk
@@ -796,7 +796,7 @@ instance GHC.Base.Functor Data.Binary.Put.PutM
 instance GHC.Base.Applicative Data.Binary.Put.PutM
 instance GHC.Base.Monad Data.Binary.Put.PutM
 instance GHC.Base.Monoid (Data.Binary.Put.PutM ())
-instance Data.Semigroup.Semigroup (Data.Binary.Put.PutM ())
+instance GHC.Base.Semigroup (Data.Binary.Put.PutM ())
 
 
 -- | Binary serialisation of Haskell values to and from lazy

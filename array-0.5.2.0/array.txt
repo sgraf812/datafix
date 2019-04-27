@@ -25,7 +25,7 @@ module Data.Array
 
 -- | The type of immutable non-strict (boxed) arrays with indices in
 --   <tt>i</tt> and elements in <tt>e</tt>.
-data Array i e :: * -> * -> *
+data Array i e
 
 -- | Construct an array with the specified bounds and containing values for
 --   given indices within these bounds.
@@ -75,7 +75,7 @@ listArray :: Ix i => (i, i) -> [e] -> Array i e
 --   strict in the values, as well as the indices, in the association list.
 --   Thus, unlike ordinary arrays built with <a>array</a>, accumulated
 --   arrays should not in general be recursive.
-accumArray :: Ix i => (e -> a -> e) -> e -> (i, i) -> [(i, a)] -> Array i e
+accumArray :: Ix i => e -> a -> e -> e -> (i, i) -> [(i, a)] -> Array i e
 
 -- | The value at the given index in an array.
 (!) :: Ix i => Array i e -> i -> e
@@ -118,7 +118,7 @@ infixl 9 //
 --   <pre>
 --   accumArray f z b = accum f (array b [(i, z) | i &lt;- range b])
 --   </pre>
-accum :: Ix i => (e -> a -> e) -> Array i e -> [(i, a)] -> Array i e
+accum :: Ix i => e -> a -> e -> Array i e -> [(i, a)] -> Array i e
 
 -- | <a>ixmap</a> allows for transformations on array indices. It may be
 --   thought of as providing function composition on the right with the
@@ -127,7 +127,7 @@ accum :: Ix i => (e -> a -> e) -> Array i e -> [(i, a)] -> Array i e
 --   A similar transformation of array values may be achieved using
 --   <a>fmap</a> from the <a>Array</a> instance of the <a>Functor</a>
 --   class.
-ixmap :: (Ix i, Ix j) => (i, i) -> (i -> j) -> Array j e -> Array i e
+ixmap :: (Ix i, Ix j) => (i, i) -> i -> j -> Array j e -> Array i e
 
 
 -- | Immutable arrays, with an overloaded interface. For array types which
@@ -146,12 +146,9 @@ module Data.Array.IArray
 --   element types can be defined.
 class IArray a e
 
--- | Extracts the bounds of an immutable array
-bounds :: (IArray a e, Ix i) => a i e -> (i, i)
-
 -- | The type of immutable non-strict (boxed) arrays with indices in
 --   <tt>i</tt> and elements in <tt>e</tt>.
-data Array i e :: * -> * -> *
+data Array i e
 
 -- | Constructs an immutable array from a pair of bounds and a list of
 --   initial associations.
@@ -284,19 +281,6 @@ module Data.Array.MArray
 --   manipulated.
 class (Monad m) => MArray a e m
 
--- | Returns the bounds of the array
-getBounds :: (MArray a e m, Ix i) => a i e -> m (i, i)
-
--- | Builds a new array, with every element initialised to the supplied
---   value.
-newArray :: (MArray a e m, Ix i) => (i, i) -> e -> m (a i e)
-
--- | Builds a new array, with every element initialised to an undefined
---   value. In a monadic context in which operations must be deterministic
---   (e.g. the ST monad), the array elements are initialised to a fixed but
---   undefined value, such as zero.
-newArray_ :: (MArray a e m, Ix i) => (i, i) -> m (a i e)
-
 -- | Builds a new array, with every element initialised to the supplied
 --   value.
 newArray :: (MArray a e m, Ix i) => (i, i) -> e -> m (a i e)
@@ -358,7 +342,7 @@ module Data.Array.IO
 --   <a>Ix</a>)</li>
 --   <li><tt>e</tt>: the element type of the array.</li>
 --   </ul>
-data IOArray i e :: * -> * -> *
+data IOArray i e
 
 -- | Mutable, unboxed, strict arrays in the <a>IO</a> monad. The type
 --   arguments are as follows:
@@ -399,19 +383,6 @@ module Data.Array.MArray.Safe
 --   type of the monad, <tt>m</tt>, in which the mutable array will be
 --   manipulated.
 class (Monad m) => MArray a e m
-
--- | Returns the bounds of the array
-getBounds :: (MArray a e m, Ix i) => a i e -> m (i, i)
-
--- | Builds a new array, with every element initialised to the supplied
---   value.
-newArray :: (MArray a e m, Ix i) => (i, i) -> e -> m (a i e)
-
--- | Builds a new array, with every element initialised to an undefined
---   value. In a monadic context in which operations must be deterministic
---   (e.g. the ST monad), the array elements are initialised to a fixed but
---   undefined value, such as zero.
-newArray_ :: (MArray a e m, Ix i) => (i, i) -> m (a i e)
 
 -- | Builds a new array, with every element initialised to the supplied
 --   value.
@@ -475,7 +446,7 @@ module Data.Array.IO.Safe
 --   <a>Ix</a>)</li>
 --   <li><tt>e</tt>: the element type of the array.</li>
 --   </ul>
-data IOArray i e :: * -> * -> *
+data IOArray i e
 
 -- | Mutable, unboxed, strict arrays in the <a>IO</a> monad. The type
 --   arguments are as follows:
@@ -510,7 +481,7 @@ module Data.Array.ST
 --   <a>Ix</a>)</li>
 --   <li><tt>e</tt>: the element type of the array.</li>
 --   </ul>
-data STArray s i e :: * -> * -> * -> *
+data STArray s i e
 
 -- | A safe way to create and work with a mutable array before returning an
 --   immutable array for later perusal. This function avoids copying the
@@ -559,7 +530,7 @@ module Data.Array.ST.Safe
 --   <a>Ix</a>)</li>
 --   <li><tt>e</tt>: the element type of the array.</li>
 --   </ul>
-data STArray s i e :: * -> * -> * -> *
+data STArray s i e
 
 -- | A safe way to create and work with a mutable array before returning an
 --   immutable array for later perusal. This function avoids copying the

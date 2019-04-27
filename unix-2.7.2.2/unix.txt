@@ -294,11 +294,11 @@ throwErrnoPath :: () => String -> FilePath -> IO a
 
 -- | as <a>throwErrnoIf</a>, but exceptions include the given path when
 --   appropriate.
-throwErrnoPathIf :: () => (a -> Bool) -> String -> FilePath -> IO a -> IO a
+throwErrnoPathIf :: () => a -> Bool -> String -> FilePath -> IO a -> IO a
 
 -- | as <a>throwErrnoIf_</a>, but exceptions include the given path when
 --   appropriate.
-throwErrnoPathIf_ :: () => (a -> Bool) -> String -> FilePath -> IO a -> IO ()
+throwErrnoPathIf_ :: () => a -> Bool -> String -> FilePath -> IO a -> IO ()
 throwErrnoPathIfRetry :: (a -> Bool) -> String -> FilePath -> IO a -> IO a
 
 -- | as <a>throwErrnoIfNull</a>, but exceptions include the given path when
@@ -2651,6 +2651,108 @@ module System.Posix.ByteString
 -- | A literal POSIX file path
 type RawFilePath = ByteString
 
+-- | Flags for <a>dlsym</a>. Notice that <a>Next</a> might not be available
+--   on your particular platform! Use <a>haveRtldNext</a>.
+--   
+--   If <tt>RTLD_DEFAULT</tt> is not defined on your platform,
+--   <a>packDL</a> <a>Default</a> reduces to <a>nullPtr</a>.
+data DL
+Null :: DL
+Next :: DL
+DLHandle :: (Ptr ()) -> DL
+
+-- | Flags for <a>dlopen</a>.
+data RTLDFlags
+RTLD_LAZY :: RTLDFlags
+RTLD_NOW :: RTLDFlags
+RTLD_GLOBAL :: RTLDFlags
+RTLD_LOCAL :: RTLDFlags
+c_dlclose :: (Ptr ()) -> IO CInt
+c_dlerror :: IO CString
+c_dlsym :: Ptr () -> CString -> IO (FunPtr a)
+c_dlopen :: CString -> CInt -> IO (Ptr ())
+
+-- | On some hosts (e.g. SuSe and Ubuntu Linux) <tt>RTLD_NEXT</tt> (and
+--   <tt>RTLD_DEFAULT</tt>) are not visible without setting the macro
+--   <tt>_GNU_SOURCE</tt>. Since we don't want to define this macro, you
+--   can use the function <a>haveRtldNext</a> to check wether the flag
+--   <a>Next</a> is available. Ideally, this will be optimized by the
+--   compiler so that it should be as efficient as an <tt>#ifdef</tt>.
+--   
+--   If you fail to test the flag and use it although it is undefined,
+--   <a>packDL</a> will throw an error.
+haveRtldNext :: Bool
+
+-- | <i>Deprecated: defaults to True</i>
+haveRtldLocal :: Bool
+packRTLDFlags :: [RTLDFlags] -> CInt
+packDL :: DL -> Ptr ()
+dlclose :: DL -> IO ()
+dlerror :: IO String
+
+-- | <a>dlsym</a> returns the address binding of the symbol described in
+--   <tt>symbol</tt>, as it occurs in the shared object identified by
+--   <tt>source</tt>.
+dlsym :: DL -> String -> IO (FunPtr a)
+
+-- | <a>undl</a> obtains the raw handle. You mustn't do something like
+--   <tt>withDL mod flags $ liftM undl &gt;&gt;= p -&gt; use p</tt>
+undl :: DL -> Ptr ()
+dlopen :: RawFilePath -> [RTLDFlags] -> IO DL
+withDL :: RawFilePath -> [RTLDFlags] -> (DL -> IO a) -> IO a
+withDL_ :: RawFilePath -> [RTLDFlags] -> (DL -> IO a) -> IO ()
+
 
 -- | <a>POSIX.1-2008</a> support
 module System.Posix
+
+-- | Flags for <a>dlsym</a>. Notice that <a>Next</a> might not be available
+--   on your particular platform! Use <a>haveRtldNext</a>.
+--   
+--   If <tt>RTLD_DEFAULT</tt> is not defined on your platform,
+--   <a>packDL</a> <a>Default</a> reduces to <a>nullPtr</a>.
+data DL
+Null :: DL
+Next :: DL
+DLHandle :: (Ptr ()) -> DL
+
+-- | Flags for <a>dlopen</a>.
+data RTLDFlags
+RTLD_LAZY :: RTLDFlags
+RTLD_NOW :: RTLDFlags
+RTLD_GLOBAL :: RTLDFlags
+RTLD_LOCAL :: RTLDFlags
+c_dlclose :: (Ptr ()) -> IO CInt
+c_dlerror :: IO CString
+c_dlsym :: Ptr () -> CString -> IO (FunPtr a)
+c_dlopen :: CString -> CInt -> IO (Ptr ())
+
+-- | On some hosts (e.g. SuSe and Ubuntu Linux) <tt>RTLD_NEXT</tt> (and
+--   <tt>RTLD_DEFAULT</tt>) are not visible without setting the macro
+--   <tt>_GNU_SOURCE</tt>. Since we don't want to define this macro, you
+--   can use the function <a>haveRtldNext</a> to check wether the flag
+--   <a>Next</a> is available. Ideally, this will be optimized by the
+--   compiler so that it should be as efficient as an <tt>#ifdef</tt>.
+--   
+--   If you fail to test the flag and use it although it is undefined,
+--   <a>packDL</a> will throw an error.
+haveRtldNext :: Bool
+
+-- | <i>Deprecated: defaults to True</i>
+haveRtldLocal :: Bool
+packRTLDFlags :: [RTLDFlags] -> CInt
+packDL :: DL -> Ptr ()
+dlclose :: DL -> IO ()
+dlerror :: IO String
+
+-- | <a>dlsym</a> returns the address binding of the symbol described in
+--   <tt>symbol</tt>, as it occurs in the shared object identified by
+--   <tt>source</tt>.
+dlsym :: DL -> String -> IO (FunPtr a)
+
+-- | <a>undl</a> obtains the raw handle. You mustn't do something like
+--   <tt>withDL mod flags $ liftM undl &gt;&gt;= p -&gt; use p</tt>
+undl :: DL -> Ptr ()
+dlopen :: FilePath -> [RTLDFlags] -> IO DL
+withDL :: String -> [RTLDFlags] -> (DL -> IO a) -> IO a
+withDL_ :: String -> [RTLDFlags] -> (DL -> IO a) -> IO ()

@@ -607,6 +607,7 @@ ZonedTime :: LocalTime -> TimeZone -> ZonedTime
 utcToZonedTime :: TimeZone -> UTCTime -> ZonedTime
 zonedTimeToUTC :: ZonedTime -> UTCTime
 getZonedTime :: IO ZonedTime
+
 utcToLocalZonedTime :: UTCTime -> IO ZonedTime
 
 
