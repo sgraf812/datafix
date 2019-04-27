@@ -49,9 +49,12 @@ matrix:
   - env: BUILD=cabal GHCVER=8.2.2 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
     compiler: ": #GHC 8.2.2"
     addons: {apt: {packages: [cabal-install-2.0,ghc-8.2.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
-  - env: BUILD=cabal GHCVER=8.4.2 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 8.4.2"
-    addons: {apt: {packages: [cabal-install-2.0,ghc-8.4.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.4.4 CABALVER=2.2 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.4.4"
+    addons: {apt: {packages: [cabal-install-2.2,ghc-8.4.4,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
+  - env: BUILD=cabal GHCVER=8.6.5 CABALVER=2.4 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.4.4"
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.5,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
 
   # Build with the newest GHC and cabal-install. This is an accepted failure,
   # see below.
@@ -69,15 +72,23 @@ matrix:
     compiler: ": #stack 8.0.2"
     addons: {apt: {packages: [libgmp-dev]}}
 
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-11.yaml"
+    compiler: ": #stack 8.2.2"
+    addons: {apt: {packages: [libgmp-dev]}}
+
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-12.yaml"
+    compiler: ": #stack 8.4.4"
+    addons: {apt: {packages: [libgmp-dev]}}
+
   # Check that the build succeeds when not depending on `lattices`
   - env: BUILD=stack ARGS="--flag pomaps:no-lattices --flag datafix:no-lattices"
     compiler: ": #stack default without lattices"
     addons: {apt: {packages: [libgmp-dev]}}
 
   # This just checks style rules
-  - env: BUILD=style GHCVER=8.4.2
-    compiler: ": #stack 8.4.2 style"
-    addons: {apt: {packages: [cabal-install-2.0,ghc-8.4.2,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
+  - env: BUILD=style GHCVER=8.6.4
+    compiler: ": #stack 8.6.4 style"
+    addons: {apt: {packages: [cabal-install-2.4,ghc-8.6.4,happy-1.19.5,alex-3.1.7], sources: [hvr-ghc]}}
 
   # Nightly builds are allowed to fail
   - env: BUILD=stack ARGS="--resolver nightly"
@@ -91,6 +102,14 @@ matrix:
 
   - env: BUILD=stack ARGS="--stack-yaml=stack-lts-9.yaml"
     compiler: ": #stack 8.0.2 osx"
+    os: osx
+
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-11.yaml"
+    compiler: ": #stack 8.2.2 osx"
+    os: osx
+
+  - env: BUILD=stack ARGS="--stack-yaml=stack-lts-12.yaml"
+    compiler: ": #stack 8.4.4 osx"
     os: osx
 
   - env: BUILD=stack ARGS="--resolver nightly"

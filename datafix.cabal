@@ -1,5 +1,5 @@
 name:                datafix
-version:             0.0.0.2
+version:             0.0.0.3
 synopsis:            Fixing data-flow problems
 description:         Fixing data-flow problems in expression trees.
                      This should be useful if you want to write optimizations
@@ -73,16 +73,16 @@ library
                      Datafix.IntArgsMonoMap
                      Datafix.IntArgsMonoSet
   build-depends:     base >= 4.8 && < 5
-                   , containers >= 0.5 && < 0.6
+                   , containers >= 0.5 && < 0.6.1
                    , transformers < 0.6
                    -- Just Data.Vector.Mutable, which has been there for ages
                    , vector < 0.13
                    -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
                    , primitive >= 0.6.2.0 && < 0.7
                    -- has not reached the first major version, so quite unstable
-                   , pomaps >= 0.0.0.2 && < 0.0.1.0
+                   , pomaps >= 0.0.0.2 && < 0.0.3.0
   if !flag(no-lattices)
-    build-depends:   lattices < 2
+    build-depends:   lattices
   if flag(no-lattices)
     hs-source-dirs:  lattices
     exposed-modules: Algebra.Lattice
@@ -167,7 +167,7 @@ benchmark benchmarks
                    , containers
                    , primitive
                    , transformers < 0.6
-                   , datafix                   
+                   , datafix
                    , ghc
                    , ghc-paths
                    , directory

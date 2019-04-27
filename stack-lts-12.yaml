@@ -9,7 +9,7 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
-resolver: lts-9.21
+resolver: lts-13.18
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -35,10 +35,10 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- containers-0.5.10.2
-- pomaps-0.0.2.0
-- cabal-toolkit-0.0.4
-- lattices-1.7
+- cabal-toolkit-0.0.5
+- pomaps-0.0.2.1
+
+allow-newer: true
 
 # Override default flag values for local packages and extra-deps
 flags: {}
