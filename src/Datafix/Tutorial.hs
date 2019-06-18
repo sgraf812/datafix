@@ -16,7 +16,7 @@
 --
 -- The need for this library arose when I was combining two analyses
 -- within GHC for my master's thesis. I recently
--- [held a talk](https://cdn.rawgit.com/sgraf812/hiw17/2645b206d3f2b5e6e7c95bc791dfa4bf9cbc8d12/slides.pdf)
+-- [held a talk](https://cdn.jsdelivr.net/gh/sgraf812/hiw17@master/slides.pdf)
 -- on that topic, feel free to click through if you want to know the details.
 --
 -- You can think of data-flow problems as problems that are solvable by
