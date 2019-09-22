@@ -31,5 +31,5 @@ import           Datafix.Explicit
 import           Datafix.MonoMap
 import           Datafix.NodeAllocator
 import           Datafix.ProblemBuilder
-import           Datafix.Utils.TypeLevel
+import           Datafix.Utils.TypeLevel hiding (Map)
 import           Datafix.Worklist

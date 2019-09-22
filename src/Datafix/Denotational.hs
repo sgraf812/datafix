@@ -69,5 +69,5 @@ datafixEq = datafix @m (eqChangeDetector @dom) \\ cdInst @dom
 
 -- | A denotation of some syntactic entity in a semantic @domain@, built in a
 -- some 'MonadDatafix' context.
-type Denotation dom
-  =  forall m. (MonadDatafix m, dom ~ Domain (DepM m)) => m (LiftedFunc dom (DepM m))
+type Denotation domain func
+  =  forall m. (MonadDatafix m, domain ~ Domain (DepM m)) => m (LiftedFunc func (DepM m))

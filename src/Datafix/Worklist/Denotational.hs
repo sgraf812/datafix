@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeApplications      #-}
 
 -- |
 -- Module      :  Datafix.Worklist.Denotational
@@ -22,8 +23,13 @@ module Datafix.Worklist.Denotational
 
 import           Datafix.Common
 import           Datafix.Denotational
+import           Datafix.Entailments
+import           Datafix.Utils.Constraints
+import           Datafix.Utils.TypeLevel
 import           Datafix.ProblemBuilder
+import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
 import           Datafix.Worklist.Internal
+import           Data.Type.Equality
 
 -- | @evalDenotation denot ib@ returns a value in @domain@ that is described by
 -- the denotation @denot@.
@@ -31,17 +37,23 @@ import           Datafix.Worklist.Internal
 -- It does so by building up the 'DataFlowProblem' corresponding to @denot@
 -- and solving the resulting problem with 'solveProblem', the documentation of
 -- which describes in detail how to arrive at a stable denotation and what
--- the 'IterationBound' @ib@ is for.
+-- the 'IterationBound' @ib@, domain ~ Domain (DepM m) is for.
 evalDenotation
-  :: Datafixable domain
-  => Denotation domain
+  :: forall domain func
+   . Datafixable domain
+  => Forall (Currying (ParamTypes func))
+  => Denotation domain func
   -- ^ A build plan for computing the denotation, possibly involving
   -- fixed-point iteration factored through calls to 'datafix'.
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
-  -> domain
-evalDenotation denot ib = solveProblem prob (Dense max_) ib root
-  where
-    (root, max_, prob) = buildProblem denot
+  -> func
+evalDenotation plan ib =
+  castWith arrowsAxiom (currys @(ParamTypes func) @(ReturnType func) impl \\ idInst @func)
+    where
+      impl :: Products (ParamTypes func) -> ReturnType func
+      impl args = solveProblem prob (Dense max_) ib (uncurriedDenot args)
+      uncurriedDenot = uncurrys @(ParamTypes func) denot \\ lfInst @func @(DependencyM DenseGraph.Ref domain)
+      (denot, max_, prob) = buildProblem plan
 {-# INLINE evalDenotation #-}

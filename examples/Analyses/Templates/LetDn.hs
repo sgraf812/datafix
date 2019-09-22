@@ -81,7 +81,7 @@ buildDenotation
   => Currying (ParamTypes domain) (ReturnType domain -> ReturnType domain -> Bool)
   => TransferAlgebra domain
   -> CoreExpr
-  -> Denotation domain
+  -> Denotation domain domain
 buildDenotation = buildDenotation'
 
 -- This brings in the scope the existentially quantified 'MonadDatafix'. Too

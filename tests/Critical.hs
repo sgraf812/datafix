@@ -20,11 +20,10 @@ instance JoinSemiLattice Natural where
 instance BoundedJoinSemiLattice Natural where
   bottom = 0
 
-
 fixLoop, fixDoubleDependency
   :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixLoop density n = solveProblem loopProblem (density (Node 0)) NeverAbort (Node n)
-fixDoubleDependency density n = solveProblem doubleDependencyProblem (density (Node 1)) NeverAbort (Node n)
+fixLoop density n = solveProblem loopProblem (density (Node 0)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixDoubleDependency density n = solveProblem doubleDependencyProblem (density (Node 1)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
 
 tests :: [TestTree]
 tests =
@@ -44,7 +43,7 @@ tests =
           [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
           ]
       , testGroup "Abortion"
-          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ solveProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (Node 0) >= 4)
+          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ solveProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (dependOn @(DependencyM _ Natural) (Node 0)) >= 4)
           ]
       ]
   ]

@@ -30,9 +30,7 @@ import           Control.Monad.Trans.Maybe
 import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
 import           Data.IORef
-import           Data.Maybe                       (fromMaybe, listToMaybe,
-                                                   mapMaybe)
-import           Data.Type.Equality
+import           Data.Maybe                       (listToMaybe, mapMaybe)
 import           Datafix.Common
 import           Datafix.Entailments
 import           Datafix.Explicit                 hiding (dependOn)
@@ -453,7 +451,7 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 -- that let's you forget about 'Node's and instead let's you focus on building
 -- more complex data-flow frameworks.
 solveProblem
-  :: forall domain graph
+  :: forall domain graph a
    . GraphRef graph
   => Datafixable domain
   => DataFlowProblem (DependencyM graph domain)
@@ -464,26 +462,21 @@ solveProblem
   -> IterationBound domain
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
-  -> Node
+  -> DependencyM graph domain a
   -- ^ The @Node@ that is initially assumed to be unstable. This should be
   -- the @Node@ you are interested in, e.g. @Node 42@ if you are interested
   -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
   -- @Node@ denoting the root expression of your data-flow analysis
   -- you specified via the @DataFlowProblem@.
-  -> domain
-solveProblem prob density ib (Node node) =
-  castWith arrowsAxiom (currys @(ParamTypes domain) @(ReturnType domain) impl \\ idInst @domain)
-    where
-      impl
-        = fromMaybe (error "Broken invariant: The root node has no value")
-        . (>>= value)
-        . runProblem
-      runProblem args = unsafePerformIO $ do
-        -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
-        -- of 'DependencyM' for why we 'unsafePerformIO'.
-        let newGraphRef = case density of
-              Sparse               -> SparseGraph.newRef
-              Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
-        env <- initialEnv (IntArgsMonoSet.singleton node args) prob ib newGraphRef
-        runReaderT (work >> withReaderT graph (Graph.lookup node args)) env
+  -> a
+solveProblem prob density ib (DM act) = unsafePerformIO $ do
+  -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
+  -- of 'DependencyM' for why we 'unsafePerformIO'.
+  let newGraphRef = case density of
+        Sparse               -> SparseGraph.newRef
+        Dense (Node maxNode) -> DenseGraph.newRef (maxNode + 1)
+  env <- initialEnv IntArgsMonoSet.empty prob ib newGraphRef
+  -- Run act once to discover dependencies and an additional time when all
+  -- values reached a fixed-point.
+  runReaderT (act >> work >> act) env
 {-# INLINE solveProblem #-}

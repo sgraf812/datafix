@@ -27,10 +27,8 @@ module Datafix.ProblemBuilder
 import           Data.Primitive.Array
 import           Datafix.Common
 import           Datafix.Denotational
-import           Datafix.Entailments
 import           Datafix.Explicit
 import           Datafix.NodeAllocator
-import           Datafix.Utils.Constraints
 
 -- | Constructs a build plan for a 'DataFlowProblem' by tracking allocation of
 -- 'Node's mapping to 'ChangeDetector's and transfer functions.
@@ -51,13 +49,11 @@ instance MonadDependency m => MonadDatafix (ProblemBuilder m) where
 -- 'ProblemBuilder' action and the @max@imum node of the problem as a proof for
 -- its denseness.
 buildProblem
-  :: forall m
+  :: forall m a
    . MonadDependency m
-  => Denotation (Domain m)
-  -> (Node, Node, DataFlowProblem m)
-buildProblem buildDenotation = (root, Node (sizeofArray arr - 1), prob)
+  => (forall md . (MonadDatafix md, DepM md ~ m) => md a)
+  -> (a, Node, DataFlowProblem m)
+buildProblem plan = (a, Node (sizeofArray arr - 1), prob)
   where
     prob = DFP (snd . indexArray arr . unwrapNode) (fst . indexArray arr . unwrapNode)
-    (root, arr) = runAllocator $ allocateNode $ \root_ -> do
-      denotation <- unwrapProblemBuilder (buildDenotation @(ProblemBuilder m))
-      return (root_, (alwaysChangeDetector @(Domain m) \\ cdInst @(Domain m), denotation))
+    (a, arr) = runAllocator $ unwrapProblemBuilder $ plan @(ProblemBuilder m)

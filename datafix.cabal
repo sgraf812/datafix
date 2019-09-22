@@ -102,12 +102,15 @@ test-suite tests
                      Analyses.Syntax.MkCoreHelpers
                      Analyses.Syntax.MkCoreFromFile
                      Analyses.Templates.LetDn
+                     SetRecurrences.FirstFollow
+                     SetRecurrences.FirstFollow
                      Fib
                      Fac
                      Mutual
                      Critical
                      Trivial
                      StrAnal
+                     FirstFollow
   build-depends:     base >= 4.8 && < 5
                    -- let cabal-toolkit choose the Cabal version
                    , Cabal
@@ -178,3 +181,13 @@ benchmark benchmarks
     build-depends:   lattices < 2
   if flag(no-lattices)
     build-depends:   pomaps >= 0.0.0.2 && < 0.0.1.0
+
+executable firstfollow-example
+  default-language:  Haskell2010
+  hs-source-dirs:    examples
+  main-is:           SetRecurrences/FirstFollow.hs
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N -main-is SetRecurrences.FirstFollow
+  build-depends:     base
+                   , containers
+                   , datafix
+

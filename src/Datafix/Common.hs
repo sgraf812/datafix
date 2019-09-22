@@ -26,12 +26,15 @@ module Datafix.Common
   , alwaysChangeDetector
   , MonadDomain (..)
   , Datafixable
+  , evalAt
+  , (<!)
   ) where
 
 import           Algebra.Lattice
 import           Datafix.MonoMap
 import           Datafix.Utils.Constraints
 import           Datafix.Utils.TypeLevel
+import           Data.Type.Equality
 
 -- $setup
 -- >>> :set -XTypeFamilies
@@ -181,3 +184,26 @@ type Datafixable domain =
   , MonoMapKey (Products (ParamTypes domain))
   , BoundedJoinSemiLattice (ReturnType domain)
   )
+
+
+evalAt
+  :: forall f arr
+   . Currying (ParamTypes arr) (ReturnType arr)
+  => Functor f
+  => f arr
+  -> Products (ParamTypes arr)
+  -> f (ReturnType arr)
+evalAt mfunc args = app <$> mfunc
+  where
+    app func = uncurrys @(ParamTypes arr) (castWith (sym arrowsAxiom) func) args
+
+(<!)
+  :: forall f arr
+   . Currying (ParamTypes arr) (ReturnType arr)
+  => Functor f
+  => f arr
+  -> Products (ParamTypes arr)
+  -> f (ReturnType arr)
+mfunc <! args = app <$> mfunc
+  where
+    app func = uncurrys @(ParamTypes arr) (castWith (sym arrowsAxiom) func) args

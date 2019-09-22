@@ -1,5 +1,6 @@
 import qualified Critical
 import qualified StrAnal
+import qualified FirstFollow
 import           System.Environment
 import           Test.Tasty
 import qualified Trivial
@@ -16,5 +17,8 @@ main = do
         ]
     , testGroup "Analyses"
         [ testGroup "Strictness" StrAnal.tests
+        ]
+    , testGroup "Set recurrences"
+        [ testGroup "First/Follow" FirstFollow.tests
         ]
     ]

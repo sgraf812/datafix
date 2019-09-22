@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications    #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
 --{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
@@ -24,7 +25,7 @@ import           Var
 import           VarEnv
 
 analyse :: CoreExpr -> StrLattice
-analyse expr = evalDenotation (buildDenotation transferFunctionAlg expr) NeverAbort (0 :: Arity)
+analyse expr = evalDenotation @(Arity -> StrLattice) (buildDenotation transferFunctionAlg expr) NeverAbort (0 :: Arity)
 
 applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
