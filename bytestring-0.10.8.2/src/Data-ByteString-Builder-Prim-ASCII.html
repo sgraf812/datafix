@@ -21,7 +21,7 @@
 <a name="line-12"></a><span class='hs-comment'>--</span>
 <a name="line-13"></a><span class='hs-comment'>-- Encodings using ASCII encoded Unicode characters.</span>
 <a name="line-14"></a><span class='hs-comment'>--</span>
-<a name="line-15"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>ASCII</span>
+<a name="line-15"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.ASCII</span>
 <a name="line-16"></a>    <span class='hs-layout'>(</span>
 <a name="line-17"></a>
 <a name="line-18"></a>     <span class='hs-comment'>-- *** ASCII</span>
@@ -89,16 +89,16 @@
 <a name="line-80"></a>
 <a name="line-81"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-82"></a>
-<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>Binary</span>
-<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Floating</span>
-<a name="line-86"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Base16</span>
-<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UncheckedShifts</span>
+<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.Binary</span>
+<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.Internal</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.Internal.Floating</span>
+<a name="line-86"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.Internal.Base16</span>
+<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString.Builder.Prim.Internal.UncheckedShifts</span>
 <a name="line-88"></a>
-<a name="line-89"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
+<a name="line-89"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
 <a name="line-90"></a>
 <a name="line-91"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-92"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
+<a name="line-92"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Types</span>
 <a name="line-93"></a>
 <a name="line-94"></a><a name="char7"></a><span class='hs-comment'>-- | Encode the least 7-bits of a 'Char' using the ASCII encoding.</span>
 <a name="line-95"></a><span class='hs-comment'>{-# INLINE char7 #-}</span>

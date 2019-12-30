@@ -17,7 +17,7 @@
 <a name="line-8"></a><span class='hs-comment'>-- Portability : GHC</span>
 <a name="line-9"></a><span class='hs-comment'>--</span>
 <a name="line-10"></a><span class='hs-comment'>-- Common internal functions for reading textual data.</span>
-<a name="line-11"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Read</span>
+<a name="line-11"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Read</span>
 <a name="line-12"></a>    <span class='hs-layout'>(</span>
 <a name="line-13"></a>      <span class='hs-conid'>IReader</span>
 <a name="line-14"></a>    <span class='hs-layout'>,</span> <span class='hs-conid'>IParser</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
@@ -27,10 +27,10 @@
 <a name="line-18"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>perhaps</span>
 <a name="line-19"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-20"></a>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Applicative</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>App</span> <span class='hs-layout'>(</span><span class='hs-conid'>Applicative</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Arrow</span> <span class='hs-layout'>(</span><span class='hs-varid'>first</span><span class='hs-layout'>)</span>
-<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span> <span class='hs-layout'>(</span><span class='hs-varid'>ap</span><span class='hs-layout'>)</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Applicative</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>App</span> <span class='hs-layout'>(</span><span class='hs-conid'>Applicative</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Arrow</span> <span class='hs-layout'>(</span><span class='hs-varid'>first</span><span class='hs-layout'>)</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Monad</span> <span class='hs-layout'>(</span><span class='hs-varid'>ap</span><span class='hs-layout'>)</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
 <a name="line-25"></a>
 <a name="line-26"></a><a name="IReader"></a><span class='hs-keyword'>type</span> <span class='hs-conid'>IReader</span> <span class='hs-varid'>t</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Either</span> <span class='hs-conid'>String</span> <span class='hs-layout'>(</span><span class='hs-varid'>a</span><span class='hs-layout'>,</span><span class='hs-varid'>t</span><span class='hs-layout'>)</span>
 <a name="line-27"></a>
@@ -47,7 +47,7 @@
 <a name="line-38"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;*&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>ap</span>
 <a name="line-39"></a>
 <a name="line-40"></a><a name="instance%20Monad%20(IParser%20t)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Monad</span> <span class='hs-layout'>(</span><span class='hs-conid'>IParser</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
-<a name="line-41"></a>    <span class='hs-varid'>return</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>App</span><span class='hs-varop'>.</span><span class='hs-varid'>pure</span>
+<a name="line-41"></a>    <span class='hs-varid'>return</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>App.pure</span>
 <a name="line-42"></a>    <span class='hs-varid'>m</span> <span class='hs-varop'>&gt;&gt;=</span> <span class='hs-varid'>k</span>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>t</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>case</span> <span class='hs-varid'>runP</span> <span class='hs-varid'>m</span> <span class='hs-varid'>t</span> <span class='hs-keyword'>of</span>
 <a name="line-43"></a>                           <span class='hs-conid'>Left</span> <span class='hs-varid'>err</span>     <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Left</span> <span class='hs-varid'>err</span>
 <a name="line-44"></a>                           <span class='hs-conid'>Right</span> <span class='hs-layout'>(</span><span class='hs-varid'>a</span><span class='hs-layout'>,</span><span class='hs-varid'>t'</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>runP</span> <span class='hs-layout'>(</span><span class='hs-varid'>k</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-varid'>t'</span>

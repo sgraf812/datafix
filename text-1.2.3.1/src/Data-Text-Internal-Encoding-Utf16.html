@@ -25,15 +25,15 @@
 <a name="line-16"></a><span class='hs-comment'>-- preconditions expected by public modules. Use at your own risk!</span>
 <a name="line-17"></a><span class='hs-comment'>--</span>
 <a name="line-18"></a><span class='hs-comment'>-- Basic UTF-16 validation and character manipulation.</span>
-<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Encoding</span><span class='hs-varop'>.</span><span class='hs-conid'>Utf16</span>
+<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Encoding.Utf16</span>
 <a name="line-20"></a>    <span class='hs-layout'>(</span>
 <a name="line-21"></a>      <span class='hs-varid'>chr2</span>
 <a name="line-22"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>validate1</span>
 <a name="line-23"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>validate2</span>
 <a name="line-24"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-25"></a>
-<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Exts</span>
-<a name="line-27"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word16</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Exts</span>
+<a name="line-27"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word16</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
 <a name="line-28"></a>
 <a name="line-29"></a><a name="chr2"></a><span class='hs-definition'>chr2</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Word16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Char</span>
 <a name="line-30"></a><span class='hs-definition'>chr2</span> <span class='hs-layout'>(</span><span class='hs-conid'>W16</span><span class='hs-cpp'>#</span> <span class='hs-varid'>a</span><span class='hs-cpp'>#</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-conid'>W16</span><span class='hs-cpp'>#</span> <span class='hs-varid'>b</span><span class='hs-cpp'>#</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>C</span><span class='hs-cpp'>#</span> <span class='hs-layout'>(</span><span class='hs-varid'>chr</span><span class='hs-cpp'>#</span> <span class='hs-layout'>(</span><span class='hs-varid'>upper</span><span class='hs-cpp'>#</span> <span class='hs-varop'>+#</span> <span class='hs-varid'>lower</span><span class='hs-cpp'>#</span> <span class='hs-varop'>+#</span> <span class='hs-num'>0x10000</span><span class='hs-cpp'>#</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>

@@ -29,7 +29,7 @@
 <a name="line-20"></a><span class='hs-comment'>--</span>
 <a name="line-21"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-22"></a>
-<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>DynamicLinker</span><span class='hs-varop'>.</span><span class='hs-conid'>Module</span> <span class='hs-layout'>(</span>
+<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.DynamicLinker.Module</span> <span class='hs-layout'>(</span>
 <a name="line-24"></a>
 <a name="line-25"></a><span class='hs-comment'>--  Usage:</span>
 <a name="line-26"></a><span class='hs-comment'>--  ******</span>
@@ -70,10 +70,10 @@
 <a name="line-61"></a>
 <a name="line-62"></a>
 <a name="line-63"></a>
-<a name="line-64"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>DynamicLinker</span>
-<a name="line-65"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>DynamicLinker</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span>
-<a name="line-66"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span>      <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-varid'>nullPtr</span><span class='hs-layout'>,</span> <span class='hs-conid'>FunPtr</span> <span class='hs-layout'>)</span>
-<a name="line-67"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span> <span class='hs-varid'>withFilePath</span> <span class='hs-layout'>)</span>
+<a name="line-64"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.DynamicLinker</span>
+<a name="line-65"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.DynamicLinker.Common</span>
+<a name="line-66"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span>      <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-varid'>nullPtr</span><span class='hs-layout'>,</span> <span class='hs-conid'>FunPtr</span> <span class='hs-layout'>)</span>
+<a name="line-67"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span> <span class='hs-varid'>withFilePath</span> <span class='hs-layout'>)</span>
 <a name="line-68"></a>
 <a name="line-69"></a><a name="unModule"></a><span class='hs-definition'>unModule</span>              <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Module</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ptr</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span>
 <a name="line-70"></a><span class='hs-definition'>unModule</span> <span class='hs-layout'>(</span><span class='hs-conid'>Module</span> <span class='hs-varid'>adr</span><span class='hs-layout'>)</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>adr</span>

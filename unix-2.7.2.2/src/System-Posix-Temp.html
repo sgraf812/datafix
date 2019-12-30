@@ -29,19 +29,19 @@
 <a name="line-20"></a><span class='hs-comment'>--</span>
 <a name="line-21"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-22"></a>
-<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Temp</span> <span class='hs-layout'>(</span>
+<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Temp</span> <span class='hs-layout'>(</span>
 <a name="line-24"></a>        <span class='hs-varid'>mkstemp</span><span class='hs-layout'>,</span> <span class='hs-varid'>mkstemps</span><span class='hs-layout'>,</span> <span class='hs-varid'>mkdtemp</span>
 <a name="line-25"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-26"></a>
 <a name="line-27"></a>
 <a name="line-28"></a>
-<a name="line-29"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-30"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span>
+<a name="line-29"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-30"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.IO</span>
 <a name="line-31"></a>
 <a name="line-32"></a><span class='hs-comment'>{-# LINE 33 "libraries/unix/System/Posix/Temp.hsc" #-}</span>
-<a name="line-33"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span>
-<a name="line-34"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-35"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>withFilePath</span><span class='hs-layout'>,</span> <span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
+<a name="line-33"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.IO</span>
+<a name="line-34"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
+<a name="line-35"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>withFilePath</span><span class='hs-layout'>,</span> <span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
 <a name="line-36"></a>
 <a name="line-37"></a><span class='hs-keyword'>foreign</span> <span class='hs-keyword'>import</span> <span class='hs-varid'>capi</span> <span class='hs-keyword'>unsafe</span> <span class='hs-str'>"HsUnix.h mkstemp"</span>
 <a name="line-38"></a>  <span class='hs-varid'>c_mkstemp</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>CString</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>CInt</span>

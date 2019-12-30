@@ -33,7 +33,7 @@
 <a name="line-24"></a><span class='hs-cpp'>#include "MachDeps.h"</span>
 <a name="line-25"></a><span class='hs-cpp'>#endif</span>
 <a name="line-26"></a>
-<a name="line-27"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span>
+<a name="line-27"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal</span>
 <a name="line-28"></a>    <span class='hs-layout'>(</span>
 <a name="line-29"></a>    <span class='hs-comment'>-- * Types</span>
 <a name="line-30"></a>    <span class='hs-comment'>-- $internals</span>
@@ -57,27 +57,27 @@
 <a name="line-48"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-49"></a>
 <a name="line-50"></a><span class='hs-cpp'>#if defined(ASSERTS)</span>
-<a name="line-51"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
+<a name="line-51"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
 <a name="line-52"></a><span class='hs-cpp'>#endif</span>
-<a name="line-53"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Bits</span>
-<a name="line-54"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Int</span> <span class='hs-layout'>(</span><span class='hs-conid'>Int32</span><span class='hs-layout'>,</span> <span class='hs-conid'>Int64</span><span class='hs-layout'>)</span>
-<a name="line-55"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
-<a name="line-56"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Typeable</span> <span class='hs-layout'>(</span><span class='hs-conid'>Typeable</span><span class='hs-layout'>)</span>
-<a name="line-57"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>A</span>
+<a name="line-53"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Bits</span>
+<a name="line-54"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Int</span> <span class='hs-layout'>(</span><span class='hs-conid'>Int32</span><span class='hs-layout'>,</span> <span class='hs-conid'>Int64</span><span class='hs-layout'>)</span>
+<a name="line-55"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Text.Internal.Unsafe.Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
+<a name="line-56"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Typeable</span> <span class='hs-layout'>(</span><span class='hs-conid'>Typeable</span><span class='hs-layout'>)</span>
+<a name="line-57"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.Text.Array</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>A</span>
 <a name="line-58"></a>
 <a name="line-59"></a><a name="Text"></a><span class='hs-comment'>-- | A space efficient, packed, unboxed Unicode text type.</span>
 <a name="line-60"></a><a name="Text"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>Text</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Text</span>
-<a name="line-61"></a>    <span class='hs-comment'>{-# UNPACK #-}</span> <span class='hs-varop'>!</span><span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span>          <span class='hs-comment'>-- payload (Word16 elements)</span>
+<a name="line-61"></a>    <span class='hs-comment'>{-# UNPACK #-}</span> <span class='hs-varop'>!</span><span class='hs-conid'>A.Array</span>          <span class='hs-comment'>-- payload (Word16 elements)</span>
 <a name="line-62"></a>    <span class='hs-comment'>{-# UNPACK #-}</span> <span class='hs-varop'>!</span><span class='hs-conid'>Int</span>              <span class='hs-comment'>-- offset (units of Word16, not Char)</span>
 <a name="line-63"></a>    <span class='hs-comment'>{-# UNPACK #-}</span> <span class='hs-varop'>!</span><span class='hs-conid'>Int</span>              <span class='hs-comment'>-- length (units of Word16, not Char)</span>
 <a name="line-64"></a>    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Typeable</span><span class='hs-layout'>)</span>
 <a name="line-65"></a>
 <a name="line-66"></a><a name="text_"></a><span class='hs-comment'>-- | Smart constructor.</span>
-<a name="line-67"></a><span class='hs-definition'>text_</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
+<a name="line-67"></a><span class='hs-definition'>text_</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A.Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
 <a name="line-68"></a><span class='hs-definition'>text_</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span> <span class='hs-keyglyph'>=</span>
 <a name="line-69"></a><span class='hs-cpp'>#if defined(ASSERTS)</span>
-<a name="line-70"></a>  <span class='hs-keyword'>let</span> <span class='hs-varid'>c</span>    <span class='hs-keyglyph'>=</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-varid'>unsafeIndex</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span>
-<a name="line-71"></a>      <span class='hs-varid'>alen</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-varid'>length</span> <span class='hs-varid'>arr</span>
+<a name="line-70"></a>  <span class='hs-keyword'>let</span> <span class='hs-varid'>c</span>    <span class='hs-keyglyph'>=</span> <span class='hs-conid'>A.unsafeIndex</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span>
+<a name="line-71"></a>      <span class='hs-varid'>alen</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>A.length</span> <span class='hs-varid'>arr</span>
 <a name="line-72"></a>  <span class='hs-keyword'>in</span> <span class='hs-varid'>assert</span> <span class='hs-layout'>(</span><span class='hs-varid'>len</span> <span class='hs-varop'>&gt;=</span> <span class='hs-num'>0</span><span class='hs-layout'>)</span> <span class='hs-varop'>.</span>
 <a name="line-73"></a>     <span class='hs-varid'>assert</span> <span class='hs-layout'>(</span><span class='hs-varid'>off</span> <span class='hs-varop'>&gt;=</span> <span class='hs-num'>0</span><span class='hs-layout'>)</span> <span class='hs-varop'>.</span>
 <a name="line-74"></a>     <span class='hs-varid'>assert</span> <span class='hs-layout'>(</span><span class='hs-varid'>alen</span> <span class='hs-varop'>==</span> <span class='hs-num'>0</span> <span class='hs-varop'>||</span> <span class='hs-varid'>len</span> <span class='hs-varop'>==</span> <span class='hs-num'>0</span> <span class='hs-varop'>||</span> <span class='hs-varid'>off</span> <span class='hs-varop'>&lt;</span> <span class='hs-varid'>alen</span><span class='hs-layout'>)</span> <span class='hs-varop'>.</span>
@@ -88,29 +88,29 @@
 <a name="line-79"></a>
 <a name="line-80"></a><a name="empty"></a><span class='hs-comment'>-- | /O(1)/ The empty 'Text'.</span>
 <a name="line-81"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span>
-<a name="line-82"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Text</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-varid'>empty</span> <span class='hs-num'>0</span> <span class='hs-num'>0</span>
+<a name="line-82"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Text</span> <span class='hs-conid'>A.empty</span> <span class='hs-num'>0</span> <span class='hs-num'>0</span>
 <a name="line-83"></a><span class='hs-comment'>{-# INLINE [1] empty #-}</span>
 <a name="line-84"></a>
 <a name="line-85"></a><a name="empty_"></a><span class='hs-comment'>-- | A non-inlined version of 'empty'.</span>
 <a name="line-86"></a><span class='hs-definition'>empty_</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span>
-<a name="line-87"></a><span class='hs-definition'>empty_</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Text</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-varid'>empty</span> <span class='hs-num'>0</span> <span class='hs-num'>0</span>
+<a name="line-87"></a><span class='hs-definition'>empty_</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Text</span> <span class='hs-conid'>A.empty</span> <span class='hs-num'>0</span> <span class='hs-num'>0</span>
 <a name="line-88"></a><span class='hs-comment'>{-# NOINLINE empty_ #-}</span>
 <a name="line-89"></a>
 <a name="line-90"></a><a name="text"></a><span class='hs-comment'>-- | Construct a 'Text' without invisibly pinning its byte array in</span>
 <a name="line-91"></a><span class='hs-comment'>-- memory if its length has dwindled to zero.</span>
-<a name="line-92"></a><span class='hs-definition'>text</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
+<a name="line-92"></a><span class='hs-definition'>text</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A.Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
 <a name="line-93"></a><span class='hs-definition'>text</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span> <span class='hs-keyglyph'>|</span> <span class='hs-varid'>len</span> <span class='hs-varop'>==</span> <span class='hs-num'>0</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>empty</span>
 <a name="line-94"></a>                 <span class='hs-keyglyph'>|</span> <span class='hs-varid'>otherwise</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>text_</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span>
 <a name="line-95"></a><span class='hs-comment'>{-# INLINE text #-}</span>
 <a name="line-96"></a>
-<a name="line-97"></a><a name="textP"></a><span class='hs-definition'>textP</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
+<a name="line-97"></a><a name="textP"></a><span class='hs-definition'>textP</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>A.Array</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Text</span>
 <a name="line-98"></a><span class='hs-comment'>{-# DEPRECATED textP "Use text instead" #-}</span>
 <a name="line-99"></a><span class='hs-definition'>textP</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>text</span>
 <a name="line-100"></a>
 <a name="line-101"></a><a name="showText"></a><span class='hs-comment'>-- | A useful 'show'-like function for debugging purposes.</span>
 <a name="line-102"></a><span class='hs-definition'>showText</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Text</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>String</span>
 <a name="line-103"></a><span class='hs-definition'>showText</span> <span class='hs-layout'>(</span><span class='hs-conid'>Text</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span>
-<a name="line-104"></a>    <span class='hs-str'>"Text "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>show</span> <span class='hs-layout'>(</span><span class='hs-conid'>A</span><span class='hs-varop'>.</span><span class='hs-varid'>toList</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-chr'>' '</span> <span class='hs-conop'>:</span>
+<a name="line-104"></a>    <span class='hs-str'>"Text "</span> <span class='hs-varop'>++</span> <span class='hs-varid'>show</span> <span class='hs-layout'>(</span><span class='hs-conid'>A.toList</span> <span class='hs-varid'>arr</span> <span class='hs-varid'>off</span> <span class='hs-varid'>len</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-chr'>' '</span> <span class='hs-conop'>:</span>
 <a name="line-105"></a>            <span class='hs-varid'>show</span> <span class='hs-varid'>off</span> <span class='hs-varop'>++</span> <span class='hs-chr'>' '</span> <span class='hs-conop'>:</span> <span class='hs-varid'>show</span> <span class='hs-varid'>len</span>
 <a name="line-106"></a>
 <a name="line-107"></a><span class='hs-comment'>-- | Map a 'Char' to a 'Text'-safe value.</span>

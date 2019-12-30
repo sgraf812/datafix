@@ -24,14 +24,14 @@
 <a name="line-15"></a><span class='hs-comment'>--</span>
 <a name="line-16"></a><span class='hs-comment'>-- Fast, unchecked bit shifting functions.</span>
 <a name="line-17"></a>
-<a name="line-18"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span><span class='hs-varop'>.</span><span class='hs-conid'>Shift</span>
+<a name="line-18"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Unsafe.Shift</span>
 <a name="line-19"></a>    <span class='hs-layout'>(</span>
 <a name="line-20"></a>      <span class='hs-conid'>UnsafeShift</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
 <a name="line-21"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-22"></a>
 <a name="line-23"></a><span class='hs-comment'>-- import qualified Data.Bits as Bits</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Base</span>
-<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Word</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Base</span>
+<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Word</span>
 <a name="line-26"></a>
 <a name="line-27"></a><a name="UnsafeShift"></a><span class='hs-comment'>-- | This is a workaround for poor optimisation in GHC 6.8.2.  It</span>
 <a name="line-28"></a><a name="UnsafeShift"></a><span class='hs-comment'>-- fails to notice constant-width shifts, and adds a test and branch</span>

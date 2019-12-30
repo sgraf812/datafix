@@ -13,19 +13,19 @@
 <a name="line-4"></a><span class='hs-cpp'>#endif</span>
 <a name="line-5"></a><span class='hs-cpp'>#include "HsConfigure.h"</span>
 <a name="line-6"></a><span class='hs-comment'>-- #hide</span>
-<a name="line-7"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>NominalDiffTime</span>
+<a name="line-7"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.NominalDiffTime</span>
 <a name="line-8"></a>    <span class='hs-layout'>(</span>
 <a name="line-9"></a>    <span class='hs-conid'>NominalDiffTime</span><span class='hs-layout'>,</span>
 <a name="line-10"></a>    <span class='hs-varid'>nominalDay</span><span class='hs-layout'>,</span>
 <a name="line-11"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-12"></a>
-<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Typeable</span>
+<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Typeable</span>
 <a name="line-14"></a><span class='hs-cpp'>#if LANGUAGE_Rank2Types</span>
-<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Data</span>
+<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Data</span>
 <a name="line-16"></a><span class='hs-cpp'>#endif</span>
-<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Fixed</span>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>DeepSeq</span>
+<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Fixed</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.DeepSeq</span>
 <a name="line-20"></a>
 <a name="line-21"></a>
 <a name="line-22"></a><a name="NominalDiffTime"></a><span class='hs-comment'>-- | This is a length of time, as measured by UTC.</span>

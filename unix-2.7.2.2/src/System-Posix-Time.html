@@ -28,15 +28,15 @@
 <a name="line-19"></a><span class='hs-comment'>--</span>
 <a name="line-20"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-21"></a>
-<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span> <span class='hs-layout'>(</span>
+<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Time</span> <span class='hs-layout'>(</span>
 <a name="line-23"></a>        <span class='hs-varid'>epochTime</span><span class='hs-layout'>,</span>
 <a name="line-24"></a>        <span class='hs-comment'>-- ToDo: lots more from sys/time.h</span>
 <a name="line-25"></a>        <span class='hs-comment'>-- how much already supported by System.Time?</span>
 <a name="line-26"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-27"></a>
-<a name="line-28"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
+<a name="line-28"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
 <a name="line-29"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-30"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
+<a name="line-30"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
 <a name="line-31"></a>
 <a name="line-32"></a><span class='hs-comment'>-- -----------------------------------------------------------------------------</span>
 <a name="line-33"></a><span class='hs-comment'>-- epochTime</span>

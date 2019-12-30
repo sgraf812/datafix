@@ -10,15 +10,15 @@
 <pre><a name="line-1"></a><span class='hs-comment'>{-# LANGUAGE CApiFFI #-}</span>
 <a name="line-2"></a><span class='hs-comment'>{-# LANGUAGE Trustworthy #-}</span>
 <a name="line-3"></a>
-<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span>
+<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Process.Internals</span> <span class='hs-layout'>(</span>
 <a name="line-5"></a>       <span class='hs-varid'>pPrPr_disableITimers</span><span class='hs-layout'>,</span> <span class='hs-varid'>c_execvpe</span><span class='hs-layout'>,</span>
 <a name="line-6"></a>       <span class='hs-varid'>decipherWaitStatus</span><span class='hs-layout'>,</span> <span class='hs-conid'>ProcessStatus</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-7"></a>
 <a name="line-8"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-9"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Exit</span>
-<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
-<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Conc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Signal</span><span class='hs-layout'>)</span>
+<a name="line-9"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Exit</span>
+<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.IO.Error</span>
+<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Conc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Signal</span><span class='hs-layout'>)</span>
 <a name="line-13"></a>
 <a name="line-14"></a><a name="ProcessStatus"></a><span class='hs-comment'>-- | The exit status of a process</span>
 <a name="line-15"></a><a name="ProcessStatus"></a><span class='hs-keyword'>data</span> <span class='hs-conid'>ProcessStatus</span>

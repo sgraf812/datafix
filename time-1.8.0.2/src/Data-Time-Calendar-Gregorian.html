@@ -10,7 +10,7 @@
 <pre><a name="line-1"></a><span class='hs-comment'>{-# OPTIONS -fno-warn-orphans #-}</span>
 <a name="line-2"></a>
 <a name="line-3"></a><span class='hs-comment'>-- #hide</span>
-<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Gregorian</span>
+<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Calendar.Gregorian</span>
 <a name="line-5"></a><span class='hs-layout'>(</span>
 <a name="line-6"></a>    <span class='hs-comment'>-- * Gregorian calendar</span>
 <a name="line-7"></a>    <span class='hs-varid'>toGregorian</span><span class='hs-layout'>,</span><span class='hs-varid'>fromGregorian</span><span class='hs-layout'>,</span><span class='hs-varid'>fromGregorianValid</span><span class='hs-layout'>,</span><span class='hs-varid'>showGregorian</span><span class='hs-layout'>,</span><span class='hs-varid'>gregorianMonthLength</span><span class='hs-layout'>,</span>
@@ -24,10 +24,10 @@
 <a name="line-15"></a>    <span class='hs-varid'>isLeapYear</span>
 <a name="line-16"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-17"></a>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>MonthDay</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>OrdinalDate</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Private</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.MonthDay</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.OrdinalDate</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Private</span>
 <a name="line-22"></a>
 <a name="line-23"></a><a name="toGregorian"></a><span class='hs-comment'>-- | Convert to proleptic Gregorian calendar. First element of result is year, second month number (1-12), third day (1-31).</span>
 <a name="line-24"></a><span class='hs-definition'>toGregorian</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Day</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span><span class='hs-conid'>Integer</span><span class='hs-layout'>,</span><span class='hs-conid'>Int</span><span class='hs-layout'>,</span><span class='hs-conid'>Int</span><span class='hs-layout'>)</span>

@@ -30,7 +30,7 @@
 <a name="line-21"></a><span class='hs-comment'>--</span>
 <a name="line-22"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-23"></a>
-<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Env</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span> <span class='hs-layout'>(</span>
+<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Env.ByteString</span> <span class='hs-layout'>(</span>
 <a name="line-25"></a>       <span class='hs-comment'>-- * Environment Variables</span>
 <a name="line-26"></a>        <span class='hs-varid'>getEnv</span>
 <a name="line-27"></a>        <span class='hs-layout'>,</span> <span class='hs-varid'>getEnvDefault</span>
@@ -47,13 +47,13 @@
 <a name="line-38"></a>
 <a name="line-39"></a>
 <a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span>    <span class='hs-layout'>(</span> <span class='hs-varid'>liftM</span> <span class='hs-layout'>)</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Maybe</span>       <span class='hs-layout'>(</span> <span class='hs-varid'>fromMaybe</span> <span class='hs-layout'>)</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Monad</span>    <span class='hs-layout'>(</span> <span class='hs-varid'>liftM</span> <span class='hs-layout'>)</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Maybe</span>       <span class='hs-layout'>(</span> <span class='hs-varid'>fromMaybe</span> <span class='hs-layout'>)</span>
 <a name="line-44"></a>
-<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>B</span>
-<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Char8</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>BC</span>
-<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span> <span class='hs-layout'>(</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span>
+<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>B</span>
+<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString.Char8</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>BC</span>
+<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString</span> <span class='hs-layout'>(</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span>
 <a name="line-48"></a>
 <a name="line-49"></a><span class='hs-comment'>-- |'getEnv' looks up a variable in the environment.</span>
 <a name="line-50"></a>
@@ -61,9 +61,9 @@
 <a name="line-52"></a>  <span class='hs-conid'>ByteString</span>            <span class='hs-comment'>{- ^ variable name  -}</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-53"></a>  <span class='hs-conid'>IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>Maybe</span> <span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span> <span class='hs-comment'>{- ^ variable value -}</span>
 <a name="line-54"></a><span class='hs-definition'>getEnv</span> <span class='hs-varid'>name</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
-<a name="line-55"></a>  <span class='hs-varid'>litstring</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>useAsCString</span> <span class='hs-varid'>name</span> <span class='hs-varid'>c_getenv</span>
+<a name="line-55"></a>  <span class='hs-varid'>litstring</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>B.useAsCString</span> <span class='hs-varid'>name</span> <span class='hs-varid'>c_getenv</span>
 <a name="line-56"></a>  <span class='hs-keyword'>if</span> <span class='hs-varid'>litstring</span> <span class='hs-varop'>/=</span> <span class='hs-varid'>nullPtr</span>
-<a name="line-57"></a>     <span class='hs-keyword'>then</span> <span class='hs-varid'>liftM</span> <span class='hs-conid'>Just</span> <span class='hs-varop'>$</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>packCString</span> <span class='hs-varid'>litstring</span>
+<a name="line-57"></a>     <span class='hs-keyword'>then</span> <span class='hs-varid'>liftM</span> <span class='hs-conid'>Just</span> <span class='hs-varop'>$</span> <span class='hs-conid'>B.packCString</span> <span class='hs-varid'>litstring</span>
 <a name="line-58"></a>     <span class='hs-keyword'>else</span> <span class='hs-varid'>return</span> <span class='hs-conid'>Nothing</span>
 <a name="line-59"></a>
 <a name="line-60"></a><span class='hs-comment'>-- |'getEnvDefault' is a wrapper around 'getEnv' where the</span>
@@ -83,7 +83,7 @@
 <a name="line-74"></a><span class='hs-definition'>getEnvironmentPrim</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
 <a name="line-75"></a>  <span class='hs-varid'>c_environ</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>getCEnviron</span>
 <a name="line-76"></a>  <span class='hs-varid'>arr</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>peekArray0</span> <span class='hs-varid'>nullPtr</span> <span class='hs-varid'>c_environ</span>
-<a name="line-77"></a>  <span class='hs-varid'>mapM</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>packCString</span> <span class='hs-varid'>arr</span>
+<a name="line-77"></a>  <span class='hs-varid'>mapM</span> <span class='hs-conid'>B.packCString</span> <span class='hs-varid'>arr</span>
 <a name="line-78"></a>
 <a name="line-79"></a><a name="getCEnviron"></a><span class='hs-definition'>getCEnviron</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ptr</span> <span class='hs-conid'>CString</span><span class='hs-layout'>)</span>
 <a name="line-80"></a>
@@ -101,11 +101,11 @@
 <a name="line-92"></a><a name="getEnvironment"></a><span class='hs-definition'>getEnvironment</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>IO</span> <span class='hs-keyglyph'>[</span><span class='hs-layout'>(</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>,</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span><span class='hs-keyglyph'>]</span> <span class='hs-comment'>{- ^ @[(key,value)]@ -}</span>
 <a name="line-93"></a><span class='hs-definition'>getEnvironment</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
 <a name="line-94"></a>  <span class='hs-varid'>env</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>getEnvironmentPrim</span>
-<a name="line-95"></a>  <span class='hs-varid'>return</span> <span class='hs-varop'>$</span> <span class='hs-varid'>map</span> <span class='hs-layout'>(</span><span class='hs-varid'>dropEq</span><span class='hs-varop'>.</span><span class='hs-layout'>(</span><span class='hs-conid'>BC</span><span class='hs-varop'>.</span><span class='hs-varid'>break</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>==</span><span class='hs-layout'>)</span> <span class='hs-chr'>'='</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varid'>env</span>
+<a name="line-95"></a>  <span class='hs-varid'>return</span> <span class='hs-varop'>$</span> <span class='hs-varid'>map</span> <span class='hs-layout'>(</span><span class='hs-varid'>dropEq</span><span class='hs-varop'>.</span><span class='hs-layout'>(</span><span class='hs-conid'>BC.break</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>==</span><span class='hs-layout'>)</span> <span class='hs-chr'>'='</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varid'>env</span>
 <a name="line-96"></a> <span class='hs-keyword'>where</span>
 <a name="line-97"></a>   <span class='hs-varid'>dropEq</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-layout'>,</span><span class='hs-varid'>y</span><span class='hs-layout'>)</span>
-<a name="line-98"></a>      <span class='hs-keyglyph'>|</span> <span class='hs-conid'>BC</span><span class='hs-varop'>.</span><span class='hs-varid'>head</span> <span class='hs-varid'>y</span> <span class='hs-varop'>==</span> <span class='hs-chr'>'='</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-layout'>,</span><span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>tail</span> <span class='hs-varid'>y</span><span class='hs-layout'>)</span>
-<a name="line-99"></a>      <span class='hs-keyglyph'>|</span> <span class='hs-varid'>otherwise</span>       <span class='hs-keyglyph'>=</span> <span class='hs-varid'>error</span> <span class='hs-varop'>$</span> <span class='hs-str'>"getEnvironment: insane variable "</span> <span class='hs-varop'>++</span> <span class='hs-conid'>BC</span><span class='hs-varop'>.</span><span class='hs-varid'>unpack</span> <span class='hs-varid'>x</span>
+<a name="line-98"></a>      <span class='hs-keyglyph'>|</span> <span class='hs-conid'>BC.head</span> <span class='hs-varid'>y</span> <span class='hs-varop'>==</span> <span class='hs-chr'>'='</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-varid'>x</span><span class='hs-layout'>,</span><span class='hs-conid'>B.tail</span> <span class='hs-varid'>y</span><span class='hs-layout'>)</span>
+<a name="line-99"></a>      <span class='hs-keyglyph'>|</span> <span class='hs-varid'>otherwise</span>       <span class='hs-keyglyph'>=</span> <span class='hs-varid'>error</span> <span class='hs-varop'>$</span> <span class='hs-str'>"getEnvironment: insane variable "</span> <span class='hs-varop'>++</span> <span class='hs-conid'>BC.unpack</span> <span class='hs-varid'>x</span>
 <a name="line-100"></a>
 <a name="line-101"></a><span class='hs-comment'>-- |The 'unsetEnv' function deletes all instances of the variable name</span>
 <a name="line-102"></a><span class='hs-comment'>-- from the environment.</span>
@@ -115,7 +115,7 @@
 <a name="line-106"></a><span class='hs-comment'>{-# LINE 108 "libraries/unix/System/Posix/Env/ByteString.hsc" #-}</span>
 <a name="line-107"></a>
 <a name="line-108"></a><span class='hs-comment'>{-# LINE 109 "libraries/unix/System/Posix/Env/ByteString.hsc" #-}</span>
-<a name="line-109"></a><span class='hs-definition'>unsetEnv</span> <span class='hs-varid'>name</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>useAsCString</span> <span class='hs-varid'>name</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span>
+<a name="line-109"></a><span class='hs-definition'>unsetEnv</span> <span class='hs-varid'>name</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>B.useAsCString</span> <span class='hs-varid'>name</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-110"></a>  <span class='hs-varid'>throwErrnoIfMinus1_</span> <span class='hs-str'>"unsetenv"</span> <span class='hs-layout'>(</span><span class='hs-varid'>c_unsetenv</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
 <a name="line-111"></a>
 <a name="line-112"></a><span class='hs-comment'>-- POSIX.1-2001 compliant unsetenv(3)</span>
@@ -130,7 +130,7 @@
 <a name="line-121"></a><span class='hs-comment'>-- and is equivalent to @setEnv(key,value,True{-overwrite-})@.</span>
 <a name="line-122"></a>
 <a name="line-123"></a><a name="putEnv"></a><span class='hs-definition'>putEnv</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>ByteString</span> <span class='hs-comment'>{- ^ "key=value" -}</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>
-<a name="line-124"></a><span class='hs-definition'>putEnv</span> <span class='hs-varid'>keyvalue</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>useAsCString</span> <span class='hs-varid'>keyvalue</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span>
+<a name="line-124"></a><span class='hs-definition'>putEnv</span> <span class='hs-varid'>keyvalue</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>B.useAsCString</span> <span class='hs-varid'>keyvalue</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-125"></a>  <span class='hs-varid'>throwErrnoIfMinus1_</span> <span class='hs-str'>"putenv"</span> <span class='hs-layout'>(</span><span class='hs-varid'>c_putenv</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
 <a name="line-126"></a>
 <a name="line-127"></a><span class='hs-keyword'>foreign</span> <span class='hs-keyword'>import</span> <span class='hs-keyword'>ccall</span> <span class='hs-keyword'>unsafe</span> <span class='hs-str'>"putenv"</span>
@@ -151,8 +151,8 @@
 <a name="line-142"></a>
 <a name="line-143"></a><span class='hs-comment'>{-# LINE 149 "libraries/unix/System/Posix/Env/ByteString.hsc" #-}</span>
 <a name="line-144"></a><span class='hs-definition'>setEnv</span> <span class='hs-varid'>key</span> <span class='hs-varid'>value</span> <span class='hs-varid'>ovrwrt</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyword'>do</span>
-<a name="line-145"></a>  <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>useAsCString</span> <span class='hs-varid'>key</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>keyP</span> <span class='hs-keyglyph'>-&gt;</span>
-<a name="line-146"></a>    <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>useAsCString</span> <span class='hs-varid'>value</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>valueP</span> <span class='hs-keyglyph'>-&gt;</span>
+<a name="line-145"></a>  <span class='hs-conid'>B.useAsCString</span> <span class='hs-varid'>key</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>keyP</span> <span class='hs-keyglyph'>-&gt;</span>
+<a name="line-146"></a>    <span class='hs-conid'>B.useAsCString</span> <span class='hs-varid'>value</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span> <span class='hs-varid'>valueP</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-147"></a>      <span class='hs-varid'>throwErrnoIfMinus1_</span> <span class='hs-str'>"setenv"</span> <span class='hs-varop'>$</span>
 <a name="line-148"></a>        <span class='hs-varid'>c_setenv</span> <span class='hs-varid'>keyP</span> <span class='hs-varid'>valueP</span> <span class='hs-layout'>(</span><span class='hs-varid'>fromIntegral</span> <span class='hs-layout'>(</span><span class='hs-varid'>fromEnum</span> <span class='hs-varid'>ovrwrt</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
 <a name="line-149"></a>
@@ -176,7 +176,7 @@
 <a name="line-167"></a>   <span class='hs-varid'>getProgArgv</span> <span class='hs-varid'>p_argc</span> <span class='hs-varid'>p_argv</span>
 <a name="line-168"></a>   <span class='hs-varid'>p</span>    <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>fromIntegral</span> <span class='hs-varop'>`liftM`</span> <span class='hs-varid'>peek</span> <span class='hs-varid'>p_argc</span>
 <a name="line-169"></a>   <span class='hs-varid'>argv</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>peek</span> <span class='hs-varid'>p_argv</span>
-<a name="line-170"></a>   <span class='hs-varid'>peekArray</span> <span class='hs-layout'>(</span><span class='hs-varid'>p</span> <span class='hs-comment'>-</span> <span class='hs-num'>1</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-varid'>advancePtr</span> <span class='hs-varid'>argv</span> <span class='hs-num'>1</span><span class='hs-layout'>)</span> <span class='hs-varop'>&gt;&gt;=</span> <span class='hs-varid'>mapM</span> <span class='hs-conid'>B</span><span class='hs-varop'>.</span><span class='hs-varid'>packCString</span>
+<a name="line-170"></a>   <span class='hs-varid'>peekArray</span> <span class='hs-layout'>(</span><span class='hs-varid'>p</span> <span class='hs-comment'>-</span> <span class='hs-num'>1</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-varid'>advancePtr</span> <span class='hs-varid'>argv</span> <span class='hs-num'>1</span><span class='hs-layout'>)</span> <span class='hs-varop'>&gt;&gt;=</span> <span class='hs-varid'>mapM</span> <span class='hs-conid'>B.packCString</span>
 <a name="line-171"></a>
 <a name="line-172"></a><span class='hs-keyword'>foreign</span> <span class='hs-keyword'>import</span> <span class='hs-keyword'>ccall</span> <span class='hs-keyword'>unsafe</span> <span class='hs-str'>"getProgArgv"</span>
 <a name="line-173"></a>  <span class='hs-varid'>getProgArgv</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Ptr</span> <span class='hs-conid'>CInt</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ptr</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ptr</span> <span class='hs-conid'>CString</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-conid'>()</span>

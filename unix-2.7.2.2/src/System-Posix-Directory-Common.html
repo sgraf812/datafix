@@ -30,7 +30,7 @@
 <a name="line-21"></a>
 <a name="line-22"></a>
 <a name="line-23"></a>
-<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Directory</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span> <span class='hs-layout'>(</span>
+<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Directory.Common</span> <span class='hs-layout'>(</span>
 <a name="line-25"></a>       <span class='hs-conid'>DirStream</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>CDir</span><span class='hs-layout'>,</span> <span class='hs-conid'>CDirent</span><span class='hs-layout'>,</span> <span class='hs-conid'>DirStreamOffset</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
 <a name="line-26"></a>       <span class='hs-varid'>rewindDirStream</span><span class='hs-layout'>,</span>
 <a name="line-27"></a>       <span class='hs-varid'>closeDirStream</span><span class='hs-layout'>,</span>
@@ -47,9 +47,9 @@
 <a name="line-38"></a>       <span class='hs-varid'>changeWorkingDirectoryFd</span><span class='hs-layout'>,</span>
 <a name="line-39"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-40"></a>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
 <a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
 <a name="line-44"></a>
 <a name="line-45"></a><a name="DirStream"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>DirStream</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>DirStream</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ptr</span> <span class='hs-conid'>CDir</span><span class='hs-layout'>)</span>
 <a name="line-46"></a>

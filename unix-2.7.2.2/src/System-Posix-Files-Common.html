@@ -36,7 +36,7 @@
 <a name="line-27"></a>
 <a name="line-28"></a>
 <a name="line-29"></a>
-<a name="line-30"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Files</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span> <span class='hs-layout'>(</span>
+<a name="line-30"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Files.Common</span> <span class='hs-layout'>(</span>
 <a name="line-31"></a>    <span class='hs-comment'>-- * File modes</span>
 <a name="line-32"></a>    <span class='hs-comment'>-- FileMode exported by System.Posix.Types</span>
 <a name="line-33"></a>    <span class='hs-varid'>unionFileModes</span><span class='hs-layout'>,</span> <span class='hs-varid'>intersectFileModes</span><span class='hs-layout'>,</span>
@@ -93,22 +93,22 @@
 <a name="line-84"></a><span class='hs-comment'>{-# LINE 80 "libraries/unix/System/Posix/Files/Common.hsc" #-}</span>
 <a name="line-85"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-86"></a>
-<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span>
-<a name="line-89"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Bits</span>
-<a name="line-90"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Int</span>
-<a name="line-91"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Ratio</span>
-<a name="line-92"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>POSIX</span> <span class='hs-layout'>(</span><span class='hs-conid'>POSIXTime</span><span class='hs-layout'>)</span>
-<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span>
-<a name="line-94"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>ForeignPtr</span>
+<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
+<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.IO.Unsafe</span>
+<a name="line-89"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Bits</span>
+<a name="line-90"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Int</span>
+<a name="line-91"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Ratio</span>
+<a name="line-92"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.POSIX</span> <span class='hs-layout'>(</span><span class='hs-conid'>POSIXTime</span><span class='hs-layout'>)</span>
+<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span>
+<a name="line-94"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.ForeignPtr</span>
 <a name="line-96"></a>
 <a name="line-97"></a><span class='hs-comment'>{-# LINE 92 "libraries/unix/System/Posix/Files/Common.hsc" #-}</span>
-<a name="line-98"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Marshal</span> <span class='hs-layout'>(</span><span class='hs-varid'>withArray</span><span class='hs-layout'>)</span>
+<a name="line-98"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Marshal</span> <span class='hs-layout'>(</span><span class='hs-varid'>withArray</span><span class='hs-layout'>)</span>
 <a name="line-99"></a>
 <a name="line-100"></a><span class='hs-comment'>{-# LINE 94 "libraries/unix/System/Posix/Files/Common.hsc" #-}</span>
-<a name="line-101"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span>
-<a name="line-102"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Storable</span>
+<a name="line-101"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span>
+<a name="line-102"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Storable</span>
 <a name="line-103"></a>
 <a name="line-104"></a><span class='hs-comment'>-- -----------------------------------------------------------------------------</span>
 <a name="line-105"></a><span class='hs-comment'>-- POSIX file modes</span>

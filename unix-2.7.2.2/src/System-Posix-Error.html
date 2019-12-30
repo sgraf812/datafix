@@ -27,7 +27,7 @@
 <a name="line-18"></a><span class='hs-comment'>--</span>
 <a name="line-19"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-20"></a>
-<a name="line-21"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span> <span class='hs-layout'>(</span>
+<a name="line-21"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Error</span> <span class='hs-layout'>(</span>
 <a name="line-22"></a>        <span class='hs-varid'>throwErrnoPath</span><span class='hs-layout'>,</span>
 <a name="line-23"></a>        <span class='hs-varid'>throwErrnoPathIf</span><span class='hs-layout'>,</span>
 <a name="line-24"></a>        <span class='hs-varid'>throwErrnoPathIf_</span><span class='hs-layout'>,</span>
@@ -41,8 +41,8 @@
 <a name="line-32"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-33"></a>
 <a name="line-34"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span> <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span><span class='hs-varid'>void</span><span class='hs-layout'>)</span>
-<a name="line-35"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-36"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span>
+<a name="line-35"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-36"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Monad</span>
 <a name="line-37"></a>
 <a name="line-38"></a><a name="throwErrnoPathIfMinus1Retry"></a><span class='hs-definition'>throwErrnoPathIfMinus1Retry</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>Eq</span> <span class='hs-varid'>a</span><span class='hs-layout'>,</span> <span class='hs-conid'>Num</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span>
 <a name="line-39"></a>                            <span class='hs-keyglyph'>=&gt;</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>FilePath</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>a</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>IO</span> <span class='hs-varid'>a</span>

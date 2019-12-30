@@ -620,7 +620,7 @@ PrettyLevel :: Int -> PrettyLevel
 prettyNormal :: PrettyLevel
 
 -- | Pretty print a value with the <a>prettyNormal</a> level.
-prettyShow :: (Pretty a) => a -> String
+prettyShow :: Pretty a => a -> String
 
 -- | Parenthesize an value if the boolean is true.
 
@@ -637,7 +637,7 @@ instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty ()
 instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty GHC.Types.Bool
 instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty GHC.Types.Ordering
 instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty GHC.Types.Char
-instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty a => Text.PrettyPrint.Annotated.HughesPJClass.Pretty (GHC.Base.Maybe a)
+instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty a => Text.PrettyPrint.Annotated.HughesPJClass.Pretty (GHC.Maybe.Maybe a)
 instance (Text.PrettyPrint.Annotated.HughesPJClass.Pretty a, Text.PrettyPrint.Annotated.HughesPJClass.Pretty b) => Text.PrettyPrint.Annotated.HughesPJClass.Pretty (Data.Either.Either a b)
 instance Text.PrettyPrint.Annotated.HughesPJClass.Pretty a => Text.PrettyPrint.Annotated.HughesPJClass.Pretty [a]
 instance (Text.PrettyPrint.Annotated.HughesPJClass.Pretty a, Text.PrettyPrint.Annotated.HughesPJClass.Pretty b) => Text.PrettyPrint.Annotated.HughesPJClass.Pretty (a, b)
@@ -1177,7 +1177,7 @@ PrettyLevel :: Int -> PrettyLevel
 prettyNormal :: PrettyLevel
 
 -- | Pretty print a value with the <a>prettyNormal</a> level.
-prettyShow :: (Pretty a) => a -> String
+prettyShow :: Pretty a => a -> String
 
 -- | Parenthesize an value if the boolean is true.
 
@@ -1194,7 +1194,7 @@ instance Text.PrettyPrint.HughesPJClass.Pretty ()
 instance Text.PrettyPrint.HughesPJClass.Pretty GHC.Types.Bool
 instance Text.PrettyPrint.HughesPJClass.Pretty GHC.Types.Ordering
 instance Text.PrettyPrint.HughesPJClass.Pretty GHC.Types.Char
-instance Text.PrettyPrint.HughesPJClass.Pretty a => Text.PrettyPrint.HughesPJClass.Pretty (GHC.Base.Maybe a)
+instance Text.PrettyPrint.HughesPJClass.Pretty a => Text.PrettyPrint.HughesPJClass.Pretty (GHC.Maybe.Maybe a)
 instance (Text.PrettyPrint.HughesPJClass.Pretty a, Text.PrettyPrint.HughesPJClass.Pretty b) => Text.PrettyPrint.HughesPJClass.Pretty (Data.Either.Either a b)
 instance Text.PrettyPrint.HughesPJClass.Pretty a => Text.PrettyPrint.HughesPJClass.Pretty [a]
 instance (Text.PrettyPrint.HughesPJClass.Pretty a, Text.PrettyPrint.HughesPJClass.Pretty b) => Text.PrettyPrint.HughesPJClass.Pretty (a, b)

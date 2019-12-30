@@ -32,7 +32,7 @@
 <a name="line-23"></a>
 <a name="line-24"></a>
 <a name="line-25"></a>
-<a name="line-26"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span> <span class='hs-layout'>(</span>
+<a name="line-26"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.IO</span> <span class='hs-layout'>(</span>
 <a name="line-27"></a>    <span class='hs-comment'>-- * Input \/ Output</span>
 <a name="line-28"></a>
 <a name="line-29"></a>    <span class='hs-comment'>-- ** Standard file descriptors</span>
@@ -77,10 +77,10 @@
 <a name="line-68"></a>
 <a name="line-69"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-70"></a>
-<a name="line-71"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-72"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
-<a name="line-73"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span>
-<a name="line-74"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span> <span class='hs-varid'>withFilePath</span> <span class='hs-layout'>)</span>
+<a name="line-71"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
+<a name="line-72"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Error</span>
+<a name="line-73"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.IO.Common</span>
+<a name="line-74"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span> <span class='hs-varid'>withFilePath</span> <span class='hs-layout'>)</span>
 <a name="line-75"></a>
 <a name="line-76"></a><a name="openFd"></a><span class='hs-comment'>-- |Open and optionally create this file.  See 'System.Posix.Files'</span>
 <a name="line-77"></a><span class='hs-comment'>-- for information on how to use the 'FileMode' type.</span>

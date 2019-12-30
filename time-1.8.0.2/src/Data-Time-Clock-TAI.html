@@ -10,10 +10,10 @@
 <pre><a name="line-1"></a><span class='hs-comment'>{-# OPTIONS -fno-warn-orphans #-}</span>
 <a name="line-2"></a><span class='hs-cpp'>#include "HsConfigure.h"</span>
 <a name="line-3"></a><span class='hs-comment'>-- | TAI and leap-second maps for converting to UTC: most people won't need this module.</span>
-<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>TAI</span>
+<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.TAI</span>
 <a name="line-5"></a><span class='hs-layout'>(</span>
 <a name="line-6"></a>    <span class='hs-comment'>-- TAI arithmetic</span>
-<a name="line-7"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>AbsoluteTime</span><span class='hs-layout'>,</span>
+<a name="line-7"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.AbsoluteTime</span><span class='hs-layout'>,</span>
 <a name="line-8"></a>
 <a name="line-9"></a>    <span class='hs-comment'>-- leap-second map type</span>
 <a name="line-10"></a>    <span class='hs-conid'>LeapSecondMap</span><span class='hs-layout'>,</span>
@@ -24,14 +24,14 @@
 <a name="line-15"></a>    <span class='hs-varid'>taiClock</span><span class='hs-layout'>,</span>
 <a name="line-16"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-17"></a>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>AbsoluteTime</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>SystemTime</span>
-<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>System</span>
-<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Maybe</span>
-<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Fixed</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.AbsoluteTime</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.SystemTime</span>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.System</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Maybe</span>
+<a name="line-25"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Fixed</span>
 <a name="line-26"></a>
 <a name="line-27"></a><a name="instance%20Show%20AbsoluteTime"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Show</span> <span class='hs-conid'>AbsoluteTime</span> <span class='hs-keyword'>where</span>
 <a name="line-28"></a>    <span class='hs-varid'>show</span> <span class='hs-varid'>t</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>show</span> <span class='hs-layout'>(</span><span class='hs-varid'>utcToLocalTime</span> <span class='hs-varid'>utc</span> <span class='hs-layout'>(</span><span class='hs-varid'>fromJust</span> <span class='hs-layout'>(</span><span class='hs-varid'>taiToUTCTime</span> <span class='hs-layout'>(</span><span class='hs-varid'>const</span> <span class='hs-layout'>(</span><span class='hs-conid'>Just</span> <span class='hs-num'>0</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varid'>t</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varop'>++</span> <span class='hs-str'>" TAI"</span> <span class='hs-comment'>-- ugly, but standard apparently</span>

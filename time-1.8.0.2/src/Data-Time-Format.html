@@ -7,30 +7,30 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Format</span>
+<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Format</span>
 <a name="line-2"></a>    <span class='hs-layout'>(</span>
 <a name="line-3"></a>    <span class='hs-comment'>-- * UNIX-style formatting</span>
 <a name="line-4"></a>    <span class='hs-conid'>NumericPadOption</span><span class='hs-layout'>,</span><span class='hs-conid'>FormatTime</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span><span class='hs-varid'>formatTime</span><span class='hs-layout'>,</span>
-<a name="line-5"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Format</span><span class='hs-varop'>.</span><span class='hs-conid'>Parse</span>
+<a name="line-5"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Format.Parse</span>
 <a name="line-6"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-7"></a>
-<a name="line-8"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Maybe</span>
-<a name="line-9"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span>
-<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Fixed</span>
+<a name="line-8"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Maybe</span>
+<a name="line-9"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Char</span>
+<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Fixed</span>
 <a name="line-11"></a>
-<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UniversalTime</span>
-<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCTime</span>
-<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>POSIX</span>
-<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Gregorian</span>
-<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>WeekDate</span>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>OrdinalDate</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Private</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>TimeZone</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>TimeOfDay</span>
-<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span>
-<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>ZonedTime</span>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Format</span><span class='hs-varop'>.</span><span class='hs-conid'>Parse</span>
+<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UniversalTime</span>
+<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCTime</span>
+<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.POSIX</span>
+<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Gregorian</span>
+<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.WeekDate</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.OrdinalDate</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Private</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime.Internal.TimeZone</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime.Internal.TimeOfDay</span>
+<a name="line-22"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime.Internal.LocalTime</span>
+<a name="line-23"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime.Internal.ZonedTime</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Format.Parse</span>
 <a name="line-25"></a>
 <a name="line-26"></a>
 <a name="line-27"></a><a name="NumericPadOption"></a><span class='hs-keyword'>type</span> <span class='hs-conid'>NumericPadOption</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Maybe</span> <span class='hs-conid'>Char</span>

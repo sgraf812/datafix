@@ -7,7 +7,7 @@
 <link type='text/css' rel='stylesheet' href='hscolour.css' />
 </head>
 <body>
-<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Easter</span>
+<pre><a name="line-1"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Calendar.Easter</span>
 <a name="line-2"></a>    <span class='hs-layout'>(</span>
 <a name="line-3"></a>    <span class='hs-varid'>sundayAfter</span><span class='hs-layout'>,</span>
 <a name="line-4"></a>    <span class='hs-varid'>orthodoxPaschalMoon</span><span class='hs-layout'>,</span><span class='hs-varid'>orthodoxEaster</span><span class='hs-layout'>,</span>
@@ -16,8 +16,8 @@
 <a name="line-7"></a>
 <a name="line-8"></a><span class='hs-comment'>-- formulae from Reingold &amp; Dershowitz, _Calendrical Calculations_, ch. 8.</span>
 <a name="line-9"></a>
-<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span>
-<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Julian</span>
+<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar</span>
+<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Julian</span>
 <a name="line-12"></a>
 <a name="line-13"></a><a name="sundayAfter"></a><span class='hs-comment'>-- | The next Sunday strictly after a given day.</span>
 <a name="line-14"></a><span class='hs-definition'>sundayAfter</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Day</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Day</span>

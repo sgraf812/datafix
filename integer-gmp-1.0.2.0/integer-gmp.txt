@@ -4,7 +4,13 @@
 
 -- | Integer library based on GMP
 --   
---   Integer library based on GMP
+--   This package provides the low-level implementation of the standard
+--   <a>Integer</a> type based on the <a>GNU Multiple Precision Arithmetic
+--   Library (GMP)</a>.
+--   
+--   This package provides access to the internal representation of
+--   <a>Integer</a> as well as primitive operations with no proper error
+--   handling, and should only be used directly with the utmost care.
 @package integer-gmp
 @version 1.0.2.0
 

@@ -54,14 +54,14 @@ data UnicodeException
 
 -- | Could not decode a byte sequence because it was invalid under the
 --   given encoding, or ran out of input in mid-decode.
-DecodeError :: String -> (Maybe Word8) -> UnicodeException
+DecodeError :: String -> Maybe Word8 -> UnicodeException
 
 -- | Tried to encode a character that could not be represented under the
 --   given encoding, or ran out of input in mid-encode.
 
 -- | <i>Deprecated: This constructor is never used, and will be
 --   removed.</i>
-EncodeError :: String -> (Maybe Char) -> UnicodeException
+EncodeError :: String -> Maybe Char -> UnicodeException
 
 -- | Function type for handling a coding error. It is supplied with two
 --   inputs:
@@ -112,7 +112,7 @@ ignore :: OnError a b
 replace :: b -> OnError a b
 instance GHC.Classes.Eq Data.Text.Encoding.Error.UnicodeException
 instance GHC.Show.Show Data.Text.Encoding.Error.UnicodeException
-instance GHC.Exception.Exception Data.Text.Encoding.Error.UnicodeException
+instance GHC.Exception.Type.Exception Data.Text.Encoding.Error.UnicodeException
 instance Control.DeepSeq.NFData Data.Text.Encoding.Error.UnicodeException
 
 module Data.Text.Internal.Builder.Int.Digits
@@ -466,6 +466,7 @@ CC :: !s -> {-# UNPACK #-} !Char -> {-# UNPACK #-} !Char -> CC s
 -- | Strict pair.
 data PairS a b
 (:*:) :: !a -> !b -> PairS a b
+infixl 2 :*:
 
 -- | An intermediate result in a scan.
 data Scan s
@@ -708,7 +709,7 @@ dropWhile :: (Char -> Bool) -> Stream Char -> Stream Char
 
 -- | <i>O(n)</i> The <a>isPrefixOf</a> function takes two <a>Stream</a>s
 --   and returns <a>True</a> iff the first is a prefix of the second.
-isPrefixOf :: (Eq a) => Stream a -> Stream a -> Bool
+isPrefixOf :: Eq a => Stream a -> Stream a -> Bool
 
 -- | <i>O(n)</i> <a>elem</a> is the stream membership predicate.
 elem :: Char -> Stream Char -> Bool
@@ -3486,7 +3487,7 @@ Generic :: FPFormat
 --   decimal notation for arguments whose absolute value lies between
 --   <tt>0.1</tt> and <tt>9,999,999</tt>, and scientific notation
 --   otherwise.
-realFloat :: (RealFloat a) => a -> Builder
+realFloat :: RealFloat a => a -> Builder
 
 -- | Encode a signed <a>RealFloat</a> according to <a>FPFormat</a> and
 --   optionally requested precision.
@@ -3499,7 +3500,7 @@ realFloat :: (RealFloat a) => a -> Builder
 --   <tt>text</tt> still provides the serialisation as implemented in
 --   <tt>base-4.11</tt>. The next major version of <tt>text</tt> will
 --   switch to the more correct <tt>base-4.12</tt> serialisation.
-formatRealFloat :: (RealFloat a) => FPFormat -> Maybe Int -> a -> Builder
+formatRealFloat :: RealFloat a => FPFormat -> Maybe Int -> a -> Builder
 instance GHC.Show.Show Data.Text.Lazy.Builder.RealFloat.FPFormat
 instance GHC.Read.Read Data.Text.Lazy.Builder.RealFloat.FPFormat
 instance GHC.Enum.Enum Data.Text.Lazy.Builder.RealFloat.FPFormat

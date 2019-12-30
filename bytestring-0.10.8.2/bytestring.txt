@@ -3079,7 +3079,7 @@ condB :: (a -> Bool) -> BoundedPrim a -> BoundedPrim a -> BoundedPrim a
 --   primitives write much fewer than 4kb (the default short buffer size).
 --   Hence, it is safe to ignore the additional memory spilled due to the
 --   more agressive buffer wrapping introduced by this optimization.
-primBounded :: BoundedPrim a -> (a -> Builder)
+primBounded :: BoundedPrim a -> a -> Builder
 
 -- | Create a <a>Builder</a> that encodes a list of values consecutively
 --   using a <a>BoundedPrim</a> for each element. This function is more
@@ -3136,10 +3136,10 @@ emptyF :: FixedPrim a
 liftFixedToBounded :: FixedPrim a -> BoundedPrim a
 
 -- | Encode a value with a <a>FixedPrim</a>.
-primFixed :: FixedPrim a -> (a -> Builder)
+primFixed :: FixedPrim a -> a -> Builder
 
 -- | Encode a list of values from left-to-right with a <a>FixedPrim</a>.
-primMapListFixed :: FixedPrim a -> ([a] -> Builder)
+primMapListFixed :: FixedPrim a -> [a] -> Builder
 
 -- | Encode a list of values represented as an <a>unfoldr</a> with a
 --   <a>FixedPrim</a>.
@@ -3157,11 +3157,11 @@ primUnfoldrFixed :: FixedPrim b -> (a -> Maybe (b, a)) -> a -> Builder
 --   
 --   We can also use it to hex-encode a strict <a>ByteString</a> as shown
 --   by the <tt>byteStringHex</tt> example above.
-primMapByteStringFixed :: FixedPrim Word8 -> (ByteString -> Builder)
+primMapByteStringFixed :: FixedPrim Word8 -> ByteString -> Builder
 
 -- | <i>Heavy inlining.</i> Encode all bytes of a lazy <a>ByteString</a>
 --   from left-to-right with a <a>FixedPrim</a>.
-primMapLazyByteStringFixed :: FixedPrim Word8 -> (ByteString -> Builder)
+primMapLazyByteStringFixed :: FixedPrim Word8 -> ByteString -> Builder
 
 -- | Encoding single signed bytes as-is.
 int8 :: FixedPrim Int8

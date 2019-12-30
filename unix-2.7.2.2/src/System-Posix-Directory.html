@@ -36,7 +36,7 @@
 <a name="line-27"></a>
 <a name="line-28"></a><span class='hs-comment'>{-# LINE 29 "libraries/unix/System/Posix/Directory.hsc" #-}</span>
 <a name="line-29"></a>
-<a name="line-30"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Directory</span> <span class='hs-layout'>(</span>
+<a name="line-30"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Directory</span> <span class='hs-layout'>(</span>
 <a name="line-31"></a>   <span class='hs-comment'>-- * Creating and removing directories</span>
 <a name="line-32"></a>   <span class='hs-varid'>createDirectory</span><span class='hs-layout'>,</span> <span class='hs-varid'>removeDirectory</span><span class='hs-layout'>,</span>
 <a name="line-33"></a>
@@ -64,14 +64,14 @@
 <a name="line-55"></a>   <span class='hs-varid'>changeWorkingDirectoryFd</span><span class='hs-layout'>,</span>
 <a name="line-56"></a>  <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-57"></a>
-<a name="line-58"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
-<a name="line-59"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
-<a name="line-60"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
+<a name="line-58"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.IO.Error</span>
+<a name="line-59"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Error</span>
+<a name="line-60"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
 <a name="line-61"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-62"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
+<a name="line-62"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
 <a name="line-63"></a>
-<a name="line-64"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Directory</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span>
-<a name="line-65"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>withFilePath</span><span class='hs-layout'>,</span> <span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
+<a name="line-64"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Directory.Common</span>
+<a name="line-65"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>withFilePath</span><span class='hs-layout'>,</span> <span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
 <a name="line-66"></a>
 <a name="line-67"></a><a name="createDirectory"></a><span class='hs-comment'>-- | @createDirectory dir mode@ calls @mkdir@ to</span>
 <a name="line-68"></a><span class='hs-comment'>--   create a new directory, @dir@, with permissions based on</span>

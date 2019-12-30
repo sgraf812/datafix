@@ -32,7 +32,7 @@
 <a name="line-23"></a><span class='hs-comment'>-- one of the presupplied functions in this module, or you can write a</span>
 <a name="line-24"></a><span class='hs-comment'>-- custom handler of your own.</span>
 <a name="line-25"></a>
-<a name="line-26"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Encoding</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
+<a name="line-26"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Encoding.Error</span>
 <a name="line-27"></a>    <span class='hs-layout'>(</span>
 <a name="line-28"></a>    <span class='hs-comment'>-- * Error handling types</span>
 <a name="line-29"></a>      <span class='hs-conid'>UnicodeException</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span>
@@ -47,10 +47,10 @@
 <a name="line-38"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>replace</span>
 <a name="line-39"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-40"></a>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>DeepSeq</span> <span class='hs-layout'>(</span><span class='hs-conid'>NFData</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Exception</span> <span class='hs-layout'>(</span><span class='hs-conid'>Exception</span><span class='hs-layout'>,</span> <span class='hs-varid'>throw</span><span class='hs-layout'>)</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Typeable</span> <span class='hs-layout'>(</span><span class='hs-conid'>Typeable</span><span class='hs-layout'>)</span>
-<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word8</span><span class='hs-layout'>)</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.DeepSeq</span> <span class='hs-layout'>(</span><span class='hs-conid'>NFData</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Exception</span> <span class='hs-layout'>(</span><span class='hs-conid'>Exception</span><span class='hs-layout'>,</span> <span class='hs-varid'>throw</span><span class='hs-layout'>)</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Typeable</span> <span class='hs-layout'>(</span><span class='hs-conid'>Typeable</span><span class='hs-layout'>)</span>
+<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word8</span><span class='hs-layout'>)</span>
 <a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Numeric</span> <span class='hs-layout'>(</span><span class='hs-varid'>showHex</span><span class='hs-layout'>)</span>
 <a name="line-46"></a>
 <a name="line-47"></a><a name="OnError"></a><span class='hs-comment'>-- | Function type for handling a coding error.  It is supplied with</span>

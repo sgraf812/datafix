@@ -29,7 +29,7 @@
 <a name="line-20"></a><span class='hs-comment'>--</span>
 <a name="line-21"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-22"></a>
-<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span> <span class='hs-layout'>(</span>
+<a name="line-23"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Process.ByteString</span> <span class='hs-layout'>(</span>
 <a name="line-24"></a>    <span class='hs-comment'>-- * Processes</span>
 <a name="line-25"></a>
 <a name="line-26"></a>    <span class='hs-comment'>-- ** Forking and executing</span>
@@ -82,10 +82,10 @@
 <a name="line-73"></a>
 <a name="line-74"></a>
 <a name="line-75"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span>
-<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span>
+<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Process.Internals</span>
+<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Process.Common</span>
 <a name="line-78"></a>
-<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span> <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span>
+<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span> <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span>
 <a name="line-80"></a>     <span class='hs-varid'>throwErrnoPath</span><span class='hs-layout'>,</span>
 <a name="line-81"></a>     <span class='hs-varid'>throwErrnoPathIf</span><span class='hs-layout'>,</span>
 <a name="line-82"></a>     <span class='hs-varid'>throwErrnoPathIf_</span><span class='hs-layout'>,</span>
@@ -93,10 +93,10 @@
 <a name="line-84"></a>     <span class='hs-varid'>throwErrnoPathIfMinus1</span><span class='hs-layout'>,</span>
 <a name="line-85"></a>     <span class='hs-varid'>throwErrnoPathIfMinus1_</span> <span class='hs-layout'>)</span>
 <a name="line-86"></a>
-<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span> <span class='hs-layout'>(</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span>
-<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Char8</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>BC</span>
+<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.ByteString</span> <span class='hs-layout'>(</span><span class='hs-conid'>ByteString</span><span class='hs-layout'>)</span>
+<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString.Char8</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>BC</span>
 <a name="line-89"></a>
-<a name="line-90"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>FilePath</span>
+<a name="line-90"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.ByteString.FilePath</span>
 <a name="line-91"></a>
 <a name="line-92"></a><a name="executeFile"></a><span class='hs-comment'>-- | @'executeFile' cmd args env@ calls one of the</span>
 <a name="line-93"></a><span class='hs-comment'>--   @execv*@ family, depending on whether or not the current</span>
@@ -125,7 +125,7 @@
 <a name="line-116"></a>  <span class='hs-varid'>withFilePath</span> <span class='hs-varid'>path</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>s</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-117"></a>    <span class='hs-varid'>withMany</span> <span class='hs-varid'>withFilePath</span> <span class='hs-layout'>(</span><span class='hs-varid'>path</span><span class='hs-conop'>:</span><span class='hs-varid'>args</span><span class='hs-layout'>)</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>cstrs</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-118"></a>      <span class='hs-varid'>withArray0</span> <span class='hs-varid'>nullPtr</span> <span class='hs-varid'>cstrs</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>arg_arr</span> <span class='hs-keyglyph'>-&gt;</span>
-<a name="line-119"></a>    <span class='hs-keyword'>let</span> <span class='hs-varid'>env'</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>map</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-layout'>(</span><span class='hs-varid'>name</span><span class='hs-layout'>,</span> <span class='hs-varid'>val</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>name</span> <span class='hs-varop'>`</span><span class='hs-conid'>BC</span><span class='hs-varop'>.</span><span class='hs-varid'>append</span><span class='hs-varop'>`</span> <span class='hs-layout'>(</span><span class='hs-chr'>'='</span> <span class='hs-varop'>`</span><span class='hs-conid'>BC</span><span class='hs-varop'>.</span><span class='hs-varid'>cons</span><span class='hs-varop'>`</span> <span class='hs-varid'>val</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varid'>env</span> <span class='hs-keyword'>in</span>
+<a name="line-119"></a>    <span class='hs-keyword'>let</span> <span class='hs-varid'>env'</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>map</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>\</span> <span class='hs-layout'>(</span><span class='hs-varid'>name</span><span class='hs-layout'>,</span> <span class='hs-varid'>val</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>name</span> <span class='hs-varop'>`BC.append`</span> <span class='hs-layout'>(</span><span class='hs-chr'>'='</span> <span class='hs-varop'>`BC.cons`</span> <span class='hs-varid'>val</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-varid'>env</span> <span class='hs-keyword'>in</span>
 <a name="line-120"></a>    <span class='hs-varid'>withMany</span> <span class='hs-varid'>withFilePath</span> <span class='hs-varid'>env'</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>cenv</span> <span class='hs-keyglyph'>-&gt;</span>
 <a name="line-121"></a>      <span class='hs-varid'>withArray0</span> <span class='hs-varid'>nullPtr</span> <span class='hs-varid'>cenv</span> <span class='hs-varop'>$</span> <span class='hs-keyglyph'>\</span><span class='hs-varid'>env_arr</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyword'>do</span>
 <a name="line-122"></a>        <span class='hs-varid'>pPrPr_disableITimers</span>

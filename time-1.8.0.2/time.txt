@@ -387,7 +387,7 @@ formatCharacter :: FormatTime t => Char -> Maybe (TimeLocale -> Maybe NumericPad
 --   <a>mondayStartWeek</a>), 0-padded to two chars, <tt>00</tt> -
 --   <tt>53</tt></li>
 --   </ul>
-formatTime :: (FormatTime t) => TimeLocale -> String -> t -> String
+formatTime :: FormatTime t => TimeLocale -> String -> t -> String
 
 -- | Parses a time value given a format string. Supports the same %-codes
 --   as <tt>formatTime</tt>, including <tt>%-</tt>, <tt>%_</tt> and

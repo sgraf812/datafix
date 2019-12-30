@@ -31,7 +31,7 @@
 <a name="line-22"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-23"></a>
 <a name="line-24"></a><span class='hs-cpp'>#ifndef TESTING</span>
-<a name="line-25"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>Annotated</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span> <span class='hs-layout'>(</span>
+<a name="line-25"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Text.PrettyPrint.Annotated.HughesPJ</span> <span class='hs-layout'>(</span>
 <a name="line-26"></a>
 <a name="line-27"></a>        <span class='hs-comment'>-- * The document type</span>
 <a name="line-28"></a>        <span class='hs-conid'>Doc</span><span class='hs-layout'>,</span> <span class='hs-conid'>TextDetails</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>AnnotDetails</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
@@ -91,19 +91,19 @@
 <a name="line-82"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-83"></a><span class='hs-cpp'>#endif</span>
 <a name="line-84"></a>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>DeepSeq</span> <span class='hs-layout'>(</span> <span class='hs-conid'>NFData</span><span class='hs-layout'>(</span><span class='hs-varid'>rnf</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
-<a name="line-86"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Function</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>on</span> <span class='hs-layout'>)</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.DeepSeq</span> <span class='hs-layout'>(</span> <span class='hs-conid'>NFData</span><span class='hs-layout'>(</span><span class='hs-varid'>rnf</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-86"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Function</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>on</span> <span class='hs-layout'>)</span>
 <a name="line-87"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 803</span>
 <a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Prelude</span>         <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span> <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-89"></a><span class='hs-cpp'>#endif</span>
 <a name="line-90"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 800</span>
-<a name="line-91"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Semigroup</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Semi</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Semigroup</span><span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-91"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.Semigroup</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Semi</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Semigroup</span><span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-92"></a><span class='hs-cpp'>#elif __GLASGOW_HASKELL__ &lt; 709</span>
-<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-varid'>mempty</span><span class='hs-layout'>,</span> <span class='hs-varid'>mappend</span><span class='hs-layout'>)</span>  <span class='hs-layout'>)</span>
+<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Monoid</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-varid'>mempty</span><span class='hs-layout'>,</span> <span class='hs-varid'>mappend</span><span class='hs-layout'>)</span>  <span class='hs-layout'>)</span>
 <a name="line-94"></a><span class='hs-cpp'>#endif</span>
-<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-varid'>fromString</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.String</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-varid'>fromString</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-96"></a>
-<a name="line-97"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Generics</span>
+<a name="line-97"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Generics</span>
 <a name="line-98"></a>
 <a name="line-99"></a><span class='hs-comment'>-- ---------------------------------------------------------------------------</span>
 <a name="line-100"></a><span class='hs-comment'>-- The Doc calculus</span>
@@ -273,9 +273,9 @@
 <a name="line-264"></a>
 <a name="line-265"></a><span class='hs-comment'>-- Combining @Doc@ values</span>
 <a name="line-266"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 800</span>
-<a name="line-267"></a><a name="instance%20Semi.Semigroup%20(Doc%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Semi</span><span class='hs-varop'>.</span><span class='hs-conid'>Semigroup</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
+<a name="line-267"></a><a name="instance%20Semi.Semigroup%20(Doc%20a)"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Semi.Semigroup</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-268"></a><span class='hs-cpp'>#ifndef TESTING</span>
-<a name="line-269"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>Annotated</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span><span class='hs-varop'>.&lt;&gt;</span><span class='hs-layout'>)</span>
+<a name="line-269"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conid'>Text.PrettyPrint.Annotated.HughesPJ</span><span class='hs-varop'>.&lt;&gt;</span><span class='hs-layout'>)</span>
 <a name="line-270"></a><span class='hs-cpp'>#else</span>
 <a name="line-271"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conid'>PrettyTestVersion</span><span class='hs-varop'>.&lt;&gt;</span><span class='hs-layout'>)</span>
 <a name="line-272"></a><span class='hs-cpp'>#endif</span>

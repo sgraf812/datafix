@@ -25,7 +25,7 @@
 <a name="line-16"></a><span class='hs-comment'>--</span>
 <a name="line-17"></a><span class='hs-comment'>-- Size hints.</span>
 <a name="line-18"></a>
-<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Fusion</span><span class='hs-varop'>.</span><span class='hs-conid'>Size</span>
+<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Fusion.Size</span>
 <a name="line-20"></a>    <span class='hs-layout'>(</span>
 <a name="line-21"></a>      <span class='hs-conid'>Size</span>
 <a name="line-22"></a>      <span class='hs-comment'>-- * Sizes</span>
@@ -46,10 +46,10 @@
 <a name="line-37"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>isEmpty</span>
 <a name="line-38"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-39"></a>
-<a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span> <span class='hs-layout'>(</span><span class='hs-varid'>mul</span><span class='hs-layout'>)</span>
+<a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Text.Internal</span> <span class='hs-layout'>(</span><span class='hs-varid'>mul</span><span class='hs-layout'>)</span>
 <a name="line-42"></a><span class='hs-cpp'>#if defined(ASSERTS)</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
 <a name="line-44"></a><span class='hs-cpp'>#endif</span>
 <a name="line-45"></a>
 <a name="line-46"></a><a name="Size"></a><span class='hs-comment'>-- | A size in UTF-16 code units.</span>

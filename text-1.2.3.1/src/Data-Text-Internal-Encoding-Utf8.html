@@ -25,7 +25,7 @@
 <a name="line-16"></a><span class='hs-comment'>-- preconditions expected by public modules. Use at your own risk!</span>
 <a name="line-17"></a><span class='hs-comment'>--</span>
 <a name="line-18"></a><span class='hs-comment'>-- Basic UTF-8 validation and character manipulation.</span>
-<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Encoding</span><span class='hs-varop'>.</span><span class='hs-conid'>Utf8</span>
+<a name="line-19"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Encoding.Utf8</span>
 <a name="line-20"></a>    <span class='hs-layout'>(</span>
 <a name="line-21"></a>    <span class='hs-comment'>-- Decomposition</span>
 <a name="line-22"></a>      <span class='hs-varid'>ord2</span>
@@ -47,13 +47,13 @@
 <a name="line-38"></a><span class='hs-cpp'>#endif</span>
 <a name="line-39"></a>
 <a name="line-40"></a><span class='hs-cpp'>#if defined(ASSERTS)</span>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Exception</span> <span class='hs-layout'>(</span><span class='hs-varid'>assert</span><span class='hs-layout'>)</span>
 <a name="line-42"></a><span class='hs-cpp'>#endif</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Bits</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>.&amp;.</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
-<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span><span class='hs-varop'>.</span><span class='hs-conid'>Shift</span> <span class='hs-layout'>(</span><span class='hs-varid'>shiftR</span><span class='hs-layout'>)</span>
-<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Exts</span>
-<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word8</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Bits</span> <span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>.&amp;.</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Text.Internal.Unsafe.Char</span> <span class='hs-layout'>(</span><span class='hs-varid'>ord</span><span class='hs-layout'>)</span>
+<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Text.Internal.Unsafe.Shift</span> <span class='hs-layout'>(</span><span class='hs-varid'>shiftR</span><span class='hs-layout'>)</span>
+<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Exts</span>
+<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Word</span> <span class='hs-layout'>(</span><span class='hs-conid'>Word8</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
 <a name="line-48"></a>
 <a name="line-49"></a><span class='hs-keyword'>default</span><span class='hs-layout'>(</span><span class='hs-conid'>Int</span><span class='hs-layout'>)</span>
 <a name="line-50"></a>

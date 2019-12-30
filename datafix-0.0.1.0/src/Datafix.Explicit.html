@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE AllowAmbiguousTypes     #-}</span><span>
+</span><a name="line-2"></a><span class="hs-pragma">{-# LANGUAGE FlexibleContexts        #-}</span><span>
+</span><a name="line-3"></a><span class="hs-pragma">{-# LANGUAGE MultiParamTypeClasses   #-}</span><span>
+</span><a name="line-4"></a><span class="hs-pragma">{-# LANGUAGE RankNTypes              #-}</span><span>
+</span><a name="line-5"></a><span class="hs-pragma">{-# LANGUAGE ScopedTypeVariables     #-}</span><span>
+</span><a name="line-6"></a><span class="hs-pragma">{-# LANGUAGE TypeFamilies            #-}</span><span>
+</span><a name="line-7"></a><span class="hs-pragma">{-# LANGUAGE UndecidableInstances    #-}</span><span>
+</span><a name="line-8"></a><span class="hs-pragma">{-# LANGUAGE UndecidableSuperClasses #-}</span><span>
+</span><a name="line-9"></a><span>
+</span><a name="line-10"></a><span class="hs-comment">-- |</span><span>
+</span><a name="line-11"></a><span class="hs-comment">-- Module      :  Datafix.Explicit</span><span>
+</span><a name="line-12"></a><span class="hs-comment">-- Copyright   :  (c) Sebastian Graf 2017-2020</span><span>
+</span><a name="line-13"></a><span class="hs-comment">-- License     :  ISC</span><span>
+</span><a name="line-14"></a><span class="hs-comment">-- Maintainer  :  sgraf1337@gmail.com</span><span>
+</span><a name="line-15"></a><span class="hs-comment">-- Portability :  portable</span><span>
+</span><a name="line-16"></a><span class="hs-comment">--</span><span>
+</span><a name="line-17"></a><span class="hs-comment">-- Primitives for describing a [data-flow problem](https://en.wikipedia.org/wiki/Data-flow_analysis) in a declarative manner.</span><span>
+</span><a name="line-18"></a><span class="hs-comment">-- This module requires you to manage assignment of 'Node's in the data-flow</span><span>
+</span><a name="line-19"></a><span class="hs-comment">-- graph to denotations by hand. If you're looking for a safer</span><span>
+</span><a name="line-20"></a><span class="hs-comment">-- approach suited for static analysis, have a look at &quot;Datafix.Denotational&quot;.</span><span>
+</span><a name="line-21"></a><span class="hs-comment">--</span><span>
+</span><a name="line-22"></a><span class="hs-comment">-- Import this module transitively through &quot;Datafix&quot; and get access to</span><span>
+</span><a name="line-23"></a><span class="hs-comment">-- &quot;Datafix.Worklist&quot; for functions that compute solutions to your</span><span>
+</span><a name="line-24"></a><span class="hs-comment">-- 'DataFlowFramework's.</span><span>
+</span><a name="line-25"></a><span>
+</span><a name="line-26"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Datafix.Explicit</span><span>
+</span><a name="line-27"></a><span>  </span><span class="hs-special">(</span><span> </span><a href="Datafix.Explicit.html#Node"><span class="hs-identifier hs-type">Node</span></a><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-28"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Datafix.Explicit.html#DataFlowFramework"><span class="hs-identifier hs-type">DataFlowFramework</span></a><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-29"></a><span>  </span><span class="hs-special">,</span><span> </span><a href="Datafix.Explicit.html#MonadDependency"><span class="hs-identifier hs-type">MonadDependency</span></a><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><a name="line-30"></a><span>  </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-31"></a><span>
+</span><a name="line-32"></a><span class="hs-keyword">import</span><span>           </span><a href="Datafix.Common.html"><span class="hs-identifier">Datafix.Common</span></a><span>
+</span><a name="line-33"></a><span>
+</span><a name="line-34"></a><span class="hs-comment">-- $setup</span><span>
+</span><a name="line-35"></a><span class="hs-comment">-- &gt;&gt;&gt; :set -XTypeFamilies</span><span>
+</span><a name="line-36"></a><span class="hs-comment">-- &gt;&gt;&gt; :set -XScopedTypeVariables</span><span>
+</span><a name="line-37"></a><span class="hs-comment">-- &gt;&gt;&gt; import Data.Proxy</span><span>
+</span><a name="line-38"></a><span class="hs-comment">--</span><span>
+</span><a name="line-39"></a><span>
+</span><a name="line-40"></a><span class="hs-comment">-- | This is the type we use to index nodes in the data-flow graph.</span><span>
+</span><a name="line-41"></a><span class="hs-comment">--</span><span>
+</span><a name="line-42"></a><span class="hs-comment">-- The connection between syntactic things (e.g. 'Id's) and 'Node's is</span><span>
+</span><a name="line-43"></a><span class="hs-comment">-- made implicitly in code in analysis templates through an appropriate</span><span>
+</span><a name="line-44"></a><span class="hs-comment">-- allocation mechanism as in 'NodeAllocator'.</span><span>
+</span><a name="line-45"></a><span class="hs-keyword">newtype</span><span> </span><a name="Node"><a href="Datafix.Explicit.html#Node"><span class="hs-identifier">Node</span></a></a><span>
+</span><a name="line-46"></a><span>  </span><span class="hs-glyph">=</span><span> </span><a name="Node"><a href="Datafix.Explicit.html#Node"><span class="hs-identifier">Node</span></a></a><span> </span><span class="hs-special">{</span><span> </span><a name="unwrapNode"><a href="Datafix.Explicit.html#unwrapNode"><span class="hs-identifier">unwrapNode</span></a></a><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-special">}</span><span>
+</span><a name="line-47"></a><span>  </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Eq</span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-type">Ord</span><span class="hs-special">,</span><span> </span><span class="hs-identifier hs-type">Show</span><span class="hs-special">)</span><span>
+</span><a name="line-48"></a><span>
+</span><a name="line-49"></a><span class="hs-comment">-- | Models a data-flow problem, where each 'Node' is mapped to</span><span>
+</span><a name="line-50"></a><span class="hs-comment">-- its denoting 'LiftedFunc' and a means to detect when</span><span>
+</span><a name="line-51"></a><span class="hs-comment">-- the iterated transfer function reached a fixed-point through</span><span>
+</span><a name="line-52"></a><span class="hs-comment">-- a 'ChangeDetector'.</span><span>
+</span><a name="line-53"></a><span class="hs-keyword">data</span><span> </span><a name="DataFlowFramework"><a href="Datafix.Explicit.html#DataFlowFramework"><span class="hs-identifier">DataFlowFramework</span></a></a><span> </span><a name="local-6989586621679075040"><a href="#local-6989586621679075040"><span class="hs-identifier">m</span></a></a><span>
+</span><a name="line-54"></a><span>  </span><span class="hs-glyph">=</span><span> </span><a name="DFF"><a href="Datafix.Explicit.html#DFF"><span class="hs-identifier">DFF</span></a></a><span>
+</span><a name="line-55"></a><span>  </span><span class="hs-special">{</span><span> </span><a name="dffTransfer"><a href="Datafix.Explicit.html#dffTransfer"><span class="hs-identifier">dffTransfer</span></a></a><span>     </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">(</span><a href="Datafix.Explicit.html#Node"><span class="hs-identifier hs-type">Node</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Datafix.Common.html#LiftedFunc"><span class="hs-identifier hs-type">LiftedFunc</span></a><span> </span><span class="hs-special">(</span><a href="Datafix.Common.html#Domain"><span class="hs-identifier hs-type">Domain</span></a><span> </span><a href="#local-6989586621679075040"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621679075040"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span>
+</span><a name="line-56"></a><span>  </span><span class="hs-comment">-- ^ A transfer function per each 'Node' of the modeled data-flow problem.</span><span>
+</span><a name="line-57"></a><span>  </span><span class="hs-special">,</span><span> </span><a name="dffDetectChange"><a href="Datafix.Explicit.html#dffDetectChange"><span class="hs-identifier">dffDetectChange</span></a></a><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-glyph">!</span><span class="hs-special">(</span><a href="Datafix.Explicit.html#Node"><span class="hs-identifier hs-type">Node</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Datafix.Common.html#ChangeDetector"><span class="hs-identifier hs-type">ChangeDetector</span></a><span> </span><span class="hs-special">(</span><a href="Datafix.Common.html#Domain"><span class="hs-identifier hs-type">Domain</span></a><span> </span><a href="#local-6989586621679075040"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><a name="line-58"></a><span>  </span><span class="hs-comment">-- ^ A 'ChangeDetector' for each 'Node' of the modeled data-flow problem.</span><span>
+</span><a name="line-59"></a><span>  </span><span class="hs-comment">-- In the simplest case, this just delegates to an 'Eq' instance.</span><span>
+</span><a name="line-60"></a><span>  </span><span class="hs-special">}</span><span>
+</span><a name="line-61"></a><span>
+</span><a name="line-62"></a><span class="hs-comment">-- | A monad with a single impure primitive 'dependOn' that expresses</span><span>
+</span><a name="line-63"></a><span class="hs-comment">-- a dependency on a 'Node' of a data-flow graph.</span><span>
+</span><a name="line-64"></a><span class="hs-comment">--</span><span>
+</span><a name="line-65"></a><span class="hs-comment">-- The associated 'Domain' type is the abstract domain in which</span><span>
+</span><a name="line-66"></a><span class="hs-comment">-- we denote 'Node's.</span><span>
+</span><a name="line-67"></a><span class="hs-comment">--</span><span>
+</span><a name="line-68"></a><span class="hs-comment">-- Think of it like memoization on steroids.</span><span>
+</span><a name="line-69"></a><span class="hs-comment">-- You can represent dynamic programs with this quite easily:</span><span>
+</span><a name="line-70"></a><span class="hs-comment">--</span><span>
+</span><a name="line-71"></a><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><a name="line-72"></a><span class="hs-comment">--   transferFib :: forall m . (MonadDependency m, Domain m ~ Int) =&gt; Node -&gt; LiftedFunc Int m</span><span>
+</span><a name="line-73"></a><span class="hs-comment">--   transferFib (Node 0) = return 0</span><span>
+</span><a name="line-74"></a><span class="hs-comment">--   transferFib (Node 1) = return 1</span><span>
+</span><a name="line-75"></a><span class="hs-comment">--   transferFib (Node n) = (+) &lt;$&gt; dependOn @m (Node (n-1)) &lt;*&gt; dependOn @m (Node (n-2))</span><span>
+</span><a name="line-76"></a><span class="hs-comment">--   -- sparing the negative n error case</span><span>
+</span><a name="line-77"></a><span class="hs-comment">-- :}</span><span>
+</span><a name="line-78"></a><span class="hs-comment">--</span><span>
+</span><a name="line-79"></a><span class="hs-comment">-- We can construct a description of a 'DataFlowFramework' with this @transferFib@ function:</span><span>
+</span><a name="line-80"></a><span class="hs-comment">--</span><span>
+</span><a name="line-81"></a><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><a name="line-82"></a><span class="hs-comment">--   dataFlowFramework :: forall m . (MonadDependency m, Domain m ~ Int) =&gt; DataFlowFramework m</span><span>
+</span><a name="line-83"></a><span class="hs-comment">--   dataFlowFramework = DFF transferFib (const (eqChangeDetector @(Domain m)))</span><span>
+</span><a name="line-84"></a><span class="hs-comment">-- :}</span><span>
+</span><a name="line-85"></a><span class="hs-comment">--</span><span>
+</span><a name="line-86"></a><span class="hs-comment">-- We regard the ordinary @fib@ function a solution to the recurrence modeled by @transferFib@:</span><span>
+</span><a name="line-87"></a><span class="hs-comment">--</span><span>
+</span><a name="line-88"></a><span class="hs-comment">-- &gt;&gt;&gt; :{</span><span>
+</span><a name="line-89"></a><span class="hs-comment">--   fib :: Int -&gt; Int</span><span>
+</span><a name="line-90"></a><span class="hs-comment">--   fib 0 = 0</span><span>
+</span><a name="line-91"></a><span class="hs-comment">--   fib 1 = 1</span><span>
+</span><a name="line-92"></a><span class="hs-comment">--   fib n = fib (n-1) + fib (n - 2)</span><span>
+</span><a name="line-93"></a><span class="hs-comment">-- :}</span><span>
+</span><a name="line-94"></a><span class="hs-comment">--</span><span>
+</span><a name="line-95"></a><span class="hs-comment">-- E.g., under the assumption of @fib@ being total (which is true on the domain of natural numbers),</span><span>
+</span><a name="line-96"></a><span class="hs-comment">-- it computes the same results as the least /fixed-point/ of the series of iterations</span><span>
+</span><a name="line-97"></a><span class="hs-comment">-- of the transfer function @transferFib@.</span><span>
+</span><a name="line-98"></a><span class="hs-comment">--</span><span>
+</span><a name="line-99"></a><span class="hs-comment">-- Ostensibly, the nth iteration of @transferFib@ substitutes each @dependOn@</span><span>
+</span><a name="line-100"></a><span class="hs-comment">-- with @transferFib@ repeatedly for n times and finally substitutes all</span><span>
+</span><a name="line-101"></a><span class="hs-comment">-- remaining @dependOn@s with a call to 'error'.</span><span>
+</span><a name="line-102"></a><span class="hs-comment">--</span><span>
+</span><a name="line-103"></a><span class="hs-comment">-- Computing a solution by /fixed-point iteration/ in a declarative manner is the</span><span>
+</span><a name="line-104"></a><span class="hs-comment">-- purpose of this library. There potentially are different approaches to</span><span>
+</span><a name="line-105"></a><span class="hs-comment">-- computing a solution, but in &quot;Datafix.Worklist&quot; we offer an approach</span><span>
+</span><a name="line-106"></a><span class="hs-comment">-- based on a worklist algorithm, trying to find a smart order in which</span><span>
+</span><a name="line-107"></a><span class="hs-comment">-- nodes in the data-flow graph are reiterated.</span><span>
+</span><a name="line-108"></a><span class="hs-comment">--</span><span>
+</span><a name="line-109"></a><span class="hs-comment">-- The concrete MonadDependency depends on the solution algorithm, which</span><span>
+</span><a name="line-110"></a><span class="hs-comment">-- is in fact the reason why there is no satisfying data type in this module:</span><span>
+</span><a name="line-111"></a><span class="hs-comment">-- We are only concerned with /declaring/ data-flow problems here.</span><span>
+</span><a name="line-112"></a><span class="hs-comment">--</span><span>
+</span><a name="line-113"></a><span class="hs-comment">-- The distinguishing feature of data-flow graphs is that they are not</span><span>
+</span><a name="line-114"></a><span class="hs-comment">-- necessarily acyclic (data-flow graphs of dynamic programs always are!),</span><span>
+</span><a name="line-115"></a><span class="hs-comment">-- but [under certain conditions](https://en.wikipedia.org/wiki/Kleene_fixed-point_theorem)</span><span>
+</span><a name="line-116"></a><span class="hs-comment">-- even have solutions when there are cycles.</span><span>
+</span><a name="line-117"></a><span class="hs-comment">--</span><span>
+</span><a name="line-118"></a><span class="hs-comment">-- Cycles occur commonly in data-flow problems of static analyses for</span><span>
+</span><a name="line-119"></a><span class="hs-comment">-- programming languages, introduced through loops or recursive functions.</span><span>
+</span><a name="line-120"></a><span class="hs-comment">-- Thus, this library mostly aims at making the life of compiler writers</span><span>
+</span><a name="line-121"></a><span class="hs-comment">-- easier.</span><span>
+</span><a name="line-122"></a><span class="hs-keyword">class</span><span> </span><a href="Datafix.Common.html#MonadDomain"><span class="hs-identifier hs-type">MonadDomain</span></a><span> </span><a href="#local-6989586621679075039"><span class="hs-identifier hs-type">m</span></a><span> </span><span class="hs-glyph">=&gt;</span><span> </span><a name="MonadDependency"><a href="Datafix.Explicit.html#MonadDependency"><span class="hs-identifier">MonadDependency</span></a></a><span> </span><a name="local-6989586621679075039"><a href="#local-6989586621679075039"><span class="hs-identifier">m</span></a></a><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-123"></a><span>  </span><a name="dependOn"><a href="Datafix.Explicit.html#dependOn"><span class="hs-identifier">dependOn</span></a></a><span> </span><span class="hs-glyph">::</span><span> </span><a href="Datafix.Explicit.html#Node"><span class="hs-identifier hs-type">Node</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="Datafix.Common.html#LiftedFunc"><span class="hs-identifier hs-type">LiftedFunc</span></a><span> </span><span class="hs-special">(</span><a href="Datafix.Common.html#Domain"><span class="hs-identifier hs-type">Domain</span></a><span> </span><a href="#local-6989586621679075039"><span class="hs-identifier hs-type">m</span></a><span class="hs-special">)</span><span> </span><a href="#local-6989586621679075039"><span class="hs-identifier hs-type">m</span></a><span>
+</span><a name="line-124"></a><span>  </span><span class="hs-comment">-- ^ Expresses a dependency on a node of the data-flow graph, thus</span><span>
+</span><a name="line-125"></a><span>  </span><span class="hs-comment">-- introducing a way of trackable recursion. That's similar</span><span>
+</span><a name="line-126"></a><span>  </span><span class="hs-comment">-- to how you would use 'Data.Function.fix' to abstract over recursion.</span><span>
+</span><a name="line-127"></a></pre></body></html>

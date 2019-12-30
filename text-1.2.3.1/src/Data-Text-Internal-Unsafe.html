@@ -24,16 +24,16 @@
 <a name="line-15"></a><span class='hs-comment'>--</span>
 <a name="line-16"></a><span class='hs-comment'>-- A module containing /unsafe/ operations, for /very very careful/ use</span>
 <a name="line-17"></a><span class='hs-comment'>-- in /heavily tested/ code.</span>
-<a name="line-18"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span>
+<a name="line-18"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Text.Internal.Unsafe</span>
 <a name="line-19"></a>    <span class='hs-layout'>(</span>
 <a name="line-20"></a>      <span class='hs-varid'>inlineInterleaveST</span>
 <a name="line-21"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>inlinePerformIO</span>
 <a name="line-22"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-23"></a>
-<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>ST</span> <span class='hs-layout'>(</span><span class='hs-conid'>ST</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-24"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.ST</span> <span class='hs-layout'>(</span><span class='hs-conid'>ST</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
 <a name="line-25"></a><span class='hs-cpp'>#if defined(__GLASGOW_HASKELL__)</span>
-<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>IO</span><span class='hs-layout'>(</span><span class='hs-conid'>IO</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-27"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Base</span> <span class='hs-layout'>(</span><span class='hs-varid'>realWorld</span><span class='hs-cpp'>#</span><span class='hs-layout'>)</span>
+<a name="line-26"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>IO</span><span class='hs-layout'>(</span><span class='hs-conid'>IO</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-27"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Base</span> <span class='hs-layout'>(</span><span class='hs-varid'>realWorld</span><span class='hs-cpp'>#</span><span class='hs-layout'>)</span>
 <a name="line-28"></a><span class='hs-cpp'>#endif</span>
 <a name="line-29"></a>
 <a name="line-30"></a>

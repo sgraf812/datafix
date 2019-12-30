@@ -8,11 +8,11 @@
 </head>
 <body>
 <pre><a name="line-1"></a><span class='hs-comment'>-- | ISO 8601 Week Date format</span>
-<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>WeekDate</span> <span class='hs-keyword'>where</span>
+<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Calendar.WeekDate</span> <span class='hs-keyword'>where</span>
 <a name="line-3"></a>
-<a name="line-4"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>OrdinalDate</span>
-<a name="line-5"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-6"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Private</span>
+<a name="line-4"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.OrdinalDate</span>
+<a name="line-5"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-6"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Private</span>
 <a name="line-7"></a>
 <a name="line-8"></a><a name="toWeekDate"></a><span class='hs-comment'>-- | Convert to ISO 8601 Week Date format. First element of result is year, second week number (1-53), third day of week (1 for Monday to 7 for Sunday).</span>
 <a name="line-9"></a><span class='hs-comment'>-- Note that \"Week\" years are not quite the same as Gregorian years, as the first day of the year is always a Monday.</span>

@@ -28,7 +28,7 @@
 <a name="line-19"></a><span class='hs-comment'>--</span>
 <a name="line-20"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-21"></a>
-<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Terminal</span> <span class='hs-layout'>(</span>
+<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Terminal</span> <span class='hs-layout'>(</span>
 <a name="line-23"></a>  <span class='hs-comment'>-- * Terminal support</span>
 <a name="line-24"></a>
 <a name="line-25"></a>  <span class='hs-comment'>-- ** Terminal attributes</span>
@@ -85,13 +85,13 @@
 <a name="line-76"></a>
 <a name="line-77"></a>
 <a name="line-78"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span>
-<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span>
-<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Terminal</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span>
-<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
+<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C</span>
+<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Terminal.Common</span>
+<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
 <a name="line-82"></a>
 <a name="line-83"></a><span class='hs-comment'>{-# LINE 84 "libraries/unix/System/Posix/Terminal.hsc" #-}</span>
 <a name="line-84"></a>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span><span class='hs-varid'>peekFilePath</span><span class='hs-layout'>)</span>
 <a name="line-86"></a>
 <a name="line-87"></a>
 <a name="line-88"></a><span class='hs-comment'>{-# LINE 91 "libraries/unix/System/Posix/Terminal.hsc" #-}</span>

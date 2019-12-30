@@ -8,25 +8,25 @@
 </head>
 <body>
 <pre><a name="line-1"></a><span class='hs-comment'>-- | Types and functions for UTC and UT1</span>
-<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span>
+<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock</span>
 <a name="line-3"></a><span class='hs-layout'>(</span>
-<a name="line-4"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UniversalTime</span><span class='hs-layout'>,</span>
-<a name="line-5"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>DiffTime</span><span class='hs-layout'>,</span>
-<a name="line-6"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCTime</span><span class='hs-layout'>,</span>
-<a name="line-7"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>NominalDiffTime</span><span class='hs-layout'>,</span>
-<a name="line-8"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCDiff</span><span class='hs-layout'>,</span>
+<a name="line-4"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.UniversalTime</span><span class='hs-layout'>,</span>
+<a name="line-5"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.DiffTime</span><span class='hs-layout'>,</span>
+<a name="line-6"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCTime</span><span class='hs-layout'>,</span>
+<a name="line-7"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.NominalDiffTime</span><span class='hs-layout'>,</span>
+<a name="line-8"></a>    <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCDiff</span><span class='hs-layout'>,</span>
 <a name="line-9"></a>    <span class='hs-varid'>getCurrentTime</span><span class='hs-layout'>,</span>
 <a name="line-10"></a>    <span class='hs-varid'>getTime_resolution</span>
 <a name="line-11"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-12"></a>
-<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UniversalTime</span>
-<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>DiffTime</span>
-<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>SystemTime</span>
-<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCDiff</span>
-<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>NominalDiffTime</span>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCTime</span>
-<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>POSIX</span>
-<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Format</span><span class='hs-varop'>.</span><span class='hs-conid'>Parse</span><span class='hs-conid'>()</span>
-<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>LocalTime</span><span class='hs-conid'>()</span>
+<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UniversalTime</span>
+<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.DiffTime</span>
+<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.SystemTime</span>
+<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCDiff</span>
+<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.NominalDiffTime</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCTime</span>
+<a name="line-19"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.POSIX</span>
+<a name="line-20"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Format.Parse</span><span class='hs-conid'>()</span>
+<a name="line-21"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.LocalTime</span><span class='hs-conid'>()</span>
 </pre></body>
 </html>

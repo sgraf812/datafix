@@ -27,7 +27,7 @@
 <a name="line-18"></a><span class='hs-comment'>--</span>
 <a name="line-19"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-20"></a>
-<a name="line-21"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span> <span class='hs-layout'>(</span>
+<a name="line-21"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Process.Common</span> <span class='hs-layout'>(</span>
 <a name="line-22"></a>    <span class='hs-comment'>-- * Processes</span>
 <a name="line-23"></a>
 <a name="line-24"></a>    <span class='hs-comment'>-- ** Forking and executing</span>
@@ -78,20 +78,20 @@
 <a name="line-69"></a>
 <a name="line-70"></a>
 <a name="line-71"></a>
-<a name="line-72"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span>
-<a name="line-73"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-74"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Marshal</span><span class='hs-varop'>.</span><span class='hs-conid'>Alloc</span> <span class='hs-layout'>(</span> <span class='hs-varid'>alloca</span><span class='hs-layout'>,</span> <span class='hs-varid'>allocaBytes</span> <span class='hs-layout'>)</span>
-<a name="line-75"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span> <span class='hs-layout'>)</span>
-<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>StablePtr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>StablePtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>newStablePtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>freeStablePtr</span> <span class='hs-layout'>)</span>
-<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Storable</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Storable</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
-<a name="line-78"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Exit</span>
-<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Process</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span>
-<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span>
+<a name="line-72"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Error</span>
+<a name="line-73"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Types</span>
+<a name="line-74"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Marshal.Alloc</span> <span class='hs-layout'>(</span> <span class='hs-varid'>alloca</span><span class='hs-layout'>,</span> <span class='hs-varid'>allocaBytes</span> <span class='hs-layout'>)</span>
+<a name="line-75"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span> <span class='hs-layout'>)</span>
+<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.StablePtr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>StablePtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>newStablePtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>freeStablePtr</span> <span class='hs-layout'>)</span>
+<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Storable</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Storable</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-78"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Exit</span>
+<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Process.Internals</span>
+<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
+<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Monad</span>
 <a name="line-82"></a>
-<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Exception</span><span class='hs-varop'>.</span><span class='hs-conid'>Base</span> <span class='hs-layout'>(</span> <span class='hs-varid'>bracket</span><span class='hs-layout'>,</span> <span class='hs-varid'>getMaskingState</span><span class='hs-layout'>,</span> <span class='hs-conid'>MaskingState</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span> <span class='hs-comment'>-- used by forkProcess</span>
-<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>TopHandler</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>runIO</span> <span class='hs-layout'>)</span>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span> <span class='hs-layout'>(</span> <span class='hs-varid'>unsafeUnmask</span><span class='hs-layout'>,</span> <span class='hs-varid'>uninterruptibleMask_</span> <span class='hs-layout'>)</span>
+<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Exception.Base</span> <span class='hs-layout'>(</span> <span class='hs-varid'>bracket</span><span class='hs-layout'>,</span> <span class='hs-varid'>getMaskingState</span><span class='hs-layout'>,</span> <span class='hs-conid'>MaskingState</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span> <span class='hs-comment'>-- used by forkProcess</span>
+<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.TopHandler</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>runIO</span> <span class='hs-layout'>)</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.IO</span> <span class='hs-layout'>(</span> <span class='hs-varid'>unsafeUnmask</span><span class='hs-layout'>,</span> <span class='hs-varid'>uninterruptibleMask_</span> <span class='hs-layout'>)</span>
 <a name="line-86"></a>
 <a name="line-87"></a><span class='hs-comment'>-- -----------------------------------------------------------------------------</span>
 <a name="line-88"></a><span class='hs-comment'>-- Process environment</span>

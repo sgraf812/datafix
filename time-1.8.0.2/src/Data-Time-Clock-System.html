@@ -8,7 +8,7 @@
 </head>
 <body>
 <pre><a name="line-1"></a><span class='hs-comment'>-- | Fast access to the system clock.</span>
-<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>System</span>
+<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.System</span>
 <a name="line-3"></a><span class='hs-layout'>(</span>
 <a name="line-4"></a>    <span class='hs-varid'>systemEpochDay</span><span class='hs-layout'>,</span>
 <a name="line-5"></a>    <span class='hs-conid'>SystemTime</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
@@ -19,12 +19,12 @@
 <a name="line-10"></a>    <span class='hs-varid'>systemToTAITime</span><span class='hs-layout'>,</span>
 <a name="line-11"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-12"></a>
-<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>AbsoluteTime</span>
-<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>DiffTime</span>
-<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>SystemTime</span>
-<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCTime</span>
-<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
-<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Int</span> <span class='hs-layout'>(</span><span class='hs-conid'>Int64</span><span class='hs-layout'>)</span>
+<a name="line-13"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.AbsoluteTime</span>
+<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.DiffTime</span>
+<a name="line-15"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.SystemTime</span>
+<a name="line-16"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCTime</span>
+<a name="line-17"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
+<a name="line-18"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Int</span> <span class='hs-layout'>(</span><span class='hs-conid'>Int64</span><span class='hs-layout'>)</span>
 <a name="line-19"></a>
 <a name="line-20"></a>
 <a name="line-21"></a><a name="truncateSystemTimeLeapSecond"></a><span class='hs-comment'>-- | Map leap-second values to the start of the following second.</span>

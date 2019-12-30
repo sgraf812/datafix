@@ -28,7 +28,7 @@
 <a name="line-19"></a><span class='hs-comment'>--</span>
 <a name="line-20"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-21"></a>
-<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Env</span> <span class='hs-layout'>(</span>
+<a name="line-22"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Env</span> <span class='hs-layout'>(</span>
 <a name="line-23"></a>      <span class='hs-varid'>getEnv</span>
 <a name="line-24"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>getEnvDefault</span>
 <a name="line-25"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>getEnvironmentPrim</span>
@@ -42,15 +42,15 @@
 <a name="line-33"></a>
 <a name="line-34"></a>
 <a name="line-35"></a>
-<a name="line-36"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span> <span class='hs-layout'>(</span><span class='hs-varid'>throwErrnoIfMinus1_</span><span class='hs-layout'>)</span>
-<a name="line-37"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-38"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>
-<a name="line-39"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Marshal</span><span class='hs-varop'>.</span><span class='hs-conid'>Array</span>
-<a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span>
-<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Storable</span>
-<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>Monad</span>
-<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Maybe</span> <span class='hs-layout'>(</span><span class='hs-varid'>fromMaybe</span><span class='hs-layout'>)</span>
-<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span>
+<a name="line-36"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Error</span> <span class='hs-layout'>(</span><span class='hs-varid'>throwErrnoIfMinus1_</span><span class='hs-layout'>)</span>
+<a name="line-37"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Types</span>
+<a name="line-38"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.String</span>
+<a name="line-39"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Marshal.Array</span>
+<a name="line-40"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span>
+<a name="line-41"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Storable</span>
+<a name="line-42"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.Monad</span>
+<a name="line-43"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Maybe</span> <span class='hs-layout'>(</span><span class='hs-varid'>fromMaybe</span><span class='hs-layout'>)</span>
+<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span>
 <a name="line-45"></a>
 <a name="line-46"></a>
 <a name="line-47"></a><span class='hs-comment'>{-# LINE 50 "libraries/unix/System/Posix/Env.hsc" #-}</span>

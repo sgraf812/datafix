@@ -31,7 +31,7 @@
 <a name="line-22"></a><span class='hs-comment'>--</span>
 <a name="line-23"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-24"></a>
-<a name="line-25"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>DynamicLinker</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span> <span class='hs-layout'>(</span>
+<a name="line-25"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.DynamicLinker.Prim</span> <span class='hs-layout'>(</span>
 <a name="line-26"></a>  <span class='hs-comment'>-- * low level API</span>
 <a name="line-27"></a>  <span class='hs-varid'>c_dlopen</span><span class='hs-layout'>,</span>
 <a name="line-28"></a>  <span class='hs-varid'>c_dlsym</span><span class='hs-layout'>,</span>
@@ -50,10 +50,10 @@
 <a name="line-41"></a>
 <a name="line-42"></a>
 <a name="line-43"></a>
-<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Bits</span>        <span class='hs-layout'>(</span> <span class='hs-layout'>(</span><span class='hs-varop'>.|.</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
-<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span>      <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-conid'>FunPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>nullPtr</span> <span class='hs-layout'>)</span>
-<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span> <span class='hs-layout'>(</span> <span class='hs-conid'>CString</span> <span class='hs-layout'>)</span>
+<a name="line-44"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Bits</span>        <span class='hs-layout'>(</span> <span class='hs-layout'>(</span><span class='hs-varop'>.|.</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-45"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span>      <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-conid'>FunPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>nullPtr</span> <span class='hs-layout'>)</span>
+<a name="line-46"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Types</span>
+<a name="line-47"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.String</span> <span class='hs-layout'>(</span> <span class='hs-conid'>CString</span> <span class='hs-layout'>)</span>
 <a name="line-48"></a>
 <a name="line-49"></a>
 <a name="line-50"></a><span class='hs-comment'>-- |On some hosts (e.g. SuSe and Ubuntu Linux) @RTLD_NEXT@ (and</span>

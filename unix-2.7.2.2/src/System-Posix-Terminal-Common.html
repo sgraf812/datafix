@@ -30,7 +30,7 @@
 <a name="line-21"></a><span class='hs-comment'>{-# LINE 22 "libraries/unix/System/Posix/Terminal/Common.hsc" #-}</span>
 <a name="line-22"></a>
 <a name="line-23"></a>
-<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Terminal</span><span class='hs-varop'>.</span><span class='hs-conid'>Common</span> <span class='hs-layout'>(</span>
+<a name="line-24"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>System.Posix.Terminal.Common</span> <span class='hs-layout'>(</span>
 <a name="line-25"></a>  <span class='hs-comment'>-- * Terminal support</span>
 <a name="line-26"></a>
 <a name="line-27"></a>  <span class='hs-comment'>-- ** Terminal attributes</span>
@@ -81,17 +81,17 @@
 <a name="line-72"></a>
 <a name="line-73"></a>
 <a name="line-74"></a>
-<a name="line-75"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Bits</span>
-<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Char</span>
-<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Error</span> <span class='hs-layout'>(</span> <span class='hs-varid'>throwErrnoIfMinus1</span><span class='hs-layout'>,</span> <span class='hs-varid'>throwErrnoIfMinus1_</span> <span class='hs-layout'>)</span>
-<a name="line-78"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>C</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>ForeignPtr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>ForeignPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>withForeignPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>mallocForeignPtrBytes</span> <span class='hs-layout'>)</span>
-<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Marshal</span><span class='hs-varop'>.</span><span class='hs-conid'>Utils</span> <span class='hs-layout'>(</span> <span class='hs-varid'>copyBytes</span> <span class='hs-layout'>)</span>
-<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Ptr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-varid'>plusPtr</span> <span class='hs-layout'>)</span>
-<a name="line-82"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign</span><span class='hs-varop'>.</span><span class='hs-conid'>Storable</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Storable</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
-<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span><span class='hs-varop'>.</span><span class='hs-conid'>Unsafe</span> <span class='hs-layout'>(</span> <span class='hs-varid'>unsafePerformIO</span> <span class='hs-layout'>)</span>
-<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Types</span>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>Posix</span><span class='hs-varop'>.</span><span class='hs-conid'>Internals</span> <span class='hs-layout'>(</span> <span class='hs-conid'>CTermios</span> <span class='hs-layout'>)</span>
+<a name="line-75"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Bits</span>
+<a name="line-76"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Char</span>
+<a name="line-77"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Error</span> <span class='hs-layout'>(</span> <span class='hs-varid'>throwErrnoIfMinus1</span><span class='hs-layout'>,</span> <span class='hs-varid'>throwErrnoIfMinus1_</span> <span class='hs-layout'>)</span>
+<a name="line-78"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.C.Types</span>
+<a name="line-79"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.ForeignPtr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>ForeignPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>withForeignPtr</span><span class='hs-layout'>,</span> <span class='hs-varid'>mallocForeignPtrBytes</span> <span class='hs-layout'>)</span>
+<a name="line-80"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Marshal.Utils</span> <span class='hs-layout'>(</span> <span class='hs-varid'>copyBytes</span> <span class='hs-layout'>)</span>
+<a name="line-81"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Ptr</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Ptr</span><span class='hs-layout'>,</span> <span class='hs-varid'>plusPtr</span> <span class='hs-layout'>)</span>
+<a name="line-82"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Foreign.Storable</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Storable</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-83"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.IO.Unsafe</span> <span class='hs-layout'>(</span> <span class='hs-varid'>unsafePerformIO</span> <span class='hs-layout'>)</span>
+<a name="line-84"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Types</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>System.Posix.Internals</span> <span class='hs-layout'>(</span> <span class='hs-conid'>CTermios</span> <span class='hs-layout'>)</span>
 <a name="line-86"></a>
 <a name="line-87"></a>
 <a name="line-88"></a><span class='hs-comment'>{-# LINE 91 "libraries/unix/System/Posix/Terminal/Common.hsc" #-}</span>

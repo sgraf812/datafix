@@ -182,7 +182,7 @@
 <a name="line-173"></a>-}</span>
 <a name="line-174"></a>
 <a name="line-175"></a>
-<a name="line-176"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span>
+<a name="line-176"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.ByteString.Builder</span>
 <a name="line-177"></a>    <span class='hs-layout'>(</span>
 <a name="line-178"></a>      <span class='hs-comment'>-- * The Builder type</span>
 <a name="line-179"></a>      <span class='hs-conid'>Builder</span>
@@ -260,35 +260,35 @@
 <a name="line-251"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>charUtf8</span>
 <a name="line-252"></a>    <span class='hs-layout'>,</span> <span class='hs-varid'>stringUtf8</span>
 <a name="line-253"></a>
-<a name="line-254"></a>    <span class='hs-layout'>,</span> <span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>ASCII</span>
+<a name="line-254"></a>    <span class='hs-layout'>,</span> <span class='hs-keyword'>module</span> <span class='hs-conid'>Data.ByteString.Builder.ASCII</span>
 <a name="line-255"></a>
 <a name="line-256"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-257"></a>
-<a name="line-258"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span>
-<a name="line-259"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>Prim</span>  <span class='hs-keyword'>as</span> <span class='hs-conid'>P</span>
-<a name="line-260"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Lazy</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>L</span>
-<a name="line-261"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span><span class='hs-varop'>.</span><span class='hs-conid'>Builder</span><span class='hs-varop'>.</span><span class='hs-conid'>ASCII</span>
+<a name="line-258"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.ByteString.Builder.Internal</span>
+<a name="line-259"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString.Builder.Prim</span>  <span class='hs-keyword'>as</span> <span class='hs-conid'>P</span>
+<a name="line-260"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString.Lazy.Internal</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>L</span>
+<a name="line-261"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.ByteString.Builder.ASCII</span>
 <a name="line-262"></a>
-<a name="line-263"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span> <span class='hs-layout'>(</span><span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
-<a name="line-264"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>System</span><span class='hs-varop'>.</span><span class='hs-conid'>IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>Handle</span><span class='hs-layout'>)</span>
+<a name="line-263"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.String</span> <span class='hs-layout'>(</span><span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-264"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>System.IO</span> <span class='hs-layout'>(</span><span class='hs-conid'>Handle</span><span class='hs-layout'>)</span>
 <a name="line-265"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Foreign</span>
 <a name="line-266"></a>
 <a name="line-267"></a><span class='hs-comment'>-- HADDOCK only imports</span>
-<a name="line-268"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span>               <span class='hs-keyword'>as</span> <span class='hs-conid'>S</span> <span class='hs-layout'>(</span><span class='hs-varid'>concat</span><span class='hs-layout'>)</span>
+<a name="line-268"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.ByteString</span>               <span class='hs-keyword'>as</span> <span class='hs-conid'>S</span> <span class='hs-layout'>(</span><span class='hs-varid'>concat</span><span class='hs-layout'>)</span>
 <a name="line-269"></a><span class='hs-cpp'>#if !(MIN_VERSION_base(4,8,0))</span>
-<a name="line-270"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span> <span class='hs-layout'>(</span><span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
+<a name="line-270"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.Monoid</span> <span class='hs-layout'>(</span><span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span>
 <a name="line-271"></a><span class='hs-cpp'>#endif</span>
-<a name="line-272"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Foldable</span>                      <span class='hs-layout'>(</span><span class='hs-varid'>foldMap</span><span class='hs-layout'>)</span>
-<a name="line-273"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>List</span>                          <span class='hs-layout'>(</span><span class='hs-varid'>intersperse</span><span class='hs-layout'>)</span>
+<a name="line-272"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.Foldable</span>                      <span class='hs-layout'>(</span><span class='hs-varid'>foldMap</span><span class='hs-layout'>)</span>
+<a name="line-273"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Data.List</span>                          <span class='hs-layout'>(</span><span class='hs-varid'>intersperse</span><span class='hs-layout'>)</span>
 <a name="line-274"></a>
 <a name="line-275"></a>
 <a name="line-276"></a><span class='hs-comment'>-- | Execute a 'Builder' and return the generated chunks as a lazy 'L.ByteString'.</span>
 <a name="line-277"></a><span class='hs-comment'>-- The work is performed lazy, i.e., only when a chunk of the lazy 'L.ByteString'</span>
 <a name="line-278"></a><span class='hs-comment'>-- is forced.</span>
 <a name="line-279"></a><span class='hs-comment'>{-# NOINLINE toLazyByteString #-}</span> <span class='hs-comment'>-- ensure code is shared</span>
-<a name="line-280"></a><a name="toLazyByteString"></a><span class='hs-definition'>toLazyByteString</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Builder</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>L</span><span class='hs-varop'>.</span><span class='hs-conid'>ByteString</span>
+<a name="line-280"></a><a name="toLazyByteString"></a><span class='hs-definition'>toLazyByteString</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Builder</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>L.ByteString</span>
 <a name="line-281"></a><span class='hs-definition'>toLazyByteString</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>toLazyByteStringWith</span>
-<a name="line-282"></a>    <span class='hs-layout'>(</span><span class='hs-varid'>safeStrategy</span> <span class='hs-conid'>L</span><span class='hs-varop'>.</span><span class='hs-varid'>smallChunkSize</span> <span class='hs-conid'>L</span><span class='hs-varop'>.</span><span class='hs-varid'>defaultChunkSize</span><span class='hs-layout'>)</span> <span class='hs-conid'>L</span><span class='hs-varop'>.</span><span class='hs-conid'>Empty</span>
+<a name="line-282"></a>    <span class='hs-layout'>(</span><span class='hs-varid'>safeStrategy</span> <span class='hs-conid'>L.smallChunkSize</span> <span class='hs-conid'>L.defaultChunkSize</span><span class='hs-layout'>)</span> <span class='hs-conid'>L.Empty</span>
 <a name="line-283"></a>
 <a name="line-284"></a><span class='hs-comment'>{- Not yet stable enough.
 <a name="line-285"></a>   See note on 'hPut' in Data.ByteString.Builder.Internal
@@ -318,13 +318,13 @@
 <a name="line-309"></a><span class='hs-comment'>--</span>
 <a name="line-310"></a><span class='hs-comment'>{-# INLINE int8 #-}</span>
 <a name="line-311"></a><span class='hs-definition'>int8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int8</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-312"></a><span class='hs-definition'>int8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int8</span>
+<a name="line-312"></a><span class='hs-definition'>int8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int8</span>
 <a name="line-313"></a>
 <a name="line-314"></a><a name="word8"></a><span class='hs-comment'>-- | Encode a single unsigned byte as-is.</span>
 <a name="line-315"></a><span class='hs-comment'>--</span>
 <a name="line-316"></a><span class='hs-comment'>{-# INLINE word8 #-}</span>
 <a name="line-317"></a><span class='hs-definition'>word8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word8</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-318"></a><span class='hs-definition'>word8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word8</span>
+<a name="line-318"></a><span class='hs-definition'>word8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word8</span>
 <a name="line-319"></a>
 <a name="line-320"></a>
 <a name="line-321"></a><span class='hs-comment'>------------------------------------------------------------------------------</span>
@@ -334,42 +334,42 @@
 <a name="line-325"></a><a name="int16LE"></a><span class='hs-comment'>-- | Encode an 'Int16' in little endian format.</span>
 <a name="line-326"></a><span class='hs-comment'>{-# INLINE int16LE #-}</span>
 <a name="line-327"></a><span class='hs-definition'>int16LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-328"></a><span class='hs-definition'>int16LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int16LE</span>
+<a name="line-328"></a><span class='hs-definition'>int16LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int16LE</span>
 <a name="line-329"></a>
 <a name="line-330"></a><a name="int32LE"></a><span class='hs-comment'>-- | Encode an 'Int32' in little endian format.</span>
 <a name="line-331"></a><span class='hs-comment'>{-# INLINE int32LE #-}</span>
 <a name="line-332"></a><span class='hs-definition'>int32LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int32</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-333"></a><span class='hs-definition'>int32LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int32LE</span>
+<a name="line-333"></a><span class='hs-definition'>int32LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int32LE</span>
 <a name="line-334"></a>
 <a name="line-335"></a><a name="int64LE"></a><span class='hs-comment'>-- | Encode an 'Int64' in little endian format.</span>
 <a name="line-336"></a><span class='hs-comment'>{-# INLINE int64LE #-}</span>
 <a name="line-337"></a><span class='hs-definition'>int64LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int64</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-338"></a><span class='hs-definition'>int64LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int64LE</span>
+<a name="line-338"></a><span class='hs-definition'>int64LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int64LE</span>
 <a name="line-339"></a>
 <a name="line-340"></a><a name="word16LE"></a><span class='hs-comment'>-- | Encode a 'Word16' in little endian format.</span>
 <a name="line-341"></a><span class='hs-comment'>{-# INLINE word16LE #-}</span>
 <a name="line-342"></a><span class='hs-definition'>word16LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-343"></a><span class='hs-definition'>word16LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word16LE</span>
+<a name="line-343"></a><span class='hs-definition'>word16LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word16LE</span>
 <a name="line-344"></a>
 <a name="line-345"></a><a name="word32LE"></a><span class='hs-comment'>-- | Encode a 'Word32' in little endian format.</span>
 <a name="line-346"></a><span class='hs-comment'>{-# INLINE word32LE #-}</span>
 <a name="line-347"></a><span class='hs-definition'>word32LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word32</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-348"></a><span class='hs-definition'>word32LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word32LE</span>
+<a name="line-348"></a><span class='hs-definition'>word32LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word32LE</span>
 <a name="line-349"></a>
 <a name="line-350"></a><a name="word64LE"></a><span class='hs-comment'>-- | Encode a 'Word64' in little endian format.</span>
 <a name="line-351"></a><span class='hs-comment'>{-# INLINE word64LE #-}</span>
 <a name="line-352"></a><span class='hs-definition'>word64LE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word64</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-353"></a><span class='hs-definition'>word64LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word64LE</span>
+<a name="line-353"></a><span class='hs-definition'>word64LE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word64LE</span>
 <a name="line-354"></a>
 <a name="line-355"></a><a name="floatLE"></a><span class='hs-comment'>-- | Encode a 'Float' in little endian format.</span>
 <a name="line-356"></a><span class='hs-comment'>{-# INLINE floatLE #-}</span>
 <a name="line-357"></a><span class='hs-definition'>floatLE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Float</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-358"></a><span class='hs-definition'>floatLE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>floatLE</span>
+<a name="line-358"></a><span class='hs-definition'>floatLE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.floatLE</span>
 <a name="line-359"></a>
 <a name="line-360"></a><a name="doubleLE"></a><span class='hs-comment'>-- | Encode a 'Double' in little endian format.</span>
 <a name="line-361"></a><span class='hs-comment'>{-# INLINE doubleLE #-}</span>
 <a name="line-362"></a><span class='hs-definition'>doubleLE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Double</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-363"></a><span class='hs-definition'>doubleLE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>doubleLE</span>
+<a name="line-363"></a><span class='hs-definition'>doubleLE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.doubleLE</span>
 <a name="line-364"></a>
 <a name="line-365"></a>
 <a name="line-366"></a><span class='hs-comment'>------------------------------------------------------------------------------</span>
@@ -379,42 +379,42 @@
 <a name="line-370"></a><a name="int16BE"></a><span class='hs-comment'>-- | Encode an 'Int16' in big endian format.</span>
 <a name="line-371"></a><span class='hs-comment'>{-# INLINE int16BE #-}</span>
 <a name="line-372"></a><span class='hs-definition'>int16BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-373"></a><span class='hs-definition'>int16BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int16BE</span>
+<a name="line-373"></a><span class='hs-definition'>int16BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int16BE</span>
 <a name="line-374"></a>
 <a name="line-375"></a><a name="int32BE"></a><span class='hs-comment'>-- | Encode an 'Int32' in big endian format.</span>
 <a name="line-376"></a><span class='hs-comment'>{-# INLINE int32BE #-}</span>
 <a name="line-377"></a><span class='hs-definition'>int32BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int32</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-378"></a><span class='hs-definition'>int32BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int32BE</span>
+<a name="line-378"></a><span class='hs-definition'>int32BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int32BE</span>
 <a name="line-379"></a>
 <a name="line-380"></a><a name="int64BE"></a><span class='hs-comment'>-- | Encode an 'Int64' in big endian format.</span>
 <a name="line-381"></a><span class='hs-comment'>{-# INLINE int64BE #-}</span>
 <a name="line-382"></a><span class='hs-definition'>int64BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int64</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-383"></a><span class='hs-definition'>int64BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>int64BE</span>
+<a name="line-383"></a><span class='hs-definition'>int64BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.int64BE</span>
 <a name="line-384"></a>
 <a name="line-385"></a><a name="word16BE"></a><span class='hs-comment'>-- | Encode a 'Word16' in big endian format.</span>
 <a name="line-386"></a><span class='hs-comment'>{-# INLINE word16BE #-}</span>
 <a name="line-387"></a><span class='hs-definition'>word16BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word16</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-388"></a><span class='hs-definition'>word16BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word16BE</span>
+<a name="line-388"></a><span class='hs-definition'>word16BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word16BE</span>
 <a name="line-389"></a>
 <a name="line-390"></a><a name="word32BE"></a><span class='hs-comment'>-- | Encode a 'Word32' in big endian format.</span>
 <a name="line-391"></a><span class='hs-comment'>{-# INLINE word32BE #-}</span>
 <a name="line-392"></a><span class='hs-definition'>word32BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word32</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-393"></a><span class='hs-definition'>word32BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word32BE</span>
+<a name="line-393"></a><span class='hs-definition'>word32BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word32BE</span>
 <a name="line-394"></a>
 <a name="line-395"></a><a name="word64BE"></a><span class='hs-comment'>-- | Encode a 'Word64' in big endian format.</span>
 <a name="line-396"></a><span class='hs-comment'>{-# INLINE word64BE #-}</span>
 <a name="line-397"></a><span class='hs-definition'>word64BE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Word64</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-398"></a><span class='hs-definition'>word64BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>word64BE</span>
+<a name="line-398"></a><span class='hs-definition'>word64BE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.word64BE</span>
 <a name="line-399"></a>
 <a name="line-400"></a><a name="floatBE"></a><span class='hs-comment'>-- | Encode a 'Float' in big endian format.</span>
 <a name="line-401"></a><span class='hs-comment'>{-# INLINE floatBE #-}</span>
 <a name="line-402"></a><span class='hs-definition'>floatBE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Float</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-403"></a><span class='hs-definition'>floatBE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>floatBE</span>
+<a name="line-403"></a><span class='hs-definition'>floatBE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.floatBE</span>
 <a name="line-404"></a>
 <a name="line-405"></a><a name="doubleBE"></a><span class='hs-comment'>-- | Encode a 'Double' in big endian format.</span>
 <a name="line-406"></a><span class='hs-comment'>{-# INLINE doubleBE #-}</span>
 <a name="line-407"></a><span class='hs-definition'>doubleBE</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Double</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-408"></a><span class='hs-definition'>doubleBE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>doubleBE</span>
+<a name="line-408"></a><span class='hs-definition'>doubleBE</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.doubleBE</span>
 <a name="line-409"></a>
 <a name="line-410"></a><span class='hs-comment'>------------------------------------------------------------------------------</span>
 <a name="line-411"></a><span class='hs-comment'>-- ASCII encoding</span>
@@ -423,12 +423,12 @@
 <a name="line-414"></a><a name="char7"></a><span class='hs-comment'>-- | Char7 encode a 'Char'.</span>
 <a name="line-415"></a><span class='hs-comment'>{-# INLINE char7 #-}</span>
 <a name="line-416"></a><span class='hs-definition'>char7</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Char</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-417"></a><span class='hs-definition'>char7</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>char7</span>
+<a name="line-417"></a><span class='hs-definition'>char7</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.char7</span>
 <a name="line-418"></a>
 <a name="line-419"></a><a name="string7"></a><span class='hs-comment'>-- | Char7 encode a 'String'.</span>
 <a name="line-420"></a><span class='hs-comment'>{-# INLINE string7 #-}</span>
 <a name="line-421"></a><span class='hs-definition'>string7</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-422"></a><span class='hs-definition'>string7</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primMapListFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>char7</span>
+<a name="line-422"></a><span class='hs-definition'>string7</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primMapListFixed</span> <span class='hs-conid'>P.char7</span>
 <a name="line-423"></a>
 <a name="line-424"></a><span class='hs-comment'>------------------------------------------------------------------------------</span>
 <a name="line-425"></a><span class='hs-comment'>-- ISO/IEC 8859-1 encoding</span>
@@ -437,12 +437,12 @@
 <a name="line-428"></a><a name="char8"></a><span class='hs-comment'>-- | Char8 encode a 'Char'.</span>
 <a name="line-429"></a><span class='hs-comment'>{-# INLINE char8 #-}</span>
 <a name="line-430"></a><span class='hs-definition'>char8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Char</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-431"></a><span class='hs-definition'>char8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>char8</span>
+<a name="line-431"></a><span class='hs-definition'>char8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primFixed</span> <span class='hs-conid'>P.char8</span>
 <a name="line-432"></a>
 <a name="line-433"></a><a name="string8"></a><span class='hs-comment'>-- | Char8 encode a 'String'.</span>
 <a name="line-434"></a><span class='hs-comment'>{-# INLINE string8 #-}</span>
 <a name="line-435"></a><span class='hs-definition'>string8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-436"></a><span class='hs-definition'>string8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primMapListFixed</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>char8</span>
+<a name="line-436"></a><span class='hs-definition'>string8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primMapListFixed</span> <span class='hs-conid'>P.char8</span>
 <a name="line-437"></a>
 <a name="line-438"></a><span class='hs-comment'>------------------------------------------------------------------------------</span>
 <a name="line-439"></a><span class='hs-comment'>-- UTF-8 encoding</span>
@@ -451,12 +451,12 @@
 <a name="line-442"></a><a name="charUtf8"></a><span class='hs-comment'>-- | UTF-8 encode a 'Char'.</span>
 <a name="line-443"></a><span class='hs-comment'>{-# INLINE charUtf8 #-}</span>
 <a name="line-444"></a><span class='hs-definition'>charUtf8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Char</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-445"></a><span class='hs-definition'>charUtf8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primBounded</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>charUtf8</span>
+<a name="line-445"></a><span class='hs-definition'>charUtf8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primBounded</span> <span class='hs-conid'>P.charUtf8</span>
 <a name="line-446"></a>
 <a name="line-447"></a><a name="stringUtf8"></a><span class='hs-comment'>-- | UTF-8 encode a 'String'.</span>
 <a name="line-448"></a><span class='hs-comment'>{-# INLINE stringUtf8 #-}</span>
 <a name="line-449"></a><span class='hs-definition'>stringUtf8</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Builder</span>
-<a name="line-450"></a><span class='hs-definition'>stringUtf8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>primMapListBounded</span> <span class='hs-conid'>P</span><span class='hs-varop'>.</span><span class='hs-varid'>charUtf8</span>
+<a name="line-450"></a><span class='hs-definition'>stringUtf8</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>P.primMapListBounded</span> <span class='hs-conid'>P.charUtf8</span>
 <a name="line-451"></a>
 <a name="line-452"></a><a name="instance%20IsString%20Builder"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>IsString</span> <span class='hs-conid'>Builder</span> <span class='hs-keyword'>where</span>
 <a name="line-453"></a>    <span class='hs-varid'>fromString</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>stringUtf8</span>

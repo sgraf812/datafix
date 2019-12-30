@@ -38,7 +38,7 @@
 <a name="line-29"></a><span class='hs-comment'>-----------------------------------------------------------------------------</span>
 <a name="line-30"></a>
 <a name="line-31"></a><span class='hs-cpp'>#ifndef TESTING</span>
-<a name="line-32"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span> <span class='hs-layout'>(</span>
+<a name="line-32"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Text.PrettyPrint.HughesPJ</span> <span class='hs-layout'>(</span>
 <a name="line-33"></a>
 <a name="line-34"></a>        <span class='hs-comment'>-- * The document type</span>
 <a name="line-35"></a>        <span class='hs-conid'>Doc</span><span class='hs-layout'>,</span> <span class='hs-conid'>TextDetails</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span>
@@ -89,23 +89,23 @@
 <a name="line-80"></a>    <span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-81"></a><span class='hs-cpp'>#endif</span>
 <a name="line-82"></a>
-<a name="line-83"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>Annotated</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span>
+<a name="line-83"></a><span class='hs-keyword'>import</span>           <span class='hs-conid'>Text.PrettyPrint.Annotated.HughesPJ</span>
 <a name="line-84"></a>                     <span class='hs-layout'>(</span> <span class='hs-conid'>TextDetails</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>Mode</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-conid'>Style</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span> <span class='hs-varid'>style</span> <span class='hs-layout'>)</span>
-<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>Annotated</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Ann</span>
+<a name="line-85"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Text.PrettyPrint.Annotated.HughesPJ</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Ann</span>
 <a name="line-86"></a>
-<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>DeepSeq</span> <span class='hs-layout'>(</span> <span class='hs-conid'>NFData</span><span class='hs-layout'>(</span><span class='hs-varid'>rnf</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
-<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Function</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>on</span> <span class='hs-layout'>)</span>
+<a name="line-87"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.DeepSeq</span> <span class='hs-layout'>(</span> <span class='hs-conid'>NFData</span><span class='hs-layout'>(</span><span class='hs-varid'>rnf</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-88"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Function</span>   <span class='hs-layout'>(</span> <span class='hs-varid'>on</span> <span class='hs-layout'>)</span>
 <a name="line-89"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 803</span>
 <a name="line-90"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Prelude</span>         <span class='hs-varid'>hiding</span> <span class='hs-layout'>(</span> <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-91"></a><span class='hs-cpp'>#endif</span>
 <a name="line-92"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 800</span>
-<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Semigroup</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Semi</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Semigroup</span><span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-93"></a><span class='hs-keyword'>import</span> <span class='hs-keyword'>qualified</span> <span class='hs-conid'>Data.Semigroup</span> <span class='hs-keyword'>as</span> <span class='hs-conid'>Semi</span> <span class='hs-layout'>(</span> <span class='hs-conid'>Semigroup</span><span class='hs-layout'>(</span><span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-94"></a><span class='hs-cpp'>#elif __GLASGOW_HASKELL__ &lt; 709</span>
-<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Monoid</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-varid'>mempty</span><span class='hs-layout'>,</span> <span class='hs-varid'>mappend</span><span class='hs-layout'>)</span>  <span class='hs-layout'>)</span>
+<a name="line-95"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Monoid</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>Monoid</span><span class='hs-layout'>(</span><span class='hs-varid'>mempty</span><span class='hs-layout'>,</span> <span class='hs-varid'>mappend</span><span class='hs-layout'>)</span>  <span class='hs-layout'>)</span>
 <a name="line-96"></a><span class='hs-cpp'>#endif</span>
-<a name="line-97"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>String</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-varid'>fromString</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
+<a name="line-97"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.String</span>     <span class='hs-layout'>(</span> <span class='hs-conid'>IsString</span><span class='hs-layout'>(</span><span class='hs-varid'>fromString</span><span class='hs-layout'>)</span> <span class='hs-layout'>)</span>
 <a name="line-98"></a>
-<a name="line-99"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC</span><span class='hs-varop'>.</span><span class='hs-conid'>Generics</span>
+<a name="line-99"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>GHC.Generics</span>
 <a name="line-100"></a>
 <a name="line-101"></a>
 <a name="line-102"></a><span class='hs-comment'>-- ---------------------------------------------------------------------------</span>
@@ -120,16 +120,16 @@
 <a name="line-111"></a>
 <a name="line-112"></a><a name="Doc"></a><span class='hs-comment'>-- | The abstract type of documents. A Doc represents a /set/ of layouts. A</span>
 <a name="line-113"></a><a name="Doc"></a><span class='hs-comment'>-- Doc with no occurrences of Union or NoDoc represents just one layout.</span>
-<a name="line-114"></a><a name="Doc"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span>
+<a name="line-114"></a><a name="Doc"></a><span class='hs-keyword'>newtype</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span>
 <a name="line-115"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 701</span>
 <a name="line-116"></a>                    <span class='hs-keyword'>deriving</span> <span class='hs-layout'>(</span><span class='hs-conid'>Generic</span><span class='hs-layout'>)</span>
 <a name="line-117"></a><span class='hs-cpp'>#endif</span>
 <a name="line-118"></a>
-<a name="line-119"></a><a name="liftList"></a><span class='hs-definition'>liftList</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>[</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span><span class='hs-layout'>)</span>
+<a name="line-119"></a><a name="liftList"></a><span class='hs-definition'>liftList</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>[</span><span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span><span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span><span class='hs-layout'>)</span>
 <a name="line-120"></a><span class='hs-definition'>liftList</span> <span class='hs-varid'>f</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-keyglyph'>[</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>|</span> <span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>]</span><span class='hs-layout'>)</span>
 <a name="line-121"></a><span class='hs-comment'>{-# INLINE liftList #-}</span>
 <a name="line-122"></a>
-<a name="line-123"></a><a name="liftBinary"></a><span class='hs-definition'>liftBinary</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-conid'>Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span>
+<a name="line-123"></a><a name="liftBinary"></a><span class='hs-definition'>liftBinary</span> <span class='hs-keyglyph'>::</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Ann.Doc</span> <span class='hs-conid'>()</span><span class='hs-layout'>)</span>
 <a name="line-124"></a>           <span class='hs-keyglyph'>-&gt;</span> <span class='hs-layout'>(</span>    <span class='hs-conid'>Doc</span>    <span class='hs-keyglyph'>-&gt;</span>     <span class='hs-conid'>Doc</span>    <span class='hs-keyglyph'>-&gt;</span>     <span class='hs-conid'>Doc</span>   <span class='hs-layout'>)</span>
 <a name="line-125"></a><span class='hs-definition'>liftBinary</span> <span class='hs-varid'>f</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>a</span><span class='hs-layout'>)</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>b</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-varid'>f</span> <span class='hs-varid'>a</span> <span class='hs-varid'>b</span><span class='hs-layout'>)</span>
 <a name="line-126"></a><span class='hs-comment'>{-# INLINE liftBinary #-}</span>
@@ -140,8 +140,8 @@
 <a name="line-131"></a>
 <a name="line-132"></a><span class='hs-comment'>-- Combining @Doc@ values</span>
 <a name="line-133"></a><span class='hs-cpp'>#if __GLASGOW_HASKELL__ &gt;= 800</span>
-<a name="line-134"></a><a name="instance%20Semi.Semigroup%20Doc"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Semi</span><span class='hs-varop'>.</span><span class='hs-conid'>Semigroup</span> <span class='hs-conid'>Doc</span> <span class='hs-keyword'>where</span>
-<a name="line-135"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conid'>Text</span><span class='hs-varop'>.</span><span class='hs-conid'>PrettyPrint</span><span class='hs-varop'>.</span><span class='hs-conid'>HughesPJ</span><span class='hs-varop'>.&lt;&gt;</span><span class='hs-layout'>)</span>
+<a name="line-134"></a><a name="instance%20Semi.Semigroup%20Doc"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Semi.Semigroup</span> <span class='hs-conid'>Doc</span> <span class='hs-keyword'>where</span>
+<a name="line-135"></a>    <span class='hs-layout'>(</span><span class='hs-varop'>&lt;&gt;</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-layout'>(</span><span class='hs-conid'>Text.PrettyPrint.HughesPJ</span><span class='hs-varop'>.&lt;&gt;</span><span class='hs-layout'>)</span>
 <a name="line-136"></a>
 <a name="line-137"></a><a name="instance%20Monoid%20Doc"></a><span class='hs-keyword'>instance</span> <span class='hs-conid'>Monoid</span> <span class='hs-conid'>Doc</span> <span class='hs-keyword'>where</span>
 <a name="line-138"></a>    <span class='hs-varid'>mempty</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>empty</span>
@@ -171,7 +171,7 @@
 <a name="line-162"></a>
 <a name="line-163"></a><a name="char"></a><span class='hs-comment'>-- | A document of height and width 1, containing a literal character.</span>
 <a name="line-164"></a><span class='hs-definition'>char</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Char</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-165"></a><span class='hs-definition'>char</span> <span class='hs-varid'>c</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>char</span> <span class='hs-varid'>c</span><span class='hs-layout'>)</span>
+<a name="line-165"></a><span class='hs-definition'>char</span> <span class='hs-varid'>c</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.char</span> <span class='hs-varid'>c</span><span class='hs-layout'>)</span>
 <a name="line-166"></a><span class='hs-comment'>{-# INLINE char #-}</span>
 <a name="line-167"></a>
 <a name="line-168"></a><a name="text"></a><span class='hs-comment'>-- | A document of height 1 containing a literal string.</span>
@@ -184,17 +184,17 @@
 <a name="line-175"></a><span class='hs-comment'>-- The side condition on the last law is necessary because @'text' \"\"@</span>
 <a name="line-176"></a><span class='hs-comment'>-- has height 1, while 'empty' has no height.</span>
 <a name="line-177"></a><span class='hs-definition'>text</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-178"></a><span class='hs-definition'>text</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>text</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
+<a name="line-178"></a><span class='hs-definition'>text</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.text</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
 <a name="line-179"></a><span class='hs-comment'>{-# INLINE text #-}</span>
 <a name="line-180"></a>
 <a name="line-181"></a><a name="ptext"></a><span class='hs-comment'>-- | Same as @text@. Used to be used for Bytestrings.</span>
 <a name="line-182"></a><span class='hs-definition'>ptext</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-183"></a><span class='hs-definition'>ptext</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>ptext</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
+<a name="line-183"></a><span class='hs-definition'>ptext</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.ptext</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
 <a name="line-184"></a><span class='hs-comment'>{-# INLINE ptext #-}</span>
 <a name="line-185"></a>
 <a name="line-186"></a><a name="sizedText"></a><span class='hs-comment'>-- | Some text with any width. (@text s = sizedText (length s) s@)</span>
 <a name="line-187"></a><span class='hs-definition'>sizedText</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>String</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-188"></a><span class='hs-definition'>sizedText</span> <span class='hs-varid'>l</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>sizedText</span> <span class='hs-varid'>l</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
+<a name="line-188"></a><span class='hs-definition'>sizedText</span> <span class='hs-varid'>l</span> <span class='hs-varid'>s</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.sizedText</span> <span class='hs-varid'>l</span> <span class='hs-varid'>s</span><span class='hs-layout'>)</span>
 <a name="line-189"></a>
 <a name="line-190"></a><a name="zeroWidthText"></a><span class='hs-comment'>-- | Some text, but without any width. Use for non-printing text</span>
 <a name="line-191"></a><span class='hs-comment'>-- such as a HTML or Latex tags</span>
@@ -205,11 +205,11 @@
 <a name="line-196"></a><span class='hs-comment'>-- 'empty' is the identity for '&lt;&gt;', '&lt;+&gt;', '$$' and '$+$', and anywhere</span>
 <a name="line-197"></a><span class='hs-comment'>-- in the argument list for 'sep', 'hcat', 'hsep', 'vcat', 'fcat' etc.</span>
 <a name="line-198"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span>
-<a name="line-199"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>empty</span>
+<a name="line-199"></a><span class='hs-definition'>empty</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-conid'>Ann.empty</span>
 <a name="line-200"></a>
 <a name="line-201"></a><a name="isEmpty"></a><span class='hs-comment'>-- | Returns 'True' if the document is empty</span>
 <a name="line-202"></a><span class='hs-definition'>isEmpty</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Bool</span>
-<a name="line-203"></a><span class='hs-definition'>isEmpty</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>isEmpty</span> <span class='hs-varid'>d</span>
+<a name="line-203"></a><span class='hs-definition'>isEmpty</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Ann.isEmpty</span> <span class='hs-varid'>d</span>
 <a name="line-204"></a>
 <a name="line-205"></a><a name="semi"></a><span class='hs-definition'>semi</span>   <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-comment'>-- ^ A ';' character</span>
 <a name="line-206"></a><a name="comma"></a><span class='hs-definition'>comma</span>  <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-comment'>-- ^ A ',' character</span>
@@ -286,22 +286,22 @@
 <a name="line-277"></a>
 <a name="line-278"></a><a name="reduceDoc"></a><span class='hs-comment'>-- | Perform some simplification of a built up @GDoc@.</span>
 <a name="line-279"></a><span class='hs-definition'>reduceDoc</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>RDoc</span>
-<a name="line-280"></a><span class='hs-definition'>reduceDoc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>reduceDoc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span>
+<a name="line-280"></a><span class='hs-definition'>reduceDoc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.reduceDoc</span> <span class='hs-varid'>d</span><span class='hs-layout'>)</span>
 <a name="line-281"></a><span class='hs-comment'>{-# INLINE reduceDoc #-}</span>
 <a name="line-282"></a>
 <a name="line-283"></a><a name="hcat"></a><span class='hs-comment'>-- | List version of '&lt;&gt;'.</span>
 <a name="line-284"></a><span class='hs-definition'>hcat</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-285"></a><span class='hs-definition'>hcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>hcat</span>
+<a name="line-285"></a><span class='hs-definition'>hcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.hcat</span>
 <a name="line-286"></a><span class='hs-comment'>{-# INLINE hcat #-}</span>
 <a name="line-287"></a>
 <a name="line-288"></a><a name="hsep"></a><span class='hs-comment'>-- | List version of '&lt;+&gt;'.</span>
 <a name="line-289"></a><span class='hs-definition'>hsep</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-290"></a><span class='hs-definition'>hsep</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>hsep</span>
+<a name="line-290"></a><span class='hs-definition'>hsep</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.hsep</span>
 <a name="line-291"></a><span class='hs-comment'>{-# INLINE hsep #-}</span>
 <a name="line-292"></a>
 <a name="line-293"></a><a name="vcat"></a><span class='hs-comment'>-- | List version of '$$'.</span>
 <a name="line-294"></a><span class='hs-definition'>vcat</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-295"></a><span class='hs-definition'>vcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>vcat</span>
+<a name="line-295"></a><span class='hs-definition'>vcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.vcat</span>
 <a name="line-296"></a><span class='hs-comment'>{-# INLINE vcat #-}</span>
 <a name="line-297"></a>
 <a name="line-298"></a><a name="nest"></a><span class='hs-comment'>-- | Nest (or indent) a document by a given number of positions</span>
@@ -322,17 +322,17 @@
 <a name="line-313"></a><span class='hs-comment'>-- The side condition on the last law is needed because</span>
 <a name="line-314"></a><span class='hs-comment'>-- 'empty' is a left identity for '&lt;&gt;'.</span>
 <a name="line-315"></a><span class='hs-definition'>nest</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-316"></a><span class='hs-definition'>nest</span> <span class='hs-varid'>k</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>nest</span> <span class='hs-varid'>k</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span>
+<a name="line-316"></a><span class='hs-definition'>nest</span> <span class='hs-varid'>k</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.nest</span> <span class='hs-varid'>k</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span>
 <a name="line-317"></a><span class='hs-comment'>{-# INLINE nest #-}</span>
 <a name="line-318"></a>
 <a name="line-319"></a><a name="hang"></a><span class='hs-comment'>-- | @hang d1 n d2 = sep [d1, nest n d2]@</span>
 <a name="line-320"></a><span class='hs-definition'>hang</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Int</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-321"></a><span class='hs-definition'>hang</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d1</span><span class='hs-layout'>)</span> <span class='hs-varid'>n</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d2</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>hang</span> <span class='hs-varid'>d1</span> <span class='hs-varid'>n</span> <span class='hs-varid'>d2</span><span class='hs-layout'>)</span>
+<a name="line-321"></a><span class='hs-definition'>hang</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d1</span><span class='hs-layout'>)</span> <span class='hs-varid'>n</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>d2</span><span class='hs-layout'>)</span> <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Doc</span> <span class='hs-layout'>(</span><span class='hs-conid'>Ann.hang</span> <span class='hs-varid'>d1</span> <span class='hs-varid'>n</span> <span class='hs-varid'>d2</span><span class='hs-layout'>)</span>
 <a name="line-322"></a><span class='hs-comment'>{-# INLINE hang #-}</span>
 <a name="line-323"></a>
 <a name="line-324"></a><a name="punctuate"></a><span class='hs-comment'>-- | @punctuate p [d1, ... dn] = [d1 \&lt;&gt; p, d2 \&lt;&gt; p, ... dn-1 \&lt;&gt; p, dn]@</span>
 <a name="line-325"></a><span class='hs-definition'>punctuate</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span>
-<a name="line-326"></a><span class='hs-definition'>punctuate</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyglyph'>[</span> <span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>|</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>punctuate</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>[</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>|</span> <span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>]</span>
+<a name="line-326"></a><span class='hs-definition'>punctuate</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>p</span><span class='hs-layout'>)</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>=</span> <span class='hs-keyglyph'>[</span> <span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>|</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-conid'>Ann.punctuate</span> <span class='hs-varid'>p</span> <span class='hs-keyglyph'>[</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>|</span> <span class='hs-conid'>Doc</span> <span class='hs-varid'>d</span> <span class='hs-keyglyph'>&lt;-</span> <span class='hs-varid'>ds</span> <span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>]</span>
 <a name="line-327"></a><span class='hs-comment'>{-# INLINE punctuate #-}</span>
 <a name="line-328"></a>
 <a name="line-329"></a>
@@ -398,12 +398,12 @@
 <a name="line-389"></a>
 <a name="line-390"></a><a name="sep"></a><span class='hs-comment'>-- | Either 'hsep' or 'vcat'.</span>
 <a name="line-391"></a><span class='hs-definition'>sep</span>  <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-392"></a><span class='hs-definition'>sep</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>sep</span>
+<a name="line-392"></a><span class='hs-definition'>sep</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.sep</span>
 <a name="line-393"></a><span class='hs-comment'>{-# INLINE sep #-}</span>
 <a name="line-394"></a>
 <a name="line-395"></a><a name="cat"></a><span class='hs-comment'>-- | Either 'hcat' or 'vcat'.</span>
 <a name="line-396"></a><span class='hs-definition'>cat</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-397"></a><span class='hs-definition'>cat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>cat</span>
+<a name="line-397"></a><span class='hs-definition'>cat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.cat</span>
 <a name="line-398"></a><span class='hs-comment'>{-# INLINE cat #-}</span>
 <a name="line-399"></a>
 <a name="line-400"></a>
@@ -412,12 +412,12 @@
 <a name="line-403"></a>
 <a name="line-404"></a><a name="fcat"></a><span class='hs-comment'>-- | \"Paragraph fill\" version of 'cat'.</span>
 <a name="line-405"></a><span class='hs-definition'>fcat</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-406"></a><span class='hs-definition'>fcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>fcat</span>
+<a name="line-406"></a><span class='hs-definition'>fcat</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.fcat</span>
 <a name="line-407"></a><span class='hs-comment'>{-# INLINE fcat #-}</span>
 <a name="line-408"></a>
 <a name="line-409"></a><a name="fsep"></a><span class='hs-comment'>-- | \"Paragraph fill\" version of 'sep'.</span>
 <a name="line-410"></a><span class='hs-definition'>fsep</span> <span class='hs-keyglyph'>::</span> <span class='hs-keyglyph'>[</span><span class='hs-conid'>Doc</span><span class='hs-keyglyph'>]</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-411"></a><span class='hs-definition'>fsep</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>fsep</span>
+<a name="line-411"></a><span class='hs-definition'>fsep</span> <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftList</span> <span class='hs-conid'>Ann.fsep</span>
 <a name="line-412"></a><span class='hs-comment'>{-# INLINE fsep #-}</span>
 <a name="line-413"></a>
 <a name="line-414"></a>
@@ -426,7 +426,7 @@
 <a name="line-417"></a>
 <a name="line-418"></a><a name="first"></a><span class='hs-comment'>-- | @first@ returns its first argument if it is non-empty, otherwise its second.</span>
 <a name="line-419"></a><span class='hs-definition'>first</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>
-<a name="line-420"></a><span class='hs-definition'>first</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftBinary</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>first</span>
+<a name="line-420"></a><span class='hs-definition'>first</span>  <span class='hs-keyglyph'>=</span> <span class='hs-varid'>liftBinary</span> <span class='hs-conid'>Ann.first</span>
 <a name="line-421"></a><span class='hs-comment'>{-# INLINE first #-}</span>
 <a name="line-422"></a>
 <a name="line-423"></a>
@@ -461,7 +461,7 @@
 <a name="line-452"></a>           <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>Doc</span>                      <span class='hs-comment'>-- ^ The document.</span>
 <a name="line-453"></a>           <span class='hs-keyglyph'>-&gt;</span> <span class='hs-varid'>a</span>                        <span class='hs-comment'>-- ^ Result.</span>
 <a name="line-454"></a><span class='hs-definition'>fullRender</span> <span class='hs-varid'>m</span> <span class='hs-varid'>lineLen</span> <span class='hs-varid'>ribbons</span> <span class='hs-varid'>txt</span> <span class='hs-varid'>rest</span> <span class='hs-layout'>(</span><span class='hs-conid'>Doc</span> <span class='hs-varid'>doc</span><span class='hs-layout'>)</span>
-<a name="line-455"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Ann</span><span class='hs-varop'>.</span><span class='hs-varid'>fullRender</span> <span class='hs-varid'>m</span> <span class='hs-varid'>lineLen</span> <span class='hs-varid'>ribbons</span> <span class='hs-varid'>txt</span> <span class='hs-varid'>rest</span> <span class='hs-varid'>doc</span>
+<a name="line-455"></a>  <span class='hs-keyglyph'>=</span> <span class='hs-conid'>Ann.fullRender</span> <span class='hs-varid'>m</span> <span class='hs-varid'>lineLen</span> <span class='hs-varid'>ribbons</span> <span class='hs-varid'>txt</span> <span class='hs-varid'>rest</span> <span class='hs-varid'>doc</span>
 <a name="line-456"></a><span class='hs-comment'>{-# INLINE fullRender #-}</span>
 <a name="line-457"></a>
 </pre></body>

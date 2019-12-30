@@ -8,11 +8,11 @@
 </head>
 <body>
 <pre><a name="line-1"></a><span class='hs-comment'>-- #hide</span>
-<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCDiff</span> <span class='hs-keyword'>where</span>
+<a name="line-2"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCDiff</span> <span class='hs-keyword'>where</span>
 <a name="line-3"></a>
-<a name="line-4"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>NominalDiffTime</span>
-<a name="line-5"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>Internal</span><span class='hs-varop'>.</span><span class='hs-conid'>UTCTime</span>
-<a name="line-6"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Clock</span><span class='hs-varop'>.</span><span class='hs-conid'>POSIX</span>
+<a name="line-4"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.NominalDiffTime</span>
+<a name="line-5"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.Internal.UTCTime</span>
+<a name="line-6"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Time.Clock.POSIX</span>
 <a name="line-7"></a>
 <a name="line-8"></a><a name="addUTCTime"></a><span class='hs-comment'>-- | addUTCTime a b = a + b</span>
 <a name="line-9"></a><span class='hs-definition'>addUTCTime</span> <span class='hs-keyglyph'>::</span> <span class='hs-conid'>NominalDiffTime</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>UTCTime</span> <span class='hs-keyglyph'>-&gt;</span> <span class='hs-conid'>UTCTime</span>

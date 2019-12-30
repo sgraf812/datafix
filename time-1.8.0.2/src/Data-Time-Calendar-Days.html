@@ -10,17 +10,17 @@
 <pre><a name="line-1"></a><span class='hs-comment'>{-# OPTIONS -fno-warn-unused-imports #-}</span>
 <a name="line-2"></a><span class='hs-cpp'>#include "HsConfigure.h"</span>
 <a name="line-3"></a><span class='hs-comment'>-- #hide</span>
-<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Time</span><span class='hs-varop'>.</span><span class='hs-conid'>Calendar</span><span class='hs-varop'>.</span><span class='hs-conid'>Days</span>
+<a name="line-4"></a><span class='hs-keyword'>module</span> <span class='hs-conid'>Data.Time.Calendar.Days</span>
 <a name="line-5"></a><span class='hs-layout'>(</span>
 <a name="line-6"></a>    <span class='hs-comment'>-- * Days</span>
 <a name="line-7"></a>    <span class='hs-conid'>Day</span><span class='hs-layout'>(</span><span class='hs-keyglyph'>..</span><span class='hs-layout'>)</span><span class='hs-layout'>,</span><span class='hs-varid'>addDays</span><span class='hs-layout'>,</span><span class='hs-varid'>diffDays</span>
 <a name="line-8"></a><span class='hs-layout'>)</span> <span class='hs-keyword'>where</span>
 <a name="line-9"></a>
-<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control</span><span class='hs-varop'>.</span><span class='hs-conid'>DeepSeq</span>
-<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Ix</span>
-<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Typeable</span>
+<a name="line-10"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Control.DeepSeq</span>
+<a name="line-11"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Ix</span>
+<a name="line-12"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Typeable</span>
 <a name="line-13"></a><span class='hs-cpp'>#if LANGUAGE_Rank2Types</span>
-<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data</span><span class='hs-varop'>.</span><span class='hs-conid'>Data</span>
+<a name="line-14"></a><span class='hs-keyword'>import</span> <span class='hs-conid'>Data.Data</span>
 <a name="line-15"></a><span class='hs-cpp'>#endif</span>
 <a name="line-16"></a>
 <a name="line-17"></a><a name="Day"></a><span class='hs-comment'>-- | The Modified Julian Day is a standard count of days, with zero being the day 1858-11-17.</span>
