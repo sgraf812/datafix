@@ -4,7 +4,7 @@
 
 -- |
 -- Module      :  Datafix.IntArgsMonoSet
--- Copyright   :  (c) Sebastian Graf 2018
+-- Copyright   :  (c) Sebastian Graf 2017-2020
 -- License     :  ISC
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
