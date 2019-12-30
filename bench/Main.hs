@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 import           Algebra.Lattice
@@ -36,7 +37,7 @@ instance NFData CoreExpr where
   rnf = seqExpr
 
 fixSum :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixSum density n = solveProblem sumProblem (density (Node n)) NeverAbort (Node n)
+fixSum density n = solveProblem sumFramework (density (Node n)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
 
 main :: IO ()
 main = defaultMain

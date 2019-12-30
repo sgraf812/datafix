@@ -131,7 +131,7 @@ test-suite tests
   if !flag(no-lattices)
     build-depends:   lattices < 2
   if flag(no-lattices)
-    build-depends:   pomaps >= 0.0.0.2 && < 0.0.1.0
+    build-depends:   pomaps >= 0.0.0.2 && < 0.0.3.0
 
 test-suite doctests
   type:              exitcode-stdio-1.0
@@ -180,7 +180,7 @@ benchmark benchmarks
   if !flag(no-lattices)
     build-depends:   lattices < 2
   if flag(no-lattices)
-    build-depends:   pomaps >= 0.0.0.2 && < 0.0.1.0
+    build-depends:   pomaps >= 0.0.0.2 && < 0.0.3.0
 
 executable firstfollow-example
   default-language:  Haskell2010
