@@ -172,7 +172,7 @@ class (Monad m, Datafixable (Domain m)) => MonadDomain m where
 --      single line of boiler-plate in most cases, see 'MonoMapKey'.
 --
 --      Note that the monotonicity requirement means we have to pull non-monotone
---      arguments in @Domain m@ into the 'Node' portion of the 'DataFlowProblem'.
+--      arguments in @Domain m@ into the 'Node' portion of the 'DataFlowFramework'.
 --
 --  3.  For fixed-point iteration to work at all, the values which we iterate
 --      naturally have to be instances of 'BoundedJoinSemiLattice'.

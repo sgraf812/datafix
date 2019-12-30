@@ -19,7 +19,7 @@ module Datafix
   , module Datafix.Denotational
   , module Datafix.Explicit
   , module Datafix.NodeAllocator
-  , module Datafix.ProblemBuilder
+  , module Datafix.FrameworkBuilder
   , Datafix.MonoMap.MonoMap
   , module Datafix.Utils.TypeLevel
   , module Datafix.Worklist
@@ -30,6 +30,6 @@ import           Datafix.Denotational
 import           Datafix.Explicit
 import           Datafix.MonoMap
 import           Datafix.NodeAllocator
-import           Datafix.ProblemBuilder
+import           Datafix.FrameworkBuilder
 import           Datafix.Utils.TypeLevel hiding (Map)
 import           Datafix.Worklist

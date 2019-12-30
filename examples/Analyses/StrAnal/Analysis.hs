@@ -6,8 +6,8 @@
 
 -- | This module defines a strictness analysis in the style of GHC's
 -- projection-based backwards analysis by defining a 'transferFunctionAlg'
--- that is passed on to @Analyses.Templates.LetDn.'buildProblem'@,
--- yielding a 'DataFlowProblem' to be solved by @Datafix.'solveProblem'@.
+-- that is passed on to @Analyses.Templates.LetDn.'buildFramework'@,
+-- yielding a 'DataFlowFramework' to be solved by @Datafix.'solveProblem'@.
 module Analyses.StrAnal.Analysis (analyse) where
 
 import           Algebra.Lattice
@@ -33,7 +33,7 @@ applyWhen False _ = id
 
 -- | This specifies the strictness as a 'TransferAlgebra'. Note the absence
 -- of any recursion! That's all abstracted into
--- @Analyses.Tempaltes.LetDn.'buildProblem'@, so that this function definition
+-- @Analyses.Tempaltes.LetDn.'buildFramework'@, so that this function definition
 -- is completely compositional: It is only concerned with peeling off a single
 -- layer of the 'CoreExprF' and interpret that in terms of the
 -- transfer function over the @Arity -> StrLattice@ 'Domain'.

@@ -7,7 +7,7 @@ module Mutual where
 import           Datafix
 import           Numeric.Natural
 
--- | A 'DataFlowProblem' with two nodes, mutually depending on another, like
+-- | A 'DataFlowFramework' with two nodes, mutually depending on another, like
 --
 -- @
 --    a = b + 1
@@ -16,8 +16,8 @@ import           Numeric.Natural
 --
 -- After a few bounces, this will reach a stable state where the first node
 -- has value 11 and the other has value 10.
-mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-mutualRecursiveProblem = DFP transfer (const (eqChangeDetector @(Domain m)))
+mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+mutualRecursiveProblem = DFF transfer (const (eqChangeDetector @(Domain m)))
   where
     transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = do

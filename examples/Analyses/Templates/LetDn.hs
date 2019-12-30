@@ -12,8 +12,8 @@
 -- sites depending on incoming argument strictness.
 --
 -- The idea is that users of this module only need to provide a
--- 'TransferAlgebra' for 'buildProblem' to get a specification for the desired
--- data-flow problem. Remarkably, 'buildProblem' completely abstracts away
+-- 'TransferAlgebra' for 'buildFramework' to get a specification for the desired
+-- data-flow problem. Remarkably, 'buildFramework' completely abstracts away
 -- recursive bindings: The passed 'TransferAlgebra' is non-recursive and thus
 -- doesn't need to do any allocation of 'Node's or calls to 'dependOn'.
 -- As a result, 'TransferAlgebra's operate in a clean @forall m. Monad m@
@@ -58,7 +58,7 @@ type TransferAlgebra lattice
 type TF m = LiftedFunc (Domain m) m
 
 -- | Given a 'TransferAlgebra', this function takes care of building a
--- 'DataFlowProblem' for 'CoreExpr's.
+-- 'DataFlowFramework' for 'CoreExpr's.
 -- It allocates 'Node's and ties knots for recursive bindings
 -- through calls to 'dependOn'. These are then hidden in a 'VarEnv'
 -- and passed on to the 'TransferAlgebra', which can stay completely
@@ -66,12 +66,12 @@ type TF m = LiftedFunc (Domain m) m
 --
 -- It returns the root 'Node', denoting the passed expression, and the maximum
 -- allocated 'Node', which allows to configure 'solveProblem' with a dense
--- 'GraphRef'. The final return value is the 'DataFlowProblem' reflecting
+-- 'GraphRef'. The final return value is the 'DataFlowFramework' reflecting
 -- the analysis specified by the 'TransferAlgebra' applied to the given
 -- 'CoreExpr'.
 --
 -- Continuing the recursion schemes analogy from 'TransferAlgebra',
--- 'buildProblem' is a recursion scheme. Applying it to a 'TransferAlgebra'
+-- 'buildFramework' is a recursion scheme. Applying it to a 'TransferAlgebra'
 -- yields a catamorphism. It is special in that recursive let-bindings
 -- lead to non-structural recursion, so termination isn't obvious and
 -- demands some confidence in domain theory by the programmer.

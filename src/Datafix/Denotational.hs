@@ -34,11 +34,11 @@ import           Datafix.Utils.TypeLevel
 -- | Builds on an associated 'DepM' that is a 'MonadDomain' (like any
 -- 'MonadDependency') by providing a way to track dependencies without explicit
 -- 'Node' management. Essentially, this allows to specify a build plan for a
--- 'DataFlowProblem' through calls to 'datafix' in analogy to 'fix' or 'mfix'.
+-- 'DataFlowFramework' through calls to 'datafix' in analogy to 'fix' or 'mfix'.
 class (Monad m, MonadDomain (DepM m)) => MonadDatafix m where
   -- | The monad in which data dependencies are expressed.
   -- Can and will be instantiated to some 'MonadDependency', if you choose
-  -- to go through 'ProblemBuilder'.
+  -- to go through 'FrameworkBuilder'.
   type DepM m :: * -> *
   -- | This is the closest we can get to an actual fixed-point combinator.
   --

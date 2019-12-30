@@ -48,12 +48,12 @@ tests =
       ]
   ]
 
-mkDFP :: forall m . (Domain m ~ Natural) => (Node -> LiftedFunc Natural m) -> DataFlowProblem m
-mkDFP transfer = DFP transfer (const (eqChangeDetector @(Domain m)))
+mkDFF :: forall m . (Domain m ~ Natural) => (Node -> LiftedFunc Natural m) -> DataFlowFramework m
+mkDFF transfer = DFF transfer (const (eqChangeDetector @(Domain m)))
 
 -- | One node graph with loop that stabilizes after 10 iterations.
-loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-loopProblem = mkDFP transfer
+loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+loopProblem = mkDFF transfer
   where
     transfer (Node 0) = do -- stabilizes at 10
       n <- dependOn @m (Node 0)
@@ -67,8 +67,8 @@ loopProblem = mkDFP transfer
 -- unstable, so that it gets iterated again, which results in a value of
 -- 4 instead of e.g. 3 (= 1 + 2, the values of @B@ in the first iteration
 -- of @A@).
-doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
-doubleDependencyProblem = mkDFP transfer
+doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+doubleDependencyProblem = mkDFF transfer
   where
     transfer (Node 0) = do -- stabilizes at 4
       n <- dependOn @m (Node 1)

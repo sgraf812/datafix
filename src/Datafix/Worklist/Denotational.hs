@@ -13,7 +13,7 @@
 -- Maintainer  :  sgraf1337@gmail.com
 -- Portability :  portable
 --
--- Bridges the "Datafix.Worklist" solver for 'DataFlowProblem's ('solveProblem')
+-- Bridges the "Datafix.Worklist" solver for 'DataFlowFramework's ('solveProblem')
 -- with the "Datafix.Denotational" approach, using 'MonadDatafix' to describe
 -- a 'Denotation'.
 
@@ -26,7 +26,7 @@ import           Datafix.Denotational
 import           Datafix.Entailments
 import           Datafix.Utils.Constraints
 import           Datafix.Utils.TypeLevel
-import           Datafix.ProblemBuilder
+import           Datafix.FrameworkBuilder
 import qualified Datafix.Worklist.Graph.Dense     as DenseGraph
 import           Datafix.Worklist.Internal
 import           Data.Type.Equality
@@ -34,7 +34,7 @@ import           Data.Type.Equality
 -- | @evalDenotation denot ib@ returns a value in @domain@ that is described by
 -- the denotation @denot@.
 --
--- It does so by building up the 'DataFlowProblem' corresponding to @denot@
+-- It does so by building up the 'DataFlowFramework' corresponding to @denot@
 -- and solving the resulting problem with 'solveProblem', the documentation of
 -- which describes in detail how to arrive at a stable denotation and what
 -- the 'IterationBound' @ib@, domain ~ Domain (DepM m) is for.
@@ -55,5 +55,5 @@ evalDenotation plan ib =
       impl :: Products (ParamTypes func) -> ReturnType func
       impl args = solveProblem prob (Dense max_) ib (uncurriedDenot args)
       uncurriedDenot = uncurrys @(ParamTypes func) denot \\ lfInst @func @(DependencyM DenseGraph.Ref domain)
-      (denot, max_, prob) = buildProblem plan
+      (denot, max_, prob) = buildFramework plan
 {-# INLINE evalDenotation #-}

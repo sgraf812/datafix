@@ -21,11 +21,11 @@
 --
 -- Import this module transitively through "Datafix" and get access to
 -- "Datafix.Worklist" for functions that compute solutions to your
--- 'DataFlowProblem's.
+-- 'DataFlowFramework's.
 
 module Datafix.Explicit
   ( Node (..)
-  , DataFlowProblem (..)
+  , DataFlowFramework (..)
   , MonadDependency (..)
   ) where
 
@@ -50,11 +50,11 @@ newtype Node
 -- its denoting 'LiftedFunc' and a means to detect when
 -- the iterated transfer function reached a fixed-point through
 -- a 'ChangeDetector'.
-data DataFlowProblem m
-  = DFP
-  { dfpTransfer     :: !(Node -> LiftedFunc (Domain m) m)
+data DataFlowFramework m
+  = DFF
+  { dffTransfer     :: !(Node -> LiftedFunc (Domain m) m)
   -- ^ A transfer function per each 'Node' of the modeled data-flow problem.
-  , dfpDetectChange :: !(Node -> ChangeDetector (Domain m))
+  , dffDetectChange :: !(Node -> ChangeDetector (Domain m))
   -- ^ A 'ChangeDetector' for each 'Node' of the modeled data-flow problem.
   -- In the simplest case, this just delegates to an 'Eq' instance.
   }
@@ -76,11 +76,11 @@ data DataFlowProblem m
 --   -- sparing the negative n error case
 -- :}
 --
--- We can construct a description of a 'DataFlowProblem' with this @transferFib@ function:
+-- We can construct a description of a 'DataFlowFramework' with this @transferFib@ function:
 --
 -- >>> :{
---   dataFlowProblem :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowProblem m
---   dataFlowProblem = DFP transferFib (const (eqChangeDetector @(Domain m)))
+--   DataFlowFramework :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowFramework m
+--   DataFlowFramework = DFF transferFib (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- We regard the ordinary @fib@ function a solution to the recurrence modeled by @transferFib@:

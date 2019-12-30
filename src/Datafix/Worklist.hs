@@ -6,7 +6,7 @@
 -- Portability :  portable
 --
 -- This module provides the 'Impl.solveProblem' function, which solves the description of a
--- 'Datafix.Description.DataFlowProblem' by employing a worklist algorithm.
+-- 'Datafix.Description.DataFlowFramework' by employing a worklist algorithm.
 -- There's also an interpreter for 'Denotation'al problems in the form of
 -- 'Denotational.evalDenotation'.
 

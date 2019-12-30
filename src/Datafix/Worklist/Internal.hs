@@ -49,7 +49,7 @@ import           System.IO.Unsafe                 (unsafePerformIO)
 -- | The concrete 'MonadDependency' for this worklist-based solver.
 --
 -- This essentially tracks the current approximation of the solution to the
--- 'DataFlowProblem' as mutable state while 'solveProblem' makes sure we will eventually
+-- 'DataFlowFramework' as mutable state while 'solveProblem' makes sure we will eventually
 -- halt with a conservative approximation.
 newtype DependencyM graph domain a
   = DM (ReaderT (Env graph domain) IO a)
@@ -58,14 +58,14 @@ newtype DependencyM graph domain a
   --
   -- This ultimately leaks badly into the exported interface in 'solveProblem':
   -- Since we can't have universally quantified instance contexts (yet!), we can' write
-  -- @(forall s. Datafixable domain => (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
+  -- @(forall s. Datafixable domain => (forall s. DataFlowFramework (DependencyM s graph domain)) -> ...@
   -- and have to instead have the isomorphic
-  -- @(forall s r. (Datafixable domain => r) -> r) -> (forall s. DataFlowProblem (DependencyM s graph domain)) -> ...@
+  -- @(forall s r. (Datafixable domain => r) -> r) -> (forall s. DataFlowFramework (DependencyM s graph domain)) -> ...@
   -- and urge all call sites to pass a meaningless 'id' parameter.
   --
   -- Also, this means more explicit type signatures as we have to make clear to
   -- the type-checker that @s@ is universally quantified in everything that
-  -- touches it, e.g. @Analyses.StrAnal.LetDn.buildProblem@ from the test suite.
+  -- touches it, e.g. @Analyses.StrAnal.LetDn.buildFramework@ from the test suite.
   --
   -- So, bottom line: We resort to 'IO' and 'unsafePerformIO' and promise not to
   -- launch missiles. In particular, we don't export 'DM' and also there
@@ -75,7 +75,7 @@ newtype DependencyM graph domain a
 -- | The iteration state of 'DependencyM'/'solveProblem'.
 data Env graph domain
   = Env
-  { problem          :: !(DataFlowProblem (DependencyM graph domain))
+  { problem          :: !(DataFlowFramework (DependencyM graph domain))
   -- ^ Constant.
   -- The specification of the data-flow problem we ought to solve.
   , iterationBound   :: !(IterationBound domain)
@@ -98,7 +98,7 @@ data Env graph domain
 
 initialEnv
   :: IntArgsMonoSet (Products (ParamTypes domain))
-  -> DataFlowProblem (DependencyM graph domain)
+  -> DataFlowFramework (DependencyM graph domain)
   -> IterationBound domain
   -> IO (graph domain)
   -> IO (Env graph domain)
@@ -113,7 +113,7 @@ initialEnv unstable_ prob ib newGraphRef =
 instance Datafixable domain => MonadDomain (DependencyM graph domain) where
   type Domain (DependencyM graph domain) = domain
 
--- | This allows us to solve @MonadDependency m => DataFlowProblem m@ descriptions
+-- | This allows us to solve @MonadDependency m => DataFlowFramework m@ descriptions
 -- with 'solveProblem'.
 instance (Datafixable domain, GraphRef graph) => MonadDependency (DependencyM graph domain) where
   dependOn = dependOn @domain @graph
@@ -268,9 +268,9 @@ recompute
 recompute node args = withCall node args $ do
   prob <- asks problem
   let node' = Node node
-  let DM iterate' = uncurrys @dom @(depm cod) (dfpTransfer prob node') args
+  let DM iterate' = uncurrys @dom @(depm cod) (dffTransfer prob node') args
                   \\ lfInst @domain @depm
-  let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dfpDetectChange prob node') args
+  let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dffDetectChange prob node') args
                     \\ cdInst @domain
   -- We need to access the graph at three different points in time:
   --
@@ -435,9 +435,9 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 
 -- | Computes the (pure) solution of the 'DependencyM' action @act@ specified in
 -- the last parameter. @act@ may reference (via 'dependOn') 'Node's of the
--- 'DataFlowProblem' @dfp@'s fixed-point, specified as the first parameter.
+-- 'DataFlowFramework' @dff@'s fixed-point, specified as the first parameter.
 --
--- @dfp@'s fixed-point is determined by its transfer functions, and
+-- @dff@'s fixed-point is determined by its transfer functions, and
 -- @solveProblem@ will make sure that all (relevant) 'Node's will have reached
 -- their fixed-point according to these transfer function before computing the
 -- solution for @act@.
@@ -446,20 +446,20 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 -- employing a worklist algorithm. For function domains, where each Node denotes
 -- a monotone function, each points dependencies' will be tracked individually.
 --
--- Apart from @dfp@ and @act@, the 'Density' of the data-flow graph and the
+-- Apart from @dff@ and @act@, the 'Density' of the data-flow graph and the
 -- 'IterationBound' can be specified. Pass 'Sparse' and 'NeverAbort' when in
 -- doubt.
 --
 -- If your problem only has finitely many different 'Node's , consider using the
--- 'ProblemBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level
+-- 'FrameworkBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level
 -- API that let's you forget about 'Node's and instead let's you focus on
 -- building more complex data-flow frameworks.
 solveProblem
   :: forall domain graph a
    . GraphRef graph
   => Datafixable domain
-  => DataFlowProblem (DependencyM graph domain)
-  -- ^ The description of the @DataFlowProblem@.
+  => DataFlowFramework (DependencyM graph domain)
+  -- ^ The description of the @DataFlowFramework@.
   -> Density graph
   -- ^ Describes if the algorithm is free to use a 'Dense', 'Vector'-based
   -- graph representation or has to go with a 'Sparse' one based on 'IntMap'.
@@ -468,7 +468,7 @@ solveProblem
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
   -> DependencyM graph domain a
   -- ^ The action for which we want to compute the solution. May reference
-  -- 'Node's from the @DataFlowProblem@. If you just want to know the value of
+  -- 'Node's from the @DataFlowFramework@. If you just want to know the value of
   -- 'Node' 42, use `dependOn @(DependecyM _ domain) (Node 42)`.
   -> a
 solveProblem prob density ib (DM act) = unsafePerformIO $ do

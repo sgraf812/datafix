@@ -57,7 +57,7 @@ library
                      Datafix.Explicit
                      Datafix.MonoMap
                      Datafix.NodeAllocator
-                     Datafix.ProblemBuilder
+                     Datafix.FrameworkBuilder
                      Datafix.Tutorial
                      Datafix.Utils.Constraints
                      Datafix.Utils.TypeLevel
@@ -190,4 +190,3 @@ executable firstfollow-example
   build-depends:     base
                    , containers
                    , datafix
-

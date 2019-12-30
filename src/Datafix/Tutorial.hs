@@ -114,11 +114,11 @@
 -- of the transfer function as it is executed!
 --
 -- With our transfer function (which denotes data-flow nodes in the semantics
--- of 'Natural's) in place, we can construct a 'DataFlowProblem':
+-- of 'Natural's) in place, we can construct a 'DataFlowFramework':
 --
 -- >>> :{
---   fibDfp :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowProblem m
---   fibDfp = DFP transferFib (const (eqChangeDetector @(Domain m)))
+--   fibDff :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+--   fibDff = DFF transferFib (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- The 'eqChangeDetector' is important for cyclic dependency graphs and makes
@@ -137,7 +137,7 @@
 --
 -- And now the final incantation of the solver:
 --
--- >>> solveProblem fibDfp Sparse NeverAbort (dependOn @(DependencyM _ Natural) (Node 10))
+-- >>> solveProblem fibDff Sparse NeverAbort (dependOn @(DependencyM _ Natural) (Node 10))
 -- 55
 --
 -- This will also execute in \(\mathcal{O}(n)\) space and time, all without
@@ -196,8 +196,8 @@
 -- :}
 --
 -- >>> :{
---   fDfp :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowProblem m
---   fDfp = DFP transferF (const (eqChangeDetector @(Domain m)))
+--   fDff :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowFramework m
+--   fDff = DFF transferF (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- Specification of the data-flow problem works the same as for the 'fib'
@@ -211,13 +211,13 @@
 --
 -- Now it's just a matter of calling 'solveProblem' with the right parameters:
 --
--- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 0))
+-- >>> solveProblem fDff Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 0))
 -- 0
--- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 5))
+-- >>> solveProblem fDff Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 5))
 -- 5
--- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 42))
+-- >>> solveProblem fDff Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 42))
 -- 42
--- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node (-10)))
+-- >>> solveProblem fDff Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node (-10)))
 -- -10
 --
 -- Note how the /specification/ of the data-flow problem was as unexciting as
