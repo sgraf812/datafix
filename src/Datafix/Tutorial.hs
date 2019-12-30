@@ -15,7 +15,7 @@
 -- [fixed-point iteration](https://en.wikipedia.org/wiki/Fixed-point_iteration).
 --
 -- The need for this library arose when I was combining two analyses
--- within GHC for my master's thesis. I recently
+-- within GHC for my master's thesis. I
 -- [held a talk](https://cdn.jsdelivr.net/gh/sgraf812/hiw17@master/slides.pdf)
 -- on that topic, feel free to click through if you want to know the details.
 --
@@ -137,7 +137,7 @@
 --
 -- And now the final incantation of the solver:
 --
--- >>> solveProblem fibDfp Sparse NeverAbort (Node 10)
+-- >>> solveProblem fibDfp Sparse NeverAbort (dependOn @(DependencyM _ Natural) (Node 10))
 -- 55
 --
 -- This will also execute in \(\mathcal{O}(n)\) space and time, all without
@@ -211,13 +211,13 @@
 --
 -- Now it's just a matter of calling 'solveProblem' with the right parameters:
 --
--- >>> solveProblem fDfp Sparse NeverAbort (Node 0)
+-- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 0))
 -- 0
--- >>> solveProblem fDfp Sparse NeverAbort (Node 5)
+-- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 5))
 -- 5
--- >>> solveProblem fDfp Sparse NeverAbort (Node 42)
+-- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node 42))
 -- 42
--- >>> solveProblem fDfp Sparse NeverAbort (Node (-10))
+-- >>> solveProblem fDfp Sparse NeverAbort (dependOn @(DependencyM _ Int) (Node (-10)))
 -- -10
 --
 -- Note how the /specification/ of the data-flow problem was as unexciting as
@@ -264,6 +264,17 @@
 -- analyses into their compiler to properly specify the data-flow problems
 -- in terms of @datafix@ and leave the intricacies of finding a good iteration
 -- order to this library :)
+--
+-- = Comparison to Datalog/Soufflé
+--
+-- In its most declarative form, @datafix@ is an embedded DSL for specifying
+-- static analyses. In that regard, it is really similar to
+-- [Soufflé](https://souffle-lang.github.io/index.html), only that Soufflé uses
+-- an external DSL (a Datalog dialect) to specify the analysis. The resulting
+-- compiled executable needs to run in a separate process and gets the facts of
+-- the input program encoded in datalog facts. @datafix@ analyses, on the other
+-- hand, will be compiled into the host program and don't need an additional
+-- communication layer.
 
 module Datafix.Tutorial () where
 
