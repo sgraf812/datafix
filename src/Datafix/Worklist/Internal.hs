@@ -433,29 +433,33 @@ work
 work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 {-# INLINE work #-}
 
--- | Computes a solution to the described 'DataFlowProblem' by iterating
--- transfer functions until a fixed-point is reached.
+-- | Computes the (pure) solution of the 'DependencyM' action @act@ specified in
+-- the last parameter. @act@ may reference (via 'dependOn') 'Node's of the
+-- 'DataFlowProblem' @dfp@'s fixed-point, specified as the first parameter.
 --
--- It does do by employing a worklist algorithm, iterating unstable 'Node's
--- only.
--- 'Node's become unstable when the point of another 'Node' their transfer function
--- 'dependOn'ed changed.
+-- @dfp@'s fixed-point is determined by its transfer functions, and
+-- @solveProblem@ will make sure that all (relevant) 'Node's will have reached
+-- their fixed-point according to these transfer function before computing the
+-- solution for @act@.
 --
--- The sole initially unstable 'Node' is the last parameter, and if your
--- 'domain' is function-valued (so the returned 'Arrows' expands to a function),
--- then any further parameters specify the exact point in the 'Node's transfer
--- function you are interested in.
+-- We try to be smart in saving unnecessary iterations of transfer functions by
+-- employing a worklist algorithm. For function domains, where each Node denotes
+-- a monotone function, each points dependencies' will be tracked individually.
 --
--- If your problem only has finitely many different 'Node's , consider using
--- the 'ProblemBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level API
--- that let's you forget about 'Node's and instead let's you focus on building
--- more complex data-flow frameworks.
+-- Apart from @dfp@ and @act@, the 'Density' of the data-flow graph and the
+-- 'IterationBound' can be specified. Pass 'Sparse' and 'NeverAbort' when in
+-- doubt.
+--
+-- If your problem only has finitely many different 'Node's , consider using the
+-- 'ProblemBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level
+-- API that let's you forget about 'Node's and instead let's you focus on
+-- building more complex data-flow frameworks.
 solveProblem
   :: forall domain graph a
    . GraphRef graph
   => Datafixable domain
   => DataFlowProblem (DependencyM graph domain)
-  -- ^ The description of the @DataFlowProblem@ to solve.
+  -- ^ The description of the @DataFlowProblem@.
   -> Density graph
   -- ^ Describes if the algorithm is free to use a 'Dense', 'Vector'-based
   -- graph representation or has to go with a 'Sparse' one based on 'IntMap'.
@@ -463,11 +467,9 @@ solveProblem
   -- ^ Whether the solution algorithm should respect a maximum bound on the
   -- number of iterations per point. Pass 'NeverAbort' if you don't care.
   -> DependencyM graph domain a
-  -- ^ The @Node@ that is initially assumed to be unstable. This should be
-  -- the @Node@ you are interested in, e.g. @Node 42@ if you are interested
-  -- in the value of @fib 42@ for a hypothetical @fibProblem@, or the
-  -- @Node@ denoting the root expression of your data-flow analysis
-  -- you specified via the @DataFlowProblem@.
+  -- ^ The action for which we want to compute the solution. May reference
+  -- 'Node's from the @DataFlowProblem@. If you just want to know the value of
+  -- 'Node' 42, use `dependOn @(DependecyM _ domain) (Node 42)`.
   -> a
 solveProblem prob density ib (DM act) = unsafePerformIO $ do
   -- Trust me, I'm an engineer! See the docs of the 'DM' constructor
