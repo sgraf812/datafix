@@ -1,5 +1,5 @@
 name:                datafix
-version:             0.0.0.3
+version:             0.0.1.0
 synopsis:            Fixing data-flow problems
 description:         Fixing data-flow problems in expression trees.
                      This should be useful if you want to write optimizations
@@ -13,7 +13,7 @@ license:             ISC
 license-file:        LICENSE
 author:              Sebastian Graf
 maintainer:          sgraf1337@gmail.com
-copyright:           © 2018 Sebastian Graf
+copyright:           © 2017-2020 Sebastian Graf
 homepage:            https://github.com/sgraf812/datafix
 bug-reports:         https://github.com/sgraf812/datafix/issues
 

@@ -65,7 +65,8 @@ newtype DependencyM graph domain a
   --
   -- Also, this means more explicit type signatures as we have to make clear to
   -- the type-checker that @s@ is universally quantified in everything that
-  -- touches it, e.g. @Analyses.StrAnal.LetDn.buildFramework@ from the test suite.
+  -- touches it, e.g. @Analyses.StrAnal.LetDn.buildDenotation@ from the test
+  -- suite.
   --
   -- So, bottom line: We resort to 'IO' and 'unsafePerformIO' and promise not to
   -- launch missiles. In particular, we don't export 'DM' and also there

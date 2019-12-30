@@ -7,8 +7,8 @@ module Fib where
 import           Datafix
 import           Numeric.Natural
 
-fibProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
-fibProblem = DFF transfer (const (eqChangeDetector @(Domain m)))
+fibFramework :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+fibFramework = DFF transfer (const (eqChangeDetector @(Domain m)))
   where
     transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = return 0

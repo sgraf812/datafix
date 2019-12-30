@@ -26,9 +26,9 @@ instance BoundedJoinSemiLattice Natural where
 
 fixFib, fixFac, fixMutualRecursive
   :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixFib density n = solveProblem fibProblem (density (Node n)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
-fixFac density n = solveProblem facProblem (density (Node n)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
-fixMutualRecursive density n = solveProblem mutualRecursiveProblem (density (Node 1)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixFib density n = solveProblem fibFramework (density (Node n)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixFac density n = solveProblem facFramework (density (Node n)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixMutualRecursive density n = solveProblem mutualRecursiveFramework (density (Node 1)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
 
 tests :: [TestTree]
 tests =
@@ -52,7 +52,7 @@ tests =
           , testCase "second node is stable" (fixMutualRecursive Dense 1 @?= 10)
           ]
       , testGroup "Abortion"
-          [ testCase "aborts after 5 updates with value 42" (solveProblem mutualRecursiveProblem Sparse (AbortAfter 5 (const 42)) (dependOn @(DependencyM _ Natural) (Node 1)) @?= 42)
+          [ testCase "aborts after 5 updates with value 42" (solveProblem mutualRecursiveFramework Sparse (AbortAfter 5 (const 42)) (dependOn @(DependencyM _ Natural) (Node 1)) @?= 42)
           ]
       ]
   ]

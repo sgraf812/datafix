@@ -7,8 +7,8 @@ module Fac where
 import           Datafix
 import           Numeric.Natural
 
-facProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
-facProblem = DFF transfer (const (eqChangeDetector @(Domain m)))
+facFramework :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+facFramework = DFF transfer (const (eqChangeDetector @(Domain m)))
   where
     transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = return 1

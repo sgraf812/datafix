@@ -16,8 +16,8 @@ import           Numeric.Natural
 --
 -- After a few bounces, this will reach a stable state where the first node
 -- has value 11 and the other has value 10.
-mutualRecursiveProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
-mutualRecursiveProblem = DFF transfer (const (eqChangeDetector @(Domain m)))
+mutualRecursiveFramework :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+mutualRecursiveFramework = DFF transfer (const (eqChangeDetector @(Domain m)))
   where
     transfer :: Node -> LiftedFunc Natural m
     transfer (Node 0) = do

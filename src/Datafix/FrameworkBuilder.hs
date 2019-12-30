@@ -33,14 +33,14 @@ import           Datafix.NodeAllocator
 -- | Constructs a build plan for a 'DataFlowFramework' by tracking allocation of
 -- 'Node's mapping to 'ChangeDetector's and transfer functions.
 newtype FrameworkBuilder m a
-  = FrameworkBuilder { unwrapFrameworkBuilder :: NodeAllocator (ChangeDetector (Domain m), LiftedFunc (Domain m) m) a }
+  = FrameworkBuilder { unwrapFB :: NodeAllocator (ChangeDetector (Domain m), LiftedFunc (Domain m) m) a }
   deriving (Functor, Applicative, Monad)
 
 instance MonadDependency m => MonadDatafix (FrameworkBuilder m) where
   type DepM (FrameworkBuilder m) = m
   datafix cd func = FrameworkBuilder $ allocateNode $ \node -> do
     let deref = dependOn @m node
-    (ret, transfer) <- unwrapFrameworkBuilder (func deref)
+    (ret, transfer) <- unwrapFB (func deref)
     return (ret, (cd, transfer))
 
 -- | @(root, max, dff) = buildFramework builder@ executes the build plan specified
@@ -56,4 +56,4 @@ buildFramework
 buildFramework plan = (a, Node (sizeofArray arr - 1), prob)
   where
     prob = DFF (snd . indexArray arr . unwrapNode) (fst . indexArray arr . unwrapNode)
-    (a, arr) = runAllocator $ unwrapFrameworkBuilder $ plan @(FrameworkBuilder m)
+    (a, arr) = runAllocator $ unwrapFB $ plan @(FrameworkBuilder m)

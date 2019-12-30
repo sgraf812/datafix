@@ -79,8 +79,8 @@ data DataFlowFramework m
 -- We can construct a description of a 'DataFlowFramework' with this @transferFib@ function:
 --
 -- >>> :{
---   DataFlowFramework :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowFramework m
---   DataFlowFramework = DFF transferFib (const (eqChangeDetector @(Domain m)))
+--   dataFlowFramework :: forall m . (MonadDependency m, Domain m ~ Int) => DataFlowFramework m
+--   dataFlowFramework = DFF transferFib (const (eqChangeDetector @(Domain m)))
 -- :}
 --
 -- We regard the ordinary @fib@ function a solution to the recurrence modeled by @transferFib@:

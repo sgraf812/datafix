@@ -22,8 +22,8 @@ instance BoundedJoinSemiLattice Natural where
 
 fixLoop, fixDoubleDependency
   :: GraphRef graph => (Node -> Density graph) -> Int -> Natural
-fixLoop density n = solveProblem loopProblem (density (Node 0)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
-fixDoubleDependency density n = solveProblem doubleDependencyProblem (density (Node 1)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixLoop density n = solveProblem loopFramework (density (Node 0)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
+fixDoubleDependency density n = solveProblem doubleDependencyFramework (density (Node 1)) NeverAbort (dependOn @(DependencyM _ Natural) (Node n))
 
 tests :: [TestTree]
 tests =
@@ -43,7 +43,7 @@ tests =
           [ testCase "stabilizes at 4" (fixDoubleDependency Dense 0 @?= 4)
           ]
       , testGroup "Abortion"
-          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ solveProblem doubleDependencyProblem Sparse (AbortAfter 1 (+ 4)) (dependOn @(DependencyM _ Natural) (Node 0)) >= 4)
+          [ testCase "stabilizes at or over 4" (assertBool ">= 4" $ solveProblem doubleDependencyFramework Sparse (AbortAfter 1 (+ 4)) (dependOn @(DependencyM _ Natural) (Node 0)) >= 4)
           ]
       ]
   ]
@@ -52,8 +52,8 @@ mkDFF :: forall m . (Domain m ~ Natural) => (Node -> LiftedFunc Natural m) -> Da
 mkDFF transfer = DFF transfer (const (eqChangeDetector @(Domain m)))
 
 -- | One node graph with loop that stabilizes after 10 iterations.
-loopProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
-loopProblem = mkDFF transfer
+loopFramework :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+loopFramework = mkDFF transfer
   where
     transfer (Node 0) = do -- stabilizes at 10
       n <- dependOn @m (Node 0)
@@ -67,8 +67,8 @@ loopProblem = mkDFF transfer
 -- unstable, so that it gets iterated again, which results in a value of
 -- 4 instead of e.g. 3 (= 1 + 2, the values of @B@ in the first iteration
 -- of @A@).
-doubleDependencyProblem :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
-doubleDependencyProblem = mkDFF transfer
+doubleDependencyFramework :: forall m . (MonadDependency m, Domain m ~ Natural) => DataFlowFramework m
+doubleDependencyFramework = mkDFF transfer
   where
     transfer (Node 0) = do -- stabilizes at 4
       n <- dependOn @m (Node 1)
