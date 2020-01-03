@@ -440,12 +440,12 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 --
 -- @dff@'s fixed-point is determined by its transfer functions, and
 -- @solveProblem@ will make sure that all (relevant) 'Node's will have reached
--- their fixed-point according to these transfer function before computing the
+-- their fixed-point according to their transfer function before computing the
 -- solution for @act@.
 --
 -- We try to be smart in saving unnecessary iterations of transfer functions by
 -- employing a worklist algorithm. For function domains, where each Node denotes
--- a monotone function, each points dependencies' will be tracked individually.
+-- a monotone function, each point's dependencies' will be tracked individually.
 --
 -- Apart from @dff@ and @act@, the 'Density' of the data-flow graph and the
 -- 'IterationBound' can be specified. Pass 'Sparse' and 'NeverAbort' when in
@@ -455,6 +455,8 @@ work = whileJust_ highestPriorityUnstableNode (uncurry recompute)
 -- 'FrameworkBuilder' API (e.g. 'datafix' + 'evalDenotation') for a higher-level
 -- API that let's you forget about 'Node's and instead let's you focus on
 -- building more complex data-flow frameworks.
+--
+-- See "Datafix.Tutorial" and the @examples/@ subfolder for examples.
 solveProblem
   :: forall domain graph a
    . GraphRef graph
