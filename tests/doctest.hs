@@ -1,5 +1,9 @@
-import System.FilePath.Glob
+import Build_doctests
 import Test.DocTest
+import System.Environment (unsetEnv)
 
 main :: IO ()
-main = glob "src/**/*.hs" >>= doctest
+main = do
+  unsetEnv "GHC_ENVIRONMENT"
+  let args = flags ++ pkgs ++ module_sources
+  doctest args

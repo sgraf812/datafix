@@ -20,7 +20,8 @@ bug-reports:         https://github.com/sgraf812/datafix/issues
 category:            Compiler
 build-type:          Custom
 stability:           alpha (experimental)
-cabal-version:       1.24
+-- We have autogen-modules, so we need Cabal 2.0
+cabal-version:       2.0
 
 extra-source-files:
   CHANGELOG.md
@@ -44,7 +45,7 @@ custom-setup
   setup-depends:
       base
     , Cabal
-    -- let cabal-toolkit choose the right Cabal and base versions
+    , cabal-doctest >= 1 && < 1.1
     , cabal-toolkit >= 0.0.4
 
 library
@@ -79,8 +80,7 @@ library
                    , vector < 0.13
                    -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
                    , primitive >= 0.6.2.0 && < 0.7
-                   -- has not reached the first major version, so quite unstable
-                   , pomaps >= 0.0.0.2 && < 0.0.3.0
+                   , pomaps >= 0.0.0.2 && < 0.2
   if !flag(no-lattices)
     build-depends:   lattices
   if flag(no-lattices)
@@ -112,7 +112,6 @@ test-suite tests
                      StrAnal
                      FirstFollow
   build-depends:     base >= 4.8 && < 5
-                   -- let cabal-toolkit choose the Cabal version
                    , Cabal
                    , cabal-toolkit >= 0.0.4
                    , tasty >= 0.11
@@ -131,7 +130,7 @@ test-suite tests
   if !flag(no-lattices)
     build-depends:   lattices < 2
   if flag(no-lattices)
-    build-depends:   pomaps >= 0.0.0.2 && < 0.0.3.0
+    build-depends:   pomaps >= 0.0.0.2 && < 0.2
 
 test-suite doctests
   type:              exitcode-stdio-1.0
@@ -141,9 +140,10 @@ test-suite doctests
   main-is:           doctest.hs
   build-depends:     base >= 4.8 && < 5
                    , doctest >=0.10
-                   , Glob >= 0.7
                    , QuickCheck >= 2.5
                    , datafix
+  other-modules:     Build_doctests
+  autogen-modules:   Build_doctests
 
 benchmark benchmarks
   type:              exitcode-stdio-1.0
@@ -151,8 +151,7 @@ benchmark benchmarks
   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
   hs-source-dirs:    bench examples
   main-is:           Main.hs
-  other-modules:     Sum
-                     Analyses.AdHocStrAnal
+  other-modules:     Analyses.AdHocStrAnal
                      Analyses.StrAnal
                      Analyses.StrAnal.Analysis
                      Analyses.StrAnal.Arity
@@ -161,8 +160,8 @@ benchmark benchmarks
                      Analyses.Syntax.MkCoreHelpers
                      Analyses.Syntax.MkCoreFromFile
                      Analyses.Templates.LetDn
+                     Sum
   build-depends:     base >= 4.8 && < 5
-                   -- let cabal-toolkit choose the Cabal version
                    , Cabal
                    , cabal-toolkit >= 0.0.4
                    , criterion >= 1.1
@@ -180,7 +179,7 @@ benchmark benchmarks
   if !flag(no-lattices)
     build-depends:   lattices < 2
   if flag(no-lattices)
-    build-depends:   pomaps >= 0.0.0.2 && < 0.0.3.0
+    build-depends:   pomaps >= 0.0.0.2 && < 0.2
 
 executable firstfollow-example
   default-language:  Haskell2010
