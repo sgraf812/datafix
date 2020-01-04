@@ -1,0 +1,123 @@
+-- cabal-install version for all jobs
+cabal-install-version: 2.4
+
+-- jobs (N:M - cabal:ghc)
+jobs:
+
+-- distribution version (xenial, bionic)
+distribution: xenial
+
+-- Jobs selection across packages
+jobs-selection: uniform
+
+-- Copy ? fields from cabal.project fields
+copy-fields: some
+
+-- --ghc-options for local packages
+local-ghc-options:
+
+-- Clone submodules, i.e. recursively
+submodules: False
+
+-- Disable caching
+cache: True
+
+-- Skip separate dependency installation step
+install-dependencies: True
+
+-- Specify 'constraint: ... installed' packages
+installed:
+
+-- Build tests with
+tests: True
+
+-- Run tests with (note: only built tests are run)
+run-tests: True
+
+-- Build benchmarks
+benchmarks: True
+
+-- Haddock step
+haddock: True
+
+-- Build without tests and benchmarks
+no-tests-no-benchmarks: True
+
+-- Make unconstrained build
+unconstrained: True
+
+-- Use head.hackage repository. Also marks as allow-failures
+head-hackage: >=8.9
+
+-- Disable cabal check run
+cabal-check: True
+
+-- Enable builds only for specific branches
+branches:
+
+-- Enable IRC notifications to given channel (e.g. 'irc.freenode.org#haskell-lens')
+irc-channels:
+
+-- Project name (used for IRC notifications), defaults to package name or name of first package listed in cabal.project file
+project-name:
+
+-- Build steps to fold
+folds:
+
+-- Add ghc-head job
+ghc-head: False
+
+-- Add postgresql service
+postgresql: False
+
+-- Environment variables per job (e.g. `8.0.2:HADDOCK=false`)
+env:
+
+-- Allow failures of particular GHC version
+allow-failures: False
+
+-- [Discouraged] Assume there are only GHCs last in major series: 8.2.* will match only 8.2.2
+last-in-series: False
+
+-- Jobs to additionally build with OSX
+osx:
+
+-- Additional apt packages to install
+apt:
+
+-- .patch files to apply to the generated Travis YAML file
+travis-patches:
+
+-- Don't insert the haskell-ci version into the generated Travis YAML file
+insert-version: True
+
+-- Disable coloring cabal output
+color: True
+
+-- Enable Doctest job
+doctest: True
+
+-- Additional Doctest options
+doctest-options:
+
+-- Doctest version
+doctest-version: ==0.16.*
+
+-- Filter packages from .ghc.environment file
+doctest-filter-packages:
+
+-- Enable HLint job
+hlint: True
+
+-- Specify HLint job
+hlint-job: latest
+
+-- Use specific .hlint.yaml
+hlint-yaml: .hlint.yaml
+
+-- Additional HLint options
+hlint-options:
+
+-- HLint version
+hlint-version: ==2.1.*
+

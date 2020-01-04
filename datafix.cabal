@@ -22,6 +22,7 @@ build-type:          Custom
 stability:           alpha (experimental)
 -- We have autogen-modules, so we need Cabal 2.0
 cabal-version:       2.0
+tested-with:         GHC==8.8.1, GHC==8.6.5, GHC==8.4.4, GHC==8.2.2
 
 extra-source-files:
   CHANGELOG.md
