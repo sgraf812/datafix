@@ -80,7 +80,7 @@ library
                    -- Just Data.Vector.Mutable, which has been there for ages
                    , vector < 0.13
                    -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
-                   , primitive >= 0.6.2.0 && < 0.7
+                   , primitive >= 0.6.2.0 && < 0.8
                    , pomaps >= 0.0.0.2 && < 0.2
   if !flag(no-lattices)
     build-depends:   lattices
