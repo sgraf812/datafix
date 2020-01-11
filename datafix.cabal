@@ -75,7 +75,7 @@ library
                      Datafix.IntArgsMonoMap
                      Datafix.IntArgsMonoSet
   build-depends:     base >= 4.8 && < 5
-                   , containers >= 0.5 && < 0.6.1
+                   , containers >= 0.5 && < 0.7
                    , transformers < 0.6
                    -- Just Data.Vector.Mutable, which has been there for ages
                    , vector < 0.13
