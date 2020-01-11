@@ -129,7 +129,8 @@ install:
   - ${CABAL} v2-freeze $WITHCOMPILER ${TEST} ${BENCH} | color_cabal_output
   - "cat cabal.project.freeze | sed -E 's/^(constraints: *| *)//' | sed 's/any.//'"
   - rm  cabal.project.freeze
-  - ${CABAL} v2-build $WITHCOMPILER ${TEST} ${BENCH} --dep -j2 all | color_cabal_output
+  - ${CABAL} v2-build $WITHCOMPILER ${TEST} --dep -j2 all | color_cabal_output
+  - ${CABAL} v2-build $WITHCOMPILER ${BENCH} --dep -j2 all | color_cabal_output
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks --dep -j2 all | color_cabal_output
 script:
   - DISTDIR=$(mktemp -d /tmp/dist-test.XXXX)
@@ -155,7 +156,8 @@ script:
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all | color_cabal_output
   # Building with tests and benchmarks...
   # build & run tests, build benchmarks
-  - ${CABAL} v2-build $WITHCOMPILER ${TEST} ${BENCH} all | color_cabal_output
+  - ${CABAL} v2-build $WITHCOMPILER ${BENCH} all | color_cabal_output
+  - ${CABAL} v2-build $WITHCOMPILER ${BENCH} all | color_cabal_output
   # Testing...
   - ${CABAL} v2-test $WITHCOMPILER ${TEST} ${BENCH} all | color_cabal_output
   # Doctest...
@@ -166,7 +168,7 @@ script:
   # cabal check...
   - (cd ${PKGDIR_datafix} && ${CABAL} -vnormal check)
   # haddock...
-  - ${CABAL} v2-haddock $WITHCOMPILER --with-haddock $HADDOCK ${TEST} ${BENCH} all | color_cabal_output
+  - ${CABAL} v2-haddock $WITHCOMPILER --with-haddock $HADDOCK all | color_cabal_output
   # Building without installed constraints for packages in global-db...
   - rm -f cabal.project.local
   - ${CABAL} v2-build $WITHCOMPILER --disable-tests --disable-benchmarks all | color_cabal_output
