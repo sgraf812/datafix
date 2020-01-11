@@ -42,6 +42,7 @@ jobs:
       addons: {"apt":{"sources":[{"sourceline":"deb http://ppa.launchpad.net/hvr/ghc/ubuntu xenial main","key_url":"https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x063dab2bdc0b3f9fcebc378bff3aeacef6f88286"}],"packages":["ghc-8.2.2","cabal-install-2.4"]}}
       os: linux
 before_install:
+  - set -x
   - HC=$(echo "/opt/$CC/bin/ghc" | sed 's/-/\//')
   - WITHCOMPILER="-w $HC"
   - HADDOCK=$(echo "/opt/$CC/bin/haddock" | sed 's/-/\//')
