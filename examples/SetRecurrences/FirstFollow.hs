@@ -37,9 +37,6 @@ import           Data.Maybe (fromMaybe)
 import           Data.Set (Set)
 import qualified Data.Set as Set
 
-import           System.Environment
-import           Text.Printf
-
 data V t nt
   = T t
   | NT nt
