@@ -77,7 +77,9 @@ library
                    , vector < 0.13
                    -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
                    , primitive >= 0.6.2.0 && < 0.8
-                   , pomaps >= 0.0.0.2 && < 0.2
+                   -- Prior to 0.2, pomaps used to offer a flag to compile without
+                   -- lattices that confuses CI
+                   , pomaps >= 0.2 && < 0.3
                    , lattices
 
 test-suite tests
