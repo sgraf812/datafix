@@ -14,8 +14,8 @@ resolver: lts-13.30
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- cabal-toolkit-0.0.6
-- pomaps-0.1.0.0
+- cabal-toolkit-0.0.7
+- pomaps-0.2.0.0
 
 allow-newer: true
 

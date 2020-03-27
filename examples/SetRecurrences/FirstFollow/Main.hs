@@ -14,7 +14,7 @@ main = do
         printf "  first_%d(%s): %s\n" k (show s) (show $ first k gr [NT s])
         printf "  follow_%d(%s): %s\n" k (show s) (show $ follow k gr s)
         putStrLn ""
-  mapM_ (uncurry3 analyse) $
+  mapM_ (uncurry3 analyse)
     [ ("Dyck", dyck, 'S')
     , ("LL(1), not SLL(k)", llsll, 'A')
     , ("empty", emptyL, 'A')

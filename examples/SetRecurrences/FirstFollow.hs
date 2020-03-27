@@ -75,8 +75,8 @@ mkGrammar ts nts ps s
   }
   where
     mkV v
-      | elem v ts  = T v
-      | elem v nts = NT v
+      | v `elem` ts  = T v
+      | v `elem` nts = NT v
       | otherwise  = error "not part of vocabulary"
 
 augmentGrammar :: (Ord t, Ord nt) => nt -> Grammar t nt -> Grammar t nt
@@ -139,7 +139,7 @@ follow k gr = (evalDenotation @(Set [WithEOF t]) plan NeverAbort Map.!)
       ]
     firsts = firstSolutions k gr
     initialEnv :: forall m . Monad m => Map nt (m (Set [WithEOF t]))
-    initialEnv = Map.singleton (start gr) (pure (Set.singleton (take k (repeat EOF))))
+    initialEnv = Map.singleton (start gr) (pure (Set.singleton (replicate k EOF)))
     plan :: forall m . (MonadDatafix m, Domain (DepM m) ~ Set [WithEOF t]) => m (DepM m (Map nt (Set [WithEOF t])))
     plan = sequence <$> build initialEnv (Set.toList (Set.delete (start gr) (nonterminals gr)))
     build :: forall m . (MonadDatafix m, Domain (DepM m) ~ Set [WithEOF t]) => Map nt (DepM m (Set [WithEOF t])) -> [nt] -> m (Map nt (DepM m (Set [WithEOF t])))
