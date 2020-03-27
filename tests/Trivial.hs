@@ -7,8 +7,6 @@ module Trivial (tests) where
 
 import           Algebra.Lattice
 import           Datafix
-import           Datafix.Worklist       (Density (..), IterationBound (..),
-                                         solveProblem)
 import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural
 import           Test.Tasty

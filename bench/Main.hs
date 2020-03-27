@@ -7,9 +7,6 @@ import           Control.DeepSeq
 import           Criterion
 import           Criterion.Main
 import           Datafix
-import           Datafix.Worklist               (Density (..),
-                                                 IterationBound (..),
-                                                 solveProblem)
 import           Datafix.Worklist.Graph         (GraphRef)
 import           Numeric.Natural
 
