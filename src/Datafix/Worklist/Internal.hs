@@ -10,6 +10,8 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE BangPatterns               #-}
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dno-suppress-idinfo #-}
 
 -- |
 -- Module      :  Datafix.Worklist.Internal
@@ -82,15 +84,17 @@ data Env graph domain
   , iterationBound   :: !(IterationBound domain)
   -- ^ Constant.
   -- Whether to abort after a number of iterations or not.
-  , callStack        :: !(IntArgsMonoSet (Products (ParamTypes domain)))
-  -- ^ Contextual state.
-  -- The set of points in the 'domain' of 'Node's currently in the call stack.
   , graph            :: !(graph domain)
   -- ^ Constant ref to stateful graph.
   -- The data-flow graph, modeling dependencies between data-flow 'Node's,
   -- or rather specific points in the 'domain' of each 'Node'.
-  , referencedPoints :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
+  , callStack        :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
   -- ^ Constant (but the the wrapped set is stateful).
+  -- The set of points in the 'domain' of 'Node's currently in the call stack.
+  -- NB: This could actually be Contextual State (using local), but that means
+  -- having to reallocate 'Env' records. We don't want that allocation.
+  , referencedPoints :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
+  -- ^ Constant
   -- The set of points the currently 'recompute'd node references so far.
   , unstable         :: !(IORef (IntArgsMonoSet (Products (ParamTypes domain))))
   -- ^ Constant (but the the wrapped queue is stateful).
@@ -104,8 +108,9 @@ initialEnv
   -> IO (graph domain)
   -> IO (Env graph domain)
 initialEnv unstable_ prob ib newGraphRef =
-  Env prob ib IntArgsMonoSet.empty
+  Env prob ib
     <$> newGraphRef
+    <*> newIORef IntArgsMonoSet.empty
     <*> newIORef IntArgsMonoSet.empty
     <*> newIORef unstable_
 {-# INLINE initialEnv #-}
@@ -197,6 +202,12 @@ zoomIORef s = do
   return res
 {-# INLINE zoomIORef #-}
 
+zoomCallStack
+  :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
+  -> ReaderT (Env graph domain) IO a
+zoomCallStack = withReaderT callStack . zoomIORef
+{-# INLINE zoomCallStack #-}
+
 zoomReferencedPoints
   :: State (IntArgsMonoSet (Products (ParamTypes domain))) a
   -> ReaderT (Env graph domain) IO a
@@ -238,11 +249,12 @@ withCall
   -> ReaderT (Env graph domain) IO a
   -> ReaderT (Env graph domain) IO a
 withCall node args r = ReaderT $ \env -> do
-  refs <- readIORef (referencedPoints env)
-  refs `seq` writeIORef (referencedPoints env) IntArgsMonoSet.empty
-  ret <- runReaderT r env
-    { callStack = IntArgsMonoSet.insert node args (callStack env)
-    }
+  !refs <- readIORef (referencedPoints env)
+  writeIORef (referencedPoints env) IntArgsMonoSet.empty
+  !oldStack <- readIORef (callStack env)
+  writeIORef (callStack env) $! IntArgsMonoSet.insert node args oldStack
+  !ret <- runReaderT r env
+  writeIORef (callStack env) oldStack
   writeIORef (referencedPoints env) refs
   return ret
 {-# INLINE withCall #-}
@@ -300,6 +312,7 @@ recompute node args = withCall node args $ do
     Just oldVal | not (detectChange' oldVal newVal) ->
       return ()
     _ -> do
+      !_ <- ask
       forM_ (IntArgsMonoSet.toList (referrers oldInfo)) $
         uncurry enqueueUnstable
       when (IntArgsMonoSet.member node args refs) $
@@ -311,7 +324,7 @@ recompute node args = withCall node args $ do
         -- set, though.
         enqueueUnstable node args
   return newVal
-{-# INLINE recompute #-}
+{-# INLINABLE recompute #-}
 
 dependOn
   :: forall domain graph depm
@@ -324,10 +337,11 @@ dependOn (Node node) =
     \\ lfInst @domain @(DependencyM graph domain)
     where
       impl args = DM $ do
-        cycleDetected <- IntArgsMonoSet.member node args <$> asks callStack
+        cycleDetected <- zoomCallStack $
+          IntArgsMonoSet.member node args <$> get
         isStable <- zoomUnstable $
           not . IntArgsMonoSet.member node args <$> get
-        maybePointInfo <- withReaderT graph (Graph.lookup node args)
+        !maybePointInfo <- withReaderT graph (Graph.lookup node args)
         zoomReferencedPoints (modify' (IntArgsMonoSet.insert node args))
         case maybePointInfo >>= value of
           -- 'value' can only be 'Nothing' if there was a 'cycleDetected':
@@ -485,3 +499,5 @@ solveProblem prob density ib (DM act) = unsafePerformIO $ do
   -- values reached a fixed-point.
   runReaderT (act >> work >> act) env
 {-# INLINE solveProblem #-}
+
+-- Problem: We need to specialise act and work on env, the DFF prob n particular.

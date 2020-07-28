@@ -57,3 +57,4 @@ buildFramework plan = (a, Node (sizeofArray arr - 1), prob)
   where
     prob = DFF (snd . indexArray arr . unwrapNode) (fst . indexArray arr . unwrapNode)
     (a, arr) = runAllocator $ unwrapFB $ plan @(FrameworkBuilder m)
+{-# INLINE buildFramework #-}

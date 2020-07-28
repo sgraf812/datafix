@@ -1,0 +1,198 @@
+/home/sgraf/code/hs/datafix/dist-newstyle/build/x86_64-linux/ghc-8.6.5/datafix-0.0.1.0/build/stranal-singleshot/stranal-singleshot datafix exprs/lambda.hs +RTS -N -rdatafix.ticky 
+
+STACK USAGE:
+
+ENTERS: 396  of which 396 (100.0%) direct to the entry code
+		  [the rest indirected via Node's info ptr]
+        101 ( 25.5%) thunks
+          3 (  0.8%) data values
+          0 (  0.0%) normal indirections
+          0 (  0.0%) permanent indirections
+
+FUNCTION ENTRIES: 292
+
+TAIL CALLS: 515, of which 376 (73%) were to known functions
+
+SLOW APPLICATIONS: 0 evaluated, 0 unevaluated
+
+         Too few args   Correct args   Too many args
+   FUN            0              0               0
+   PAP            0              0               0
+
+
+RETURNS: 74
+         18 ( 24.3%) from entering a new constructor
+		  [the rest from entering an existing constructor]
+
+RET_NEW:                  18:   5.6% 11.1% 50.0% 11.1% 11.1%  0.0%  0.0%  0.0% 11.1%
+RET_OLD:                   3:   0.0%  0.0%100.0%  0.0%  0.0%  0.0%  0.0%  0.0%  0.0%
+RET_UNBOXED_TUP:          53:   0.0%100.0%  0.0%  0.0%  0.0%  0.0%  0.0%  0.0%  0.0%
+
+UPDATE FRAMES: 99 (0 omitted from thunks)
+CATCH FRAMES:  0
+UPDATES: 0
+          0 (  0.0%) data values
+		  [0 in place, 0 allocated new space]
+          0 (  0.0%) partial applications
+		  [0 in place, 0 allocated new space]
+          0 (  0.0%) updates by squeezing
+
+The following table is explained by http://ghc.haskell.org/trac/ghc/wiki/Debugging/TickyTicky
+All allocation numbers are in bytes.
+
+**************************************************
+
+    Entries      Alloc    Alloc'd  Non-void Arguments      STG Name
+--------------------------------------------------------------------------------
+          1          0          0   9 >>MSiippp            main:Analyses.StrAnal.Analysis.$wgo{v r1eXM} (fun)
+         28       1904          0   1 S                    sat_s1j4F{v} (main:Analyses.StrAnal.Analysis) (fun) in s1j4G
+         28       1232          0   1 S                    sat_s1j4G{v} (main:Analyses.StrAnal.Analysis) (fun) in s1j7e
+          6        368          0   1 S                    sat_s1j3y{v} (main:Analyses.StrAnal.Analysis) (fun) in s1j7e
+         34          0          0   2 .S                   datafix-0.0.1.0-inplace:Datafix.Worklist.Internal.$fApplicativeDependencyM1{v ruIO} (fun)
+         32          0          0   3 S>.                  $s$fMonadReaderT_$c>>={v rB2y} (datafix-0.0.1.0-inplace:Datafix.Worklist.Internal) (fun)
+         32          0          0   3 S>.                  datafix-0.0.1.0-inplace:Datafix.Worklist.Internal.dependOn_$s$fMonadReaderT_$c>>={v ruJ1} (fun)
+          1          0          0   1 +                    datafix-0.0.1.0-inplace:Datafix.Common.$p1MonadDomain{v rhVT} (fun)
+          1          0          0   1 +                    datafix-0.0.1.0-inplace:Datafix.Explicit.$p1MonadDependency{v rjg9} (fun)
+          1          0          0   1 +                    datafix-0.0.1.0-inplace:Datafix.Denotational.$p2MonadDatafix{v rn1w} (fun)
+         42       1416          0   1 S                    sat_s1j7e{v} (main:Analyses.StrAnal.Analysis) (fun) in r1eXP
+         38       3840          0   3 +SM                  main:Analyses.StrAnal.Analysis.$wtransferFunctionAlg{v r1eXP} (fun)
+         15          0          0   5 +EESM                main:Analyses.StrAnal.Analysis.transferFunctionAlg{v r1eXU} (fun)
+         14        504          0   1 M                    sat_s1e5g{v} (main:Analyses.Templates.LetDn) (fun) in s1e5h
+          7        280          0   1 M                    sat_s1e5h{v} (main:Analyses.Templates.LetDn) (fun) in s1e4X
+         15        360          0   2 ..                   $s$fApplicativeStateT_$cpure{v rmp3} (datafix-0.0.1.0-inplace:Datafix.NodeAllocator) (fun)
+         15          0          0   2 ..                   datafix-0.0.1.0-inplace:Datafix.NodeAllocator.$fApplicativeNodeAllocator_$s$fApplicativeStateT_$cpure{v rjSN} (fun)
+         14          0          0   3 S>.                  $s$fMonadStateT_$c>>={v rmoZ} (datafix-0.0.1.0-inplace:Datafix.NodeAllocator) (fun)
+         14          0          0   3 S>.                  datafix-0.0.1.0-inplace:Datafix.NodeAllocator.$fMonadNodeAllocator_$s$fMonadStateT_$c>>={v rjSW} (fun)
+          2         72          0   1 +                    datafix-0.0.1.0-inplace:Datafix.FrameworkBuilder.$fMonadDatafixFrameworkBuilder{v rniD} (fun)
+          1          0          0   1 +                    datafix-0.0.1.0-inplace:Datafix.Denotational.$p1MonadDatafix{v rn0R} (fun)
+          1         16          0   2 LL                   main:Analyses.Syntax.MkCoreFromFile.compileCoreExpr5{v ruqu} (fun)
+         23       1344          0   2 SM                   buildExpr{v s1e4X} (main:Analyses.Templates.LetDn) (fun) in r1cB5
+          5        224          0   4 ++.M                 main:Analyses.Templates.LetDn.$wbuildDenotation'{v r1cB5} (fun)
+          1          0          0   2 ++                   sat_s1jcK{v} (main:Analyses.StrAnal.Analysis) (fun) in r1dqI
+          3        344          0   1 .                    sat_so2g{v} (datafix-0.0.1.0-inplace:Datafix.FrameworkBuilder) (fun) in rn8M
+          2         40          0   1 +                    datafix-0.0.1.0-inplace:Datafix.FrameworkBuilder.buildFramework{v rn8M} (fun)
+          1         96          0   1 M                    main:Analyses.StrAnal.Analysis.analyse{v r1dqI} (fun)
+          4       1640          0   2 Sp                   main:Analyses.Syntax.MkCoreFromFile.$w$saddPkgDbs{v rupB} (fun)
+          5       1640          0   1 S                    sat_s1aWD{v} (main:Analyses.Syntax.MkCoreFromFile) (fun) in ruqg
+          1         16          0   1 L                    main:Analyses.Syntax.MkCoreFromFile.compileCoreExpr1{v ruqg} (fun)
+          2         32          0   0                      main:Main.main1{v r1mGl} (fun)
+          1          0          0   0                      main:Main.main7{v r1mGq} (fun)
+          1          0          0   0                      main::Main.main{v 01D} (fun)
+
+**************************************************
+        191 ALLOC_HEAP_ctr
+      15368 ALLOC_HEAP_tot
+        195 HEAP_CHK_ctr
+        396 STK_CHK_ctr
+          0 ALLOC_RTS_ctr
+          0 ALLOC_RTS_tot
+         81 ALLOC_FUN_ctr
+       3392 ALLOC_FUN_gds
+          0 ALLOC_PAP_ctr
+          0 ALLOC_PAP_adm
+          0 ALLOC_PAP_gds
+        244 ALLOC_UP_THK_ctr
+          0 ALLOC_SE_THK_ctr
+       7000 ALLOC_THK_gds
+         91 ALLOC_CON_ctr
+       4880 ALLOC_CON_gds
+          1 ALLOC_PRIM_ctr
+         72 ALLOC_PRIM_gds
+          0 ALLOC_PRIM_slp
+          0 ENT_VIA_NODE_ctr
+          0 ENT_STATIC_CON_ctr
+          3 ENT_DYN_CON_ctr
+        201 ENT_STATIC_FUN_DIRECT_ctr
+         91 ENT_DYN_FUN_DIRECT_ctr
+         79 ENT_LNE_ctr
+          0 ENT_STATIC_IND_ctr
+          0 ENT_DYN_IND_ctr
+          0 E!NT_PERM_IND_ctr requires +RTS -Z
+          0 ENT_AP_ctr
+          0 ENT_PAP_ctr
+          0 ENT_AP_STACK_ctr
+          0 ENT_BH_ctr
+          0 ENT_STATIC_THK_SINGLE_ctr
+          2 ENT_STATIC_THK_MANY_ctr
+          0 ENT_DYN_THK_SINGLE_ctr
+         99 ENT_DYN_THK_MANY_ctr
+          0 UPD_CAF_BH_UPDATABLE_ctr
+          2 UPD_CAF_BH_SINGLE_ENTRY_ctr
+          0 SLOW_CALL_fast_v16_ctr
+          0 SLOW_CALL_fast_v_ctr
+          0 SLOW_CALL_fast_f_ctr
+          0 SLOW_CALL_fast_d_ctr
+          0 SLOW_CALL_fast_l_ctr
+          0 SLOW_CALL_fast_n_ctr
+         69 SLOW_CALL_fast_p_ctr
+         49 SLOW_CALL_fast_pv_ctr
+         58 SLOW_CALL_fast_pp_ctr
+         46 SLOW_CALL_fast_ppv_ctr
+          1 SLOW_CALL_fast_ppp_ctr
+          1 SLOW_CALL_fast_pppv_ctr
+          0 SLOW_CALL_fast_pppp_ctr
+          0 SLOW_CALL_fast_ppppp_ctr
+          0 SLOW_CALL_fast_pppppp_ctr
+          0 VERY_SLOW_CALL_ctr
+        139 UNKNOWN_CALL_ctr
+        291 KNOWN_CALL_ctr
+          0 KNOWN_CALL_TOO_FEW_ARGS_ctr
+         85 KNOWN_CALL_EXTRA_ARGS_ctr
+          0 MULTI_CHUNK_SLOW_CALL_ctr
+          0 MULTI_CHUNK_SLOW_CALL_CHUNKS_ctr
+          0 SLOW_CALL_ctr
+          0 SLOW_CALL_FUN_TOO_FEW_ctr
+          0 SLOW_CALL_FUN_CORRECT_ctr
+          0 SLOW_CALL_FUN_TOO_MANY_ctr
+          0 SLOW_CALL_PAP_TOO_FEW_ctr
+          0 SLOW_CALL_PAP_CORRECT_ctr
+          0 SLOW_CALL_PAP_TOO_MANY_ctr
+          0 SLOW_CALL_UNEVALD_ctr
+         18 RET_NEW_ctr
+          3 RET_OLD_ctr
+         53 RET_UNBOXED_TUP_ctr
+          1 RET_NEW_hst_0
+          2 RET_NEW_hst_1
+          9 RET_NEW_hst_2
+          2 RET_NEW_hst_3
+          2 RET_NEW_hst_4
+          0 RET_NEW_hst_5
+          0 RET_NEW_hst_6
+          0 RET_NEW_hst_7
+          2 RET_NEW_hst_8
+          0 RET_OLD_hst_0
+          0 RET_OLD_hst_1
+          3 RET_OLD_hst_2
+          0 RET_OLD_hst_3
+          0 RET_OLD_hst_4
+          0 RET_OLD_hst_5
+          0 RET_OLD_hst_6
+          0 RET_OLD_hst_7
+          0 RET_OLD_hst_8
+          0 RET_UNBOXED_TUP_hst_0
+         53 RET_UNBOXED_TUP_hst_1
+          0 RET_UNBOXED_TUP_hst_2
+          0 RET_UNBOXED_TUP_hst_3
+          0 RET_UNBOXED_TUP_hst_4
+          0 RET_UNBOXED_TUP_hst_5
+          0 RET_UNBOXED_TUP_hst_6
+          0 RET_UNBOXED_TUP_hst_7
+          0 RET_UNBOXED_TUP_hst_8
+          0 UPDF_OMITTED_ctr
+         99 UPDF_PUSHED_ctr
+          0 CATCHF_PUSHED_ctr
+          0 UPDF_RCC_PUSHED_ctr
+          0 UPDF_RCC_OMITTED_ctr
+          0 UPD_SQUEEZED_ctr
+          0 UPD_CON_IN_NEW_ctr
+          0 UPD_CON_IN_PLACE_ctr
+          0 UPD_PAP_IN_NEW_ctr
+          0 UPD_PAP_IN_PLACE_ctr
+          0 UPD_NEW_IND_ctr
+          0 U!PD_NEW_PERM_IND_ctr requires +RTS -Z
+          0 UPD_OLD_IND_ctr
+          0 U!PD_OLD_PERM_IND_ctr requires +RTS -Z
+          0 GC_SEL_ABANDONED_ctr
+          0 GC_SEL_MINOR_ctr
+          0 GC_SEL_MAJOR_ctr
+          0 GC_FAILED_PROMOTION_ctr

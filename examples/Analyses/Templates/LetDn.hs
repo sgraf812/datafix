@@ -83,6 +83,7 @@ buildDenotation
   -> CoreExpr
   -> Denotation domain domain
 buildDenotation = buildDenotation'
+{-# INLINE buildDenotation #-}
 
 -- This brings in the scope the existentially quantified 'MonadDatafix'. Too
 -- bad that we have no big lambda so that this is necessary.
@@ -162,4 +163,4 @@ buildDenotation' alg' = buildExpr emptyVarEnv
                 transferRHS <- buildExpr env' rhs
                 pure ((env'', (id_, self):transferredBind), transferRHS)
     {-# INLINE datafixBindingGroup #-}
-{-# INLINE buildDenotation #-}
+{-# INLINE buildDenotation' #-}

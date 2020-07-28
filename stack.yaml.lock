@@ -5,19 +5,26 @@
 
 packages:
 - completed:
-    hackage: cabal-toolkit-0.0.5@sha256:ca30f5f97ce0728fbc8ab2ffa8487d2bcc1077ecd451ff7f2fd10630cddf487c,1508
+    hackage: cabal-toolkit-0.0.7@sha256:a694f07178b60769c5b1e54c3a95b9032130ad0315fa92e8d5970e31a60bd580,1502
     pantry-tree:
       size: 332
-      sha256: 8ab99ba00f14c585075c9e441b5062b3b196161cbcb4d60fb3c8c216a8f0ae65
+      sha256: 90e428bba039ed65843eb1eda2b321660dcefce21f71b531dda32d008c27ed73
   original:
-    hackage: cabal-toolkit-0.0.5
+    hackage: cabal-toolkit-0.0.7
 - completed:
-    hackage: pomaps-0.0.2.1@sha256:65100d17267e83d006a538f071fc7c8707806c5ee62270dfcf2799de5a193a6c,3189
+    hackage: cabal-doctest-1.0.8@sha256:34dff6369d417df2699af4e15f06bc181d495eca9c51efde173deae2053c197c,1491
     pantry-tree:
-      size: 1107
-      sha256: 6bade3c11a14cf52b94f9368bbca080a573810bc2ed298f526d906788a53adec
+      size: 334
+      sha256: 1632476e4cdd37f323f81b2df0d06efe542ca3b02ab0097e1cd95d12c0fc2003
   original:
-    hackage: pomaps-0.0.2.1
+    hackage: cabal-doctest-1.0.8
+- completed:
+    hackage: pomaps-0.2.0.0@sha256:bbb22b1faf793598d8bf7b10c558b41f9153738eef24ef8fcb293ce6f10c7db8,2925
+    pantry-tree:
+      size: 1036
+      sha256: 656ed0e8e0ed8511dc3892f2d3ed2d974ad0947654b5c32c8734f36b4d49ba12
+  original:
+    hackage: pomaps-0.2.0.0
 snapshots:
 - completed:
     size: 500539

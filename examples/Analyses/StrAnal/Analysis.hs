@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeApplications    #-}
 -- This is so that the specialisation of transferFunctionAlg gets inlined.
 {-# OPTIONS_GHC -funfolding-creation-threshold=999999 #-}
---{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all #-}
+-- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dno-suppress-idinfo #-}
 
 -- | This module defines a strictness analysis in the style of GHC's
 -- projection-based backwards analysis by defining a 'transferFunctionAlg'
