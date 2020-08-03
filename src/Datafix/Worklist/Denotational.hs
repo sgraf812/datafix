@@ -54,6 +54,7 @@ evalDenotation plan ib =
     where
       impl :: Products (ParamTypes func) -> ReturnType func
       impl args = solveProblem prob (Dense max_) ib (uncurriedDenot args)
+      {-# INLINE impl #-}
       uncurriedDenot = uncurrys @(ParamTypes func) denot \\ lfInst @func @(DependencyM DenseGraph.Ref domain)
       (denot, max_, prob) = buildFramework plan
 {-# INLINE evalDenotation #-}

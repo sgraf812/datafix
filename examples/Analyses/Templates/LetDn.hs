@@ -4,6 +4,7 @@
 {-# LANGUAGE RankNTypes            #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE BangPatterns          #-}
 {-# OPTIONS_GHC -fexpose-all-unfoldings #-}
 
 -- | This module provides a template for backward analyses in the style of
@@ -102,7 +103,7 @@ buildDenotation' alg' = buildExpr emptyVarEnv
       :: VarEnv (TF (DepM m))
       -> CoreExpr
       -> m (TF (DepM m))
-    buildExpr env expr =
+    buildExpr !env expr =
       case expr of
         Lit lit -> pure (alg env (LitF lit))
         Var id_ -> pure (alg env (VarF id_))
@@ -153,7 +154,7 @@ buildDenotation' alg' = buildExpr emptyVarEnv
 
     datafixBindingGroup = mapBinders impl
       where
-        impl env binders =
+        impl !env binders =
           case binders of
             [] -> pure (env, [])
             ((id_, rhs):binders') ->

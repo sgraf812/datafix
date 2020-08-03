@@ -1,4 +1,6 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MagicHash                  #-}
+{-# LANGUAGE UnboxedTuples              #-}
 
 -- |
 -- Module      :  Datafix.NodeAllocator
@@ -25,7 +27,8 @@ import           Data.Primitive.Array
 import           Datafix.Explicit
 import           Datafix.Utils.GrowableVector     (GrowableVector)
 import qualified Datafix.Utils.GrowableVector     as GV
-import           System.IO.Unsafe                 (unsafePerformIO)
+import           GHC.Exts
+import           GHC.IO
 
 -- | A state monad wrapping a mapping from 'Node' to some 'v'
 -- which we will instantiate to appropriate 'LiftedFunc's.
@@ -52,9 +55,11 @@ allocateNode f = NodeAllocator $ do
 
 -- | Runs the allocator, beginning with an empty mapping.
 runAllocator :: NodeAllocator v a -> (a, Array v)
-runAllocator (NodeAllocator alloc) = unsafePerformIO $ do
+runAllocator (NodeAllocator alloc) = reallyUnsafePerformIO $ do
   vec <- GV.new 8
   (a, vec') <- runStateT alloc vec
   vec'' <- GV.freeze vec'
   return (a, vec'')
+  where
+    reallyUnsafePerformIO (IO m) = case m realWorld# of (# _, a #) -> a
 {-# INLINE runAllocator #-}

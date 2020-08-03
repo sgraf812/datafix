@@ -248,15 +248,18 @@ withCall
   -> Products (ParamTypes domain)
   -> ReaderT (Env graph domain) IO a
   -> ReaderT (Env graph domain) IO a
-withCall node args r = ReaderT $ \env -> do
-  !refs <- readIORef (referencedPoints env)
-  writeIORef (referencedPoints env) IntArgsMonoSet.empty
-  !oldStack <- readIORef (callStack env)
-  writeIORef (callStack env) $! IntArgsMonoSet.insert node args oldStack
-  !ret <- runReaderT r env
-  writeIORef (callStack env) oldStack
-  writeIORef (referencedPoints env) refs
-  return ret
+withCall node args r = ReaderT $ \env ->
+  -- Another manual SAT
+  let impl = do
+        !refs <- readIORef (referencedPoints env)
+        writeIORef (referencedPoints env) IntArgsMonoSet.empty
+        !oldStack <- readIORef (callStack env)
+        writeIORef (callStack env) $! IntArgsMonoSet.insert node args oldStack
+        !ret <- runReaderT r env
+        writeIORef (callStack env) oldStack
+        writeIORef (referencedPoints env) refs
+        return ret
+  in impl
 {-# INLINE withCall #-}
 
 -- | The first of the two major functions of this module.
@@ -278,53 +281,55 @@ recompute
   => GraphRef graph
   => Datafixable domain
   => Int -> Products dom -> ReaderT (Env graph domain) IO cod
-recompute node args = withCall node args $ do
-  prob <- asks problem
-  let node' = Node node
-  let DM iterate' = uncurrys @dom @(depm cod) (dffTransfer prob node') args
-                  \\ lfInst @domain @depm
-  let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dffDetectChange prob node') args
-                    \\ cdInst @domain
-  -- We need to access the graph at three different points in time:
-  --
-  --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
-  --    2. directly after the call to 'iterate', to get the 'oldInfo'
-  --    3. And again to actually write the 'newInfo'
-  --
-  -- The last two can be merged, whereas it's crucial that 'oldInfo'
-  -- is captured *after* the call to 'iterate', otherwise we might
-  -- not pick up all 'referrers'.
-  -- If abortion is required, 'maybeAbortedVal' will not be 'Nothing'.
-  maybeAbortedVal <- runMaybeT $ do
-    AbortAfter n abort <- lift (asks iterationBound)
-    Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
-    guard (iterations preInfo >= n)
-    Just oldVal <- return (value preInfo)
-    return (uncurrys @dom @(cod -> cod) abort args oldVal \\ afInst @domain)
-  -- For the 'Nothing' case, we proceed by iterating the transfer function.
-  newVal <- maybe iterate' return maybeAbortedVal
-  -- When abortion is required, 'iterate'' is not called and
-  -- 'refs' will be empty, thus the node will never be marked unstable again.
-  refs <- asks referencedPoints >>= lift . readIORef
-  oldInfo <- withReaderT graph (Graph.updatePoint node args newVal refs)
-  deleteUnstable node args
-  case value oldInfo of
-    Just oldVal | not (detectChange' oldVal newVal) ->
-      return ()
-    _ -> do
-      !_ <- ask
-      forM_ (IntArgsMonoSet.toList (referrers oldInfo)) $
-        uncurry enqueueUnstable
-      when (IntArgsMonoSet.member node args refs) $
-        -- This is a little unfortunate: The 'oldInfo' will
-        -- not have listed the current node itself as a refererrer
-        -- in case of a loop, so we have to check for
-        -- that case manually in the new 'references' set.
-        -- The info stored in the graph has the right 'referrers'
-        -- set, though.
-        enqueueUnstable node args
-  return newVal
-{-# INLINABLE recompute #-}
+recompute node args = withCall node args $ ReaderT $ \env ->
+  let impl = flip runReaderT env $ do
+        prob <- asks problem
+        let node' = Node node
+        let DM iterate' = uncurrys @dom @(depm cod) (dffTransfer prob node') args
+                        \\ lfInst @domain @depm
+        let detectChange' = uncurrys @dom @(cod -> cod -> Bool) (dffDetectChange prob node') args
+                          \\ cdInst @domain
+        -- We need to access the graph at three different points in time:
+        --
+        --    1. before the call to 'iterate', to access 'iterations', but only if abortion is required
+        --    2. directly after the call to 'iterate', to get the 'oldInfo'
+        --    3. And again to actually write the 'newInfo'
+        --
+        -- The last two can be merged, whereas it's crucial that 'oldInfo'
+        -- is captured *after* the call to 'iterate', otherwise we might
+        -- not pick up all 'referrers'.
+        -- If abortion is required, 'maybeAbortedVal' will not be 'Nothing'.
+        maybeAbortedVal <- runMaybeT $ do
+          AbortAfter n abort <- lift (asks iterationBound)
+          Just preInfo <- lift (withReaderT graph (Graph.lookup node args))
+          guard (iterations preInfo >= n)
+          Just oldVal <- return (value preInfo)
+          return (uncurrys @dom @(cod -> cod) abort args oldVal \\ afInst @domain)
+        -- For the 'Nothing' case, we proceed by iterating the transfer function.
+        newVal <- maybe iterate' return maybeAbortedVal
+        -- When abortion is required, 'iterate'' is not called and
+        -- 'refs' will be empty, thus the node will never be marked unstable again.
+        refs <- asks referencedPoints >>= lift . readIORef
+        oldInfo <- withReaderT graph (Graph.updatePoint node args newVal refs)
+        deleteUnstable node args
+        case value oldInfo of
+          Just oldVal | not (detectChange' oldVal newVal) ->
+            return ()
+          _ -> do
+            !_ <- ask
+            forM_ (IntArgsMonoSet.toList (referrers oldInfo)) $
+              uncurry enqueueUnstable
+            when (IntArgsMonoSet.member node args refs) $
+              -- This is a little unfortunate: The 'oldInfo' will
+              -- not have listed the current node itself as a refererrer
+              -- in case of a loop, so we have to check for
+              -- that case manually in the new 'references' set.
+              -- The info stored in the graph has the right 'referrers'
+              -- set, though.
+              enqueueUnstable node args
+        return newVal
+  in impl
+{-# INLINE recompute #-}
 
 dependOn
   :: forall domain graph depm
@@ -427,13 +432,18 @@ scheme2 maybeVal node args =
 -- body will be called and passed the value contained in the 'Just'.  Results
 -- are discarded.
 --
--- Taken from 'Control.Monad.Loops.whileJust_'.
-whileJust_ :: Monad m => m (Maybe a) -> (a -> m b) -> m ()
-whileJust_ cond action = go
-  where
-    go = cond >>= \case
-      Nothing -> return ()
-      Just a  -> action a >> go
+-- Taken from 'Control.Monad.Loops.whileJust_' and specialised to ReaderT with
+-- some manual SAT.
+whileJust_
+  :: Monad m
+  => ReaderT env m (Maybe a)
+  -> (a -> ReaderT env m b)
+  -> ReaderT env m ()
+whileJust_ cond action = ReaderT $ \env ->
+  let go = runReaderT cond env >>= \case
+        Nothing -> return ()
+        Just a  -> runReaderT (action a) env >> go
+  in go
 {-# INLINE whileJust_ #-}
 
 -- | Defined as 'work = whileJust_ highestPriorityUnstableNode (uncurry recompute)'.
@@ -501,3 +511,6 @@ solveProblem prob density ib (DM act) = unsafePerformIO $ do
 {-# INLINE solveProblem #-}
 
 -- Problem: We need to specialise act and work on env, the DFF prob n particular.
+-- act won't be inlined, because the runRW# from buildFramework inhibits that we
+-- see how act is actually defined. Still, specialising work for env is probably
+-- even more important!
