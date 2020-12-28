@@ -11,6 +11,7 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE PatternSynonyms            #-}
 -- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dno-suppress-idinfo #-}
 
 -- |
@@ -32,6 +33,7 @@ import           Control.Monad.Trans.Reader
 import           Control.Monad.Trans.State.Strict
 import           Data.IORef
 import           Data.Maybe                       (listToMaybe, mapMaybe)
+import           GHC.Exts                         (oneShot)
 import           Datafix.Common
 import           Datafix.Entailments
 import           Datafix.Explicit                 hiding (dependOn)
@@ -54,7 +56,7 @@ import           System.IO.Unsafe                 (unsafePerformIO)
 -- 'DataFlowFramework' as mutable state while 'solveProblem' makes sure we will eventually
 -- halt with a conservative approximation.
 newtype DependencyM graph domain a
-  = DM (ReaderT (Env graph domain) IO a)
+  = DM' { unDM :: ReaderT (Env graph domain) IO a }
   -- ^ Why does this use 'IO'? Actually, we only need 'ST' here, but that
   -- means we have to carry around the state thread in type signatures.
   --
@@ -71,9 +73,28 @@ newtype DependencyM graph domain a
   -- suite.
   --
   -- So, bottom line: We resort to 'IO' and 'unsafePerformIO' and promise not to
-  -- launch missiles. In particular, we don't export 'DM' and also there
+  -- launch missiles. In particular, we don't export 'DM'' and also there
   -- must never be an instance of 'MonadIO' for this.
-  deriving (Functor, Applicative, Monad)
+  --
+  -- There's another trick: We use \"The one-shot state monad trick\", per
+  -- @Note [The one-shot state monad trick]@ in GHC. That makes sure that the
+  -- reader environment is always eta-expanded, which is pretty crucial for
+  -- performance. We achieve that with the pattern synonym 'DM' below.
+
+pattern DM :: ReaderT (Env graph domain) IO a -> DependencyM graph domain a
+pattern DM act <- DM' act where
+  DM (ReaderT act) = DM' (ReaderT (oneShot act))
+{-# COMPLETE DM #-}
+
+instance Functor (DependencyM graph domain) where
+  fmap f (DM act) = DM (fmap f act)
+
+instance Applicative (DependencyM graph domain) where
+  pure a = DM (pure a)
+  DM f <*> DM a = DM (f <*> a)
+
+instance Monad (DependencyM graph domain) where
+  DM a >>= k = DM (a >>= unDM . k)
 
 -- | The iteration state of 'DependencyM'/'solveProblem'.
 data Env graph domain
