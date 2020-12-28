@@ -1,10 +1,11 @@
 module Analyses.AdHocStrAnal (analyse) where
 
-import           Algebra.Lattice
+import           Datafix.SemiLattice
 import           Analyses.StrAnal.Arity
 import           Analyses.StrAnal.Strictness
 
 import           CoreSyn
+import           CoreArity
 import           Id
 import           Var
 import           VarEnv
@@ -16,7 +17,9 @@ applyWhen :: Bool -> (a -> a) -> a -> a
 applyWhen True f  = f
 applyWhen False _ = id
 
-analExpr :: VarEnv StrType -> CoreExpr -> Arity -> StrLattice
+type SigEnv = VarEnv (Arity, StrType)
+
+analExpr :: SigEnv -> CoreExpr -> Arity -> StrLattice
 analExpr env expr arity =
   case expr of
     Lit _       -> emptyStrLattice
@@ -29,7 +32,7 @@ analExpr env expr arity =
     Cast e _ -> analExpr env e arity
     App f a ->
       let
-        StrLattice (fTy, fAnns) = analExpr env f (arity + 1)
+        StrLattice fTy fAnns = analExpr env f (arity + 1)
         (argStr, fTy') = overArgs unconsArgStr fTy
         argArity =
           case argStr of
@@ -38,17 +41,16 @@ analExpr env expr arity =
             HyperStrict -> Arity maxBound
             Lazy        -> 0
             Strict n    -> n
-        StrLattice (aTy, aAnns) = analExpr env a argArity
+        StrLattice aTy aAnns = analExpr env a argArity
       in mkStrLattice (aTy `bothStrType` fTy') (fAnns \/ aAnns)
     Var id_
       | isLocalId id_ ->
           let
             rhsType = case lookupVarEnv env id_ of
-              Just ty
-                -- 'ty' is a safe approximation for a call with 'idArity' at
-                -- minimum.
+              Just (sig_arity, ty)
+                -- 'ty' is a safe approximation for a call with at least sig_arity.
                 -- Note that 'Arity' is 'Op' ordered.
-                | arity <= Arity (idArity id_) -> ty
+                | arity <= sig_arity -> ty
               _ -> emptyStrType
           in mkStrLattice (unitStrType id_ (Strict arity) `bothStrType` rhsType) emptyAnnotations
       | otherwise -> emptyStrLattice
@@ -56,7 +58,7 @@ analExpr env expr arity =
       | isTyVar id_ -> analExpr env body arity
       | otherwise ->
           let
-            StrLattice (ty1, anns) = analExpr env body (0 /\ (arity-1))
+            StrLattice ty1 anns = analExpr env body (0 /\ (arity-1))
             (argStr, ty2) = peelFV id_ ty1
             anns' = annotate id_ argStr anns
             ty3 = modifyArgs (consArgStr argStr) ty2
@@ -66,31 +68,32 @@ analExpr env expr arity =
       let
         transferAlt (_, bndrs, alt) =
           peelAndAnnotateFVs bndrs (analExpr env alt arity)
-        StrLattice (altTy, altAnns) =
+        StrLattice altTy altAnns =
           peelAndAnnotateFV bndr . joins . map transferAlt $ alts
-        StrLattice (scrutTy, scrutAnns) = analExpr env scrut 0
+        StrLattice scrutTy scrutAnns = analExpr env scrut 0
       in mkStrLattice (scrutTy `bothStrType` altTy) (scrutAnns \/ altAnns)
     Let bind body ->
       let
-        -- we assume a single call with `idArity` for our approximation
+        -- we assume a single call with manifest arity for our approximation
         (rhsAnns, env') = case bind of
           NonRec id_ rhs
-            | StrLattice (ty, anns) <- analExpr env rhs (Arity (idArity id_))
-            -> (anns, extendVarEnv env id_ ty)
+            | let sig_arity = Arity $ manifestArity rhs
+            , StrLattice ty anns <- analExpr env rhs arity
+            -> (anns, extendVarEnv env id_ (sig_arity, ty))
           Rec binds  -> fixBinds env binds
         bodyLatt = analExpr env' body arity
-        StrLattice (bodyTy, bodyAnns) = peelAndAnnotateFVs (bindersOf bind) bodyLatt
+        StrLattice bodyTy bodyAnns = peelAndAnnotateFVs (bindersOf bind) bodyLatt
       in mkStrLattice bodyTy (bodyAnns \/ rhsAnns)
 
-fixBinds :: VarEnv StrType -> [(Id, CoreExpr)] -> (Annotations, VarEnv StrType)
+fixBinds :: SigEnv -> [(Id, CoreExpr)] -> (Annotations, SigEnv)
 fixBinds env binds = mergeWithLatts stableLatts
   where
-    mergeWithLatts :: [StrLattice] -> (Annotations, VarEnv StrType)
+    mergeWithLatts :: [StrLattice] -> (Annotations, SigEnv)
     mergeWithLatts latts = foldr merger (emptyAnnotations, env) (zip binds latts)
 
-    merger :: ((Id, CoreExpr), StrLattice) -> (Annotations, VarEnv StrType) -> (Annotations, VarEnv StrType)
-    merger ((id_, _), StrLattice (ty, anns)) (restAnns, env') =
-      (restAnns \/ anns, extendVarEnv env' id_ ty)
+    merger :: ((Id, CoreExpr), StrLattice) -> (Annotations, SigEnv) -> (Annotations, SigEnv)
+    merger ((id_, rhs), StrLattice ty anns) (restAnns, env') =
+      (restAnns \/ anns, extendVarEnv env' id_ (Arity $ manifestArity rhs, ty))
 
     latts0 :: [StrLattice]
     latts0 = map (const bottom) binds
@@ -99,7 +102,7 @@ fixBinds env binds = mergeWithLatts stableLatts
     approximations = iterate (iter . snd . mergeWithLatts) latts0
 
     stable :: ([StrLattice], [StrLattice]) -> Bool
-    stable (old, new) = map strType old == map strType new
+    stable (old, new) = map strTy old == map strTy new
 
     stableLatts :: [StrLattice]
     stableLatts = snd . head . filter stable $ zip approximations (tail approximations)
@@ -108,6 +111,7 @@ fixBinds env binds = mergeWithLatts stableLatts
 
     iterBind (id_, rhs) (env', latts) =
       let
-        latt = analExpr env' rhs (Arity (idArity id_))
-        env'' = extendVarEnv env' id_ (strType latt)
+        arity = Arity $ manifestArity rhs
+        latt = analExpr env' rhs arity
+        env'' = extendVarEnv env' id_ (arity, strTy latt)
       in (env'', latt:latts)

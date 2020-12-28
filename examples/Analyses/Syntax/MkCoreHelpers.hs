@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Analyses.Syntax.MkCoreHelpers where
 
 import           CoreSyn
@@ -8,6 +9,11 @@ import           MkCore
 import           Type
 import           TysWiredIn
 import           Unique
+
+#if MIN_VERSION_ghc(8,10,0)
+mkFunTys :: [Type] -> Type -> Type
+mkFunTys = mkVisFunTys
+#endif
 
 mkTestId :: Int -> String -> Type -> Id
 mkTestId i s = mkSysLocal (mkFastString s) (mkBuiltinUnique i)

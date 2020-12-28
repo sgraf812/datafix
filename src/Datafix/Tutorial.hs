@@ -36,7 +36,7 @@
 -- >>> :set -XTypeFamilies
 -- >>> import Datafix
 -- >>> import Data.Proxy (Proxy (..))
--- >>> import Algebra.Lattice (JoinSemiLattice (..), BoundedJoinSemiLattice (..))
+-- >>> import Datafix.SemiLattice (JoinSemiLattice (..), BoundedJoinSemiLattice (..))
 -- >>> import Numeric.Natural
 --
 -- = Use Case: Solving Recurrences

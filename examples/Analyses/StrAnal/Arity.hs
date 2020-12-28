@@ -3,7 +3,6 @@
 
 module Analyses.StrAnal.Arity where
 
-import           Algebra.Lattice
 import           Algebra.PartialOrd
 import           Data.IntMap.Strict (IntMap)
 import qualified Data.IntMap.Strict as IntMap
@@ -12,6 +11,7 @@ import           Data.Ord           (Down (..))
 import           GHC.Exts           (coerce)
 
 import           Datafix.MonoMap
+import           Datafix.SemiLattice
 
 -- | Arity is totally ordered, but with the order turned
 -- upside down. E.g., 'Arity 0' is the figurative 'top'

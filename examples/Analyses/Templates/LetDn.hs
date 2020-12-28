@@ -30,7 +30,9 @@ import           Data.Proxy               (Proxy (..))
 import           Analyses.Syntax.CoreSynF
 import           Datafix
 
+import           CoreArity
 import           CoreSyn
+import           Id
 import           VarEnv
 
 -- | A 'TransferAlgebra' for a given @lattice@ interprets a single layer of
@@ -127,7 +129,7 @@ buildDenotation' alg' = buildExpr emptyVarEnv
           transferAlts <- mapM (buildAlt env) alts
           pure (alg env (CaseF transferScrut bndr ty transferAlts))
         Let bind body -> do
-          (env', transferredBind) <- datafixBindingGroup env bind
+          (env', transferredBind) <- datafixBindingGroup env (setManifestArity bind)
           transferBody <- buildExpr env' body
           -- Note that we pass the old env to 'alg'.
           -- 'alg' should use 'transferredBind' for
@@ -165,3 +167,11 @@ buildDenotation' alg' = buildExpr emptyVarEnv
                 pure ((env'', (id_, self):transferredBind), transferRHS)
     {-# INLINE datafixBindingGroup #-}
 {-# INLINE buildDenotation' #-}
+
+-- | This annotates the binders' 'idArity' with the manifest arity of the RHS.
+-- It's how we communicate arity information to strictness analysis.
+setManifestArity :: CoreBind -> CoreBind
+setManifestArity (NonRec id_ rhs) =
+  NonRec (id_ `setIdArity` manifestArity rhs) rhs
+setManifestArity (Rec pairs) =
+  Rec $ map (\(id_,rhs)->(id_ `setIdArity` manifestArity rhs, rhs)) pairs

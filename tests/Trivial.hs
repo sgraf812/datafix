@@ -5,7 +5,7 @@
 
 module Trivial (tests) where
 
-import           Algebra.Lattice
+import           Datafix.SemiLattice
 import           Datafix
 import           Datafix.Worklist.Graph (GraphRef)
 import           Numeric.Natural

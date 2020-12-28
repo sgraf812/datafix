@@ -14,8 +14,9 @@ import           CoreTidy                       (tidyExpr)
 import           Id
 import           VarEnv                         (emptyTidyEnv)
 
+_vars :: [Id]
 x, x1, x2, y, z, b, b1, b2, f, g :: Id
-[x, x1, x2, y, z, b, b1, b2, f, g] = mkTestIds
+_vars@[x, x1, x2, y, z, b, b1, b2, f, g] = mkTestIds
   [ ("x", int)
   , ("x1", int)
   , ("x2", int)
@@ -46,7 +47,7 @@ example1 =
     (var f $$ boolLit False $$ intLit 1)
 
 anns1 :: Annotations
-anns1 = annotations (StrAnal.analyse example1)
+anns1 = strAnns (StrAnal.analyse example1)
 
 -- | @
 -- let f b =
@@ -66,7 +67,7 @@ example2 =
 
 ty2 :: StrType
 anns2 :: Annotations
-StrLattice (ty2, anns2) = StrAnal.analyse example2
+StrLattice ty2 anns2 = StrAnal.analyse example2
 
 -- | @
 -- let f b =
@@ -86,7 +87,7 @@ example3 =
 
 ty3 :: StrType
 anns3 :: Annotations
-StrLattice (ty3, anns3) = StrAnal.analyse example3
+StrLattice ty3 anns3 = StrAnal.analyse example3
 
 -- | @
 -- let f b =
@@ -105,7 +106,7 @@ example4 =
     (var f $$ boolLit False $$ intLit 1)
 
 ty4 :: StrType
-StrLattice (ty4, _) = StrAnal.analyse example4
+StrLattice ty4 _ = StrAnal.analyse example4
 
 -- | @
 -- let f b =
@@ -124,7 +125,7 @@ example5 =
     (var f $$ boolLit False $$ intLit 1)
 
 ty5 :: StrType
-StrLattice (ty5, _) = StrAnal.analyse example5
+StrLattice ty5 _ = StrAnal.analyse example5
 
 
 -- | @
@@ -144,7 +145,7 @@ example6 =
     (var f $$ boolLit False $$ intLit 1)
 
 anns6 :: Annotations
-StrLattice (_, anns6) = StrAnal.analyse example6
+StrLattice _ anns6 = StrAnal.analyse example6
 
 
 -- | @
@@ -242,6 +243,7 @@ tests =
       coincidesWithAdHoc desc e =
         testGroup desc
           [ testCase "coincides with AdHocStrAnal" $
+              -- print $ map idUnique _vars
               StrAnal.analyse e @?= AdHocStrAnal.analyse e
           ]
       coincidesWithAdHocOnFile file =
@@ -250,4 +252,3 @@ tests =
               e <- compileCoreExpr file
               StrAnal.analyse e @?= AdHocStrAnal.analyse e
           ]
-

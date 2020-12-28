@@ -6,10 +6,8 @@
 
 module Analyses.StrAnal.Strictness where
 
-import           Algebra.Lattice
-import           Data.IntMap.Strict     (IntMap)
+import           Datafix.SemiLattice
 import           Data.Maybe             (fromMaybe)
-import           Unsafe.Coerce          (unsafeCoerce)
 
 import           Analyses.StrAnal.Arity
 
@@ -19,10 +17,7 @@ import           UniqFM
 import           VarEnv
 
 instance Show v => Show (UniqFM v) where
-  -- I'd rather use coerce or the UFM constructor, but
-  -- that isn't exported.
-  show env = show (unsafeCoerce env :: IntMap v)
-
+  show = show . nonDetUFMToList
 
 -- | Captures lower bounds on evaluation cardinality of some variable.
 -- E.g.: Is this variable evaluated at least once, and if so, what is the
@@ -94,7 +89,11 @@ defaultStr Diverges = HyperStrict
 -- expression.
 data StrEnv
   = StrEnv !(VarEnv Strictness) !Termination
-  deriving (Eq, Show)
+  deriving Eq
+
+instance Show StrEnv where
+  show (StrEnv env Dunno)    = show env
+  show (StrEnv env Diverges) = show env ++ "b"
 
 instance JoinSemiLattice StrEnv where
   (StrEnv a t1) \/ (StrEnv b t2) =
@@ -258,24 +257,26 @@ annotate id_ str (Ann anns) = Ann (extendVarEnv_C overwriteError anns id_ str)
 lookupAnnotation :: Id -> Annotations -> Maybe Strictness
 lookupAnnotation id_ (Ann env) = lookupVarEnv env id_
 
-newtype StrLattice
-  = StrLattice (StrType, Annotations)
-  deriving (Eq, Show, JoinSemiLattice, BoundedJoinSemiLattice)
+data StrLattice
+  = StrLattice
+  { strTy :: !StrType
+  , strAnns :: !Annotations
+  } deriving (Eq, Show)
+
+instance JoinSemiLattice StrLattice where
+  StrLattice ty1 anns1 \/ StrLattice ty2 anns2 = StrLattice (ty1 \/ ty2) (anns1 \/ anns2)
+
+instance BoundedJoinSemiLattice StrLattice where
+  bottom = StrLattice bottom bottom
 
 mkStrLattice :: StrType -> Annotations -> StrLattice
-mkStrLattice ty ann = StrLattice (ty, ann)
+mkStrLattice ty ann = StrLattice ty ann
 
 emptyStrLattice :: StrLattice
 emptyStrLattice = mkStrLattice emptyStrType emptyAnnotations
 
-strType :: StrLattice -> StrType
-strType (StrLattice (ty, _)) = ty
-
-annotations :: StrLattice -> Annotations
-annotations (StrLattice (_, anns)) = anns
-
 peelAndAnnotateFV :: Id -> StrLattice -> StrLattice
-peelAndAnnotateFV id_ (StrLattice (ty, anns)) =
+peelAndAnnotateFV id_ (StrLattice ty anns) =
   let (str, ty') = peelFV id_ ty
       anns' = annotate id_ str anns
   in mkStrLattice ty' anns'

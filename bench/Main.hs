@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeApplications #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-import           Algebra.Lattice
+import           Datafix.SemiLattice
 import           Control.DeepSeq
 import           Criterion
 import           Criterion.Main
@@ -69,7 +69,7 @@ main = defaultMain
 
 
 seqStrLattice :: StrLattice -> ()
-seqStrLattice l = strType l `seq` annotations l `seq` ()
+seqStrLattice l = strTy l `seq` strAnns l `seq` ()
 
 x, x1, x2, z, b, b1, b2, f, g :: Id
 [x, x1, x2, z, b, b1, b2, f, g] = mkTestIds

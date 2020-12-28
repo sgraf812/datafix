@@ -25,7 +25,6 @@
 
 module Datafix.Worklist.Internal where
 
-import           Algebra.Lattice
 import           Control.Monad                    (forM_, guard, when)
 import           Control.Monad.Trans.Class
 import           Control.Monad.Trans.Maybe
@@ -40,6 +39,7 @@ import qualified Datafix.Explicit
 import           Datafix.IntArgsMonoSet           (IntArgsMonoSet)
 import qualified Datafix.IntArgsMonoSet           as IntArgsMonoSet
 import           Datafix.MonoMap                  (MonoMapKey)
+import           Datafix.SemiLattice
 import           Datafix.Utils.Constraints
 import           Datafix.Utils.TypeLevel
 import           Datafix.Worklist.Graph           (GraphRef, PointInfo (..))

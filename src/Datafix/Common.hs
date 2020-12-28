@@ -30,7 +30,7 @@ module Datafix.Common
   , (<!)
   ) where
 
-import           Algebra.Lattice
+import           Datafix.SemiLattice
 import           Datafix.MonoMap
 import           Datafix.Utils.Constraints
 import           Datafix.Utils.TypeLevel

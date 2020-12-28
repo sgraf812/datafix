@@ -9,7 +9,7 @@ import           Analyses.Syntax.MkCoreFromFile (compileCoreExpr)
 import           Control.Exception
 
 seqStrLattice :: StrLattice -> ()
-seqStrLattice l = strType l `seq` annotations l `seq` ()
+seqStrLattice l = strTy l `seq` strAnns l `seq` ()
 
 main :: IO ()
 main = do

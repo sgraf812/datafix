@@ -6,14 +6,17 @@
 mkDerivation {
   pname = "datafix";
   version = "0.0.1.0";
-  src = ./.;
+  sha256 = "1rp3lwrqd8ghmjbqk22sb4mfhl13swm3vij28l5ygj2f3sb8x2zi";
   isLibrary = true;
   isExecutable = true;
   setupHaskellDepends = [ base Cabal cabal-doctest cabal-toolkit ];
   libraryHaskellDepends = [
     base containers lattices pomaps primitive transformers vector
   ];
-  executableHaskellDepends = [ base containers ];
+  executableHaskellDepends = [
+    base Cabal cabal-toolkit containers criterion deepseq directory
+    filepath ghc ghc-paths lattices primitive text transformers turtle
+  ];
   testHaskellDepends = [
     base Cabal cabal-toolkit containers directory doctest filepath ghc
     ghc-paths lattices primitive QuickCheck tasty tasty-hunit
