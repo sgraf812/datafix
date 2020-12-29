@@ -12,7 +12,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE PatternSynonyms            #-}
--- {-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dno-suppress-idinfo #-}
+{-# OPTIONS_GHC -ddump-simpl -ddump-to-file -dsuppress-all -dno-suppress-idinfo #-}
 
 -- |
 -- Module      :  Datafix.Worklist.Internal
