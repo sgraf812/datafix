@@ -1,0 +1,6 @@
+packages:
+  datafix/
+  datafix-tests/
+
+tests: True
+benchmarks: True

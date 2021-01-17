@@ -1,0 +1,92 @@
+cabal-version:       2.4
+name:                datafix
+version:             0.0.2.0
+synopsis:            Fixing data-flow problems
+description:         Fixing data-flow problems in expression trees.
+                     This should be useful if you want to write optimizations
+                     for your favorite programming language.
+
+                     See the Tutorial module for an introduction. After that,
+                     you might want to take a look at the `examples/` folder
+                     in the [repository](https://github.com/sgraf812/datafix/tree/master/datafix/examples).
+
+license:             ISC
+license-file:        LICENSE
+author:              Sebastian Graf
+maintainer:          sgraf1337@gmail.com
+copyright:           © 2017-2021 Sebastian Graf
+homepage:            https://github.com/sgraf812/datafix
+bug-reports:         https://github.com/sgraf812/datafix/issues
+
+category:            Compiler
+build-type:          Simple
+stability:           alpha (experimental)
+tested-with:         GHC==8.10.2, GHC==8.8.4, GHC==8.6.5, GHC==8.4.4, GHC==8.2.2
+
+extra-source-files:
+  CHANGELOG.md
+  README.md
+
+source-repository head
+  type:     git
+  location: https://github.com/sgraf812/datafix
+
+library
+  default-language:  Haskell2010
+  ghc-options:       -Wall
+  hs-source-dirs:    src
+  exposed-modules:   Datafix
+                   , Datafix.Common
+                   , Datafix.Denotational
+                   , Datafix.Explicit
+                   , Datafix.FrameworkBuilder
+                   , Datafix.Tutorial
+                   , Datafix.Worklist
+                   , Datafix.Worklist.Denotational
+                   , Datafix.Worklist.Graph
+                   , Datafix.Worklist.Graph.Dense
+                   , Datafix.Worklist.Graph.Sparse
+                   , Datafix.Worklist.Internal
+  reexported-modules: Datafix.Utils.Constraints
+                    , Datafix.Utils.MonoMap
+                    , Datafix.Utils.NodeAllocator
+                    , Datafix.Utils.SemiLattice
+                    , Datafix.Utils.TypeLevel
+  build-depends:     base >= 4.8 && < 5
+                   , containers >= 0.5 && < 0.7
+                   , transformers < 0.6
+                   -- Just Data.Vector.Mutable, which has been there for ages
+                   , vector < 0.13
+                   -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
+                   , primitive >= 0.6.2.0 && < 0.8
+                   -- Prior to 0.2, pomaps used to offer a flag to compile without
+                   -- lattices that confuses CI
+                   , pomaps >= 0.2 && < 0.3
+                   , lattices
+                   , common
+
+library common
+  default-language:  Haskell2010
+  ghc-options:       -Wall
+
+  hs-source-dirs:    common
+  exposed-modules:   Datafix.Utils.Entailments
+                     Datafix.Utils.IntArgsMonoMap
+                     Datafix.Utils.IntArgsMonoSet
+                     Datafix.Utils.MonoMap
+                     Datafix.Utils.NodeAllocator
+                     Datafix.Utils.SemiLattice
+                     Datafix.Utils.GrowableVector
+                     Datafix.Utils.Constraints
+                     Datafix.Utils.TypeLevel
+  build-depends:     base >= 4.8 && < 5
+                   , containers >= 0.5 && < 0.7
+                   , transformers < 0.6
+                   -- Just Data.Vector.Mutable, which has been there for ages
+                   , vector < 0.13
+                   -- Data.Primitive.Array.sizeofArray was introduced in 0.6.2.0
+                   , primitive >= 0.6.2.0 && < 0.8
+                   -- Prior to 0.2, pomaps used to offer a flag to compile without
+                   -- lattices that confuses CI
+                   , pomaps >= 0.2 && < 0.3
+                   , lattices

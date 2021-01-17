@@ -1,0 +1,160 @@
+name:                datafix-tests
+version:             0.0.0.1
+license:             ISC
+license-file:        LICENSE
+author:              Sebastian Graf
+maintainer:          sgraf1337@gmail.com
+
+build-type:          Custom
+-- We have autogen-modules, so we need Cabal 2.0
+cabal-version:       2.0
+tested-with:         GHC==8.10.2, GHC==8.8.4, GHC==8.6.5, GHC==8.4.4, GHC==8.2.2
+
+extra-source-files:
+  exprs/const.hs
+  exprs/findLT.hs
+  exprs/kahan.hs
+  exprs/lambda.hs
+  exprs/sieve.hs
+
+source-repository head
+  type:     git
+  location: https://github.com/sgraf812/datafix
+
+custom-setup
+  setup-depends:
+      base
+    , Cabal
+    , cabal-doctest >= 1 && < 1.1
+    , cabal-toolkit >= 0.0.7
+
+test-suite tests
+  type:              exitcode-stdio-1.0
+  default-language:  Haskell2010
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs:    tests examples
+  main-is:           Main.hs
+  other-modules:     Analyses.AdHocStrAnal
+                     Analyses.StrAnal
+                     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Arity
+                     Analyses.StrAnal.Strictness
+                     Analyses.Syntax.CoreSynF
+                     Analyses.Syntax.MkCoreHelpers
+                     Analyses.Syntax.MkCoreFromFile
+                     Analyses.Templates.LetDn
+                     SetRecurrences.FirstFollow
+                     Fib
+                     Fac
+                     Mutual
+                     Critical
+                     Trivial
+                     StrAnal
+                     FirstFollow
+  build-depends:     base >= 4.8 && < 5
+                   , Cabal
+                   , cabal-toolkit >= 0.0.4
+                   , tasty >= 0.11
+                   , tasty-hunit >= 0.9
+                   , tasty-smallcheck >= 0.8
+                   , containers
+                   , primitive
+                   , transformers < 0.6
+                   , datafix
+                   , ghc
+                   , ghc-paths
+                   , directory
+                   , filepath
+                   , turtle
+                   , text
+                   , lattices
+
+-- We currently don't run doctests as part of the automated testsuite
+-- since a Custom Setup.hs doesn't allow internal library components.
+-- Which is what we use in datafix-the-library.
+-- test-suite doctests
+--   type:              exitcode-stdio-1.0
+--   default-language:  Haskell2010
+--   ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
+--   hs-source-dirs:    tests
+--   main-is:           doctest.hs
+--   build-depends:     base >= 4.8 && < 5
+--                    , doctest >=0.10
+--                    , QuickCheck >= 2.5
+--                    , datafix
+--   other-modules:     Build_doctests
+--   autogen-modules:   Build_doctests
+
+benchmark benchmarks
+  type:              exitcode-stdio-1.0
+  default-language:  Haskell2010
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
+  hs-source-dirs:    bench examples
+  main-is:           Main.hs
+  other-modules:     Analyses.AdHocStrAnal
+                     Analyses.StrAnal
+                     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Arity
+                     Analyses.StrAnal.Strictness
+                     Analyses.Syntax.CoreSynF
+                     Analyses.Syntax.MkCoreHelpers
+                     Analyses.Syntax.MkCoreFromFile
+                     Analyses.Templates.LetDn
+                     Sum
+  build-depends:     base >= 4.8 && < 5
+                   , Cabal
+                   , cabal-toolkit >= 0.0.4
+                   , criterion >= 1.1
+                   , deepseq
+                   , containers
+                   , primitive
+                   , transformers < 0.6
+                   , datafix
+                   , ghc
+                   , ghc-paths
+                   , directory
+                   , filepath
+                   , turtle
+                   , text
+                   , lattices
+
+executable firstfollow-example
+  default-language:  Haskell2010
+  hs-source-dirs:    examples
+  main-is:           SetRecurrences/FirstFollow/Main.hs
+  ghc-options:       -Wall -threaded -rtsopts -with-rtsopts=-N
+  other-modules:     SetRecurrences.FirstFollow
+  build-depends:     base
+                   , containers
+                   , datafix
+
+executable stranal-singleshot
+  default-language:  Haskell2010
+  hs-source-dirs:    examples
+  main-is:           Analyses/StrAnal/Main.hs
+  ghc-options:       -Wall -threaded -rtsopts -ticky -with-rtsopts=-N
+  other-modules:     Analyses.AdHocStrAnal
+                     Analyses.StrAnal
+                     Analyses.StrAnal.Analysis
+                     Analyses.StrAnal.Arity
+                     Analyses.StrAnal.Strictness
+                     Analyses.Syntax.CoreSynF
+                     Analyses.Syntax.MkCoreHelpers
+                     Analyses.Syntax.MkCoreFromFile
+                     Analyses.Templates.LetDn
+  build-depends:     base >= 4.8 && < 5
+                   , Cabal
+                   , cabal-toolkit >= 0.0.4
+                   , criterion >= 1.1
+                   , deepseq
+                   , containers
+                   , primitive
+                   , transformers < 0.6
+                   , datafix
+                   , ghc
+                   , ghc-paths
+                   , directory
+                   , filepath
+                   , turtle
+                   , text
+                   , lattices
